@@ -12,11 +12,13 @@ import { resizeImage } from './common'
 import { fetchPlaylistWithReactQuery } from '@/web/api/hooks/usePlaylist'
 import { fetchAlbumWithReactQuery } from '@/web/api/hooks/useAlbum'
 import { RepeatMode } from '@/shared/playerDataTypes'
+import type { PlaybackQuality } from '@/shared/api/Track'
 import toast from 'react-hot-toast'
 import { scrobble } from '@/web/api/user'
 import { fetchArtistWithReactQuery } from '../api/hooks/useArtist'
 import { appName } from './const'
 import { isLyricsWindow } from './isLyricsWindow'
+import settings from '@/web/states/settings'
 
 type TrackID = number
 export enum TrackListSourceType {
@@ -60,6 +62,15 @@ export class Player {
   fmTrackList: TrackID[] = []
   shuffle: boolean = false
   fmTrack: Track | null = null
+  audioInfo: {
+    requested: PlaybackQuality
+    level?: string
+    bitrate?: number
+    format?: string | null
+    source?: string
+  } = {
+    requested: 'exhigh',
+  }
 
   /**
    * Persistence hook, set by the store (states/player.ts). Invoked after a
@@ -295,22 +306,31 @@ export class Player {
    * @param {TrackID} trackID
    */
   private async _fetchAudioSource(trackID: TrackID) {
+    const requestedQuality = settings.audioQuality
     try {
-      // console.log(`[player] fetchAudioSourceWithReactQuery `, trackID)
-      const response = await fetchAudioSourceWithReactQuery({ id: trackID })
-      // console.log(`[player] fetchAudioSourceWithReactQuery `, response)
-      let audio = response.data?.[0]?.url
+      const response = await fetchAudioSourceWithReactQuery({
+        id: trackID,
+        level: requestedQuality,
+      })
+      const source = response.data?.[0]
+      let audio = source?.url
       if (audio && audio.includes('126.net')) {
         audio = audio.replace('http://', 'https://')
       }
       return {
         audio,
         id: trackID,
+        requestedQuality,
+        bitrate: source?.br,
+        actualLevel: source?.level,
+        format: source?.type ?? source?.encodeType,
+        source: source?.source,
       }
     } catch {
       return {
         audio: null,
         id: trackID,
+        requestedQuality,
       }
     }
   }
@@ -338,7 +358,15 @@ export class Player {
    */
   private async _playAudio(autoplay: boolean = true) {
     this._progress = 0
-    const { audio, id } = await this._fetchAudioSource(this.trackID)
+    const {
+      audio,
+      id,
+      requestedQuality,
+      bitrate,
+      actualLevel,
+      format,
+      source,
+    } = await this._fetchAudioSource(this.trackID)
 
     if (!audio) {
       toast('无法播放此歌曲')
@@ -346,10 +374,23 @@ export class Player {
       return
     }
     if (this.trackID !== id) return
-    this._playAudioViaHowler(audio, id, autoplay)
+    this.audioInfo = {
+      requested: requestedQuality,
+      level: actualLevel,
+      bitrate,
+      format,
+      source,
+    }
+    this._playAudioViaHowler(audio, id, requestedQuality, bitrate, autoplay)
   }
 
-  private async _playAudioViaHowler(audio: string, id: number, autoplay: boolean = true) {
+  private async _playAudioViaHowler(
+    audio: string,
+    id: number,
+    quality: PlaybackQuality,
+    bitrate?: number,
+    autoplay: boolean = true
+  ) {
     Howler.unload()
 
     const url = audio.includes('?') ? `${audio}&dash-id=${id}` : `${audio}?dash-id=${id}`
@@ -389,7 +430,7 @@ export class Player {
       this.state = State.Playing
     }
     _howler.once('load', () => {
-      this._cacheAudio((_howler as any)._src)
+      this._cacheAudio((_howler as any)._src, id, quality, bitrate)
     })
 
     if (!this._progressInterval) {
@@ -407,14 +448,15 @@ export class Player {
     }
   }
 
-  private async _cacheAudio(audio: string) {
+  private async _cacheAudio(
+    audio: string,
+    id: number,
+    quality: PlaybackQuality,
+    bitrate?: number
+  ) {
     if (audio.includes(appName.toLowerCase()) || !window.ipcRenderer) return
-    const id = Number(new URL(audio).searchParams.get('dash-id'))
     if (isNaN(id) || !id) return
-    // audio info
-    const response = await fetchAudioSourceWithReactQuery({ id })
-    // 缓存
-    cacheAudio(id, audio, response?.data?.[0]?.br)
+    cacheAudio(id, audio, bitrate, quality)
   }
 
   private async _nextFMTrack() {
