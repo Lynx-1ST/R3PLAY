@@ -125,6 +125,23 @@ module.exports = {
     '!**/node_modules/better-sqlite3/bin/**',
     '!**/node_modules/better-sqlite3/build/**',
 
+    // Release-only packaging compatibility for transitive runtime modules.
+    {
+      from: '../../node_modules/entities',
+      to: './node_modules/entities',
+      filter: ['**/*'],
+    },
+    {
+      from: '../../node_modules/.pnpm/content-disposition@0.5.4/node_modules/content-disposition',
+      to: './node_modules/express/node_modules/content-disposition',
+      filter: ['**/*'],
+    },
+    {
+      from: '../../node_modules/.pnpm/process-warning@1.0.0/node_modules/process-warning',
+      to: './node_modules/pino/node_modules/process-warning',
+      filter: ['**/*'],
+    },
+
     {
       from: './dist',
       to: './main',
