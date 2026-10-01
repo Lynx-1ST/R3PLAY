@@ -10,11 +10,7 @@ import { CacheAPIs } from '@/shared/CacheAPIs'
 import { FetchTracksResponse } from '@/shared/api/Track'
 import store from '@/desktop/main/store'
 import { db, Tables } from '@/desktop/main/db'
-import {
-  DEFAULT_UNBLOCK_AUDIO_SOURCE_ORDER,
-  normalizeAudioSourcePreference,
-  prioritizeUnblockAudioSource,
-} from '@/shared/audioSources'
+import { normalizeAudioSourceMode } from '@/shared/audioSources'
 const match = require('@unblockneteasemusic/server')
 
 log.info('[electron] appServer/routes/r3play/audio.ts')
@@ -166,17 +162,14 @@ async function audio(fastify: FastifyInstance) {
       // const res = getAudioFromYouTube(id)
       // console.log('youtube ',res);
 
-      const audioSourcePreference = normalizeAudioSourcePreference(
-        store.get('settings.audioSourcePreference')
-      )
+      const audioSourceMode = normalizeAudioSourceMode(store.get('settings.audioSourceMode'))
 
-      // With an explicit source selection, do not reuse a previously cached file
-      // from another provider. Auto mode keeps the original cache behavior.
-      if (audioSourcePreference === 'auto') {
-        const localCache = await getAudioFromCache(id)
-        if (localCache) {
-          return localCache
-        }
+      const localCache = await getAudioFromCache(id)
+      if (
+        localCache &&
+        (audioSourceMode === 'fallback' || localCache.data?.[0]?.source === 'netease')
+      ) {
+        return localCache
       }
 
       let fromNetease: any
@@ -200,7 +193,7 @@ async function audio(fastify: FastifyInstance) {
         return
       }
 
-      if (audioSourcePreference === 'netease') {
+      if (audioSourceMode === 'netease') {
         if (fromNetease?.data?.[0]?.freeTrialInfo) {
           fromNetease.data[0].url = ''
         }
@@ -214,13 +207,10 @@ async function audio(fastify: FastifyInstance) {
       // console.log(fromNetease);
 
       const trackID = id
-      // Keep the original UNM cache behavior only in Auto mode. An explicit
-      // provider preference must be resolved again so the new selection applies.
-      if (audioSourcePreference === 'auto') {
-        const cacheData = await cache.get(CacheAPIs.Unblock, trackID)
-        if (cacheData) {
-          return cacheData
-        }
+      // Only consult UnblockNeteaseMusic when fallback mode is enabled.
+      const cacheData = await cache.get(CacheAPIs.Unblock, trackID)
+      if (cacheData) {
+        return cacheData
       }
       if (!trackID) {
         reply.code(400).send({
@@ -242,7 +232,7 @@ async function audio(fastify: FastifyInstance) {
       process.env.FOLLOW_SOURCE_ORDER = 'true'
 
       const isEnglish = /^[a-zA-Z\s]+$/
-      let source: string[] = [...DEFAULT_UNBLOCK_AUDIO_SOURCE_ORDER]
+      let source = ['kugou', 'bodian', 'qq', 'migu', 'kuwo', 'joox', 'bilivideo']
       const enableFindTrackOnYouTube = store.get('settings.enableFindTrackOnYouTube')
       const httpProxyForYouTubeSettings = store.get('settings.httpProxyForYouTube')
       if (enableFindTrackOnYouTube && httpProxyForYouTubeSettings) {
@@ -259,11 +249,6 @@ async function audio(fastify: FastifyInstance) {
           source = ['ytdlp', 'kugou', 'qq', 'migu', 'bilivideo']
         }
       }
-      source = prioritizeUnblockAudioSource(audioSourcePreference, source)
-      log.info(
-        `[audio] source preference=${audioSourcePreference}, UNM order=${source.join(',')}`
-      )
-
       try {
         const data: any = await match(trackID, source)
         if (data === null || data === undefined || data?.url === '') {
