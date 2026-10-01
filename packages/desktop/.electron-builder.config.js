@@ -142,6 +142,15 @@ module.exports = {
       to: './node_modules/express/node_modules/content-disposition',
       filter: ['**/*'],
     },
+    // UnblockNeteaseMusic 0.28.0 depends on pino 6.14.0, whose process-warning
+    // API is the old callable v1 form. With pnpm hoisting, electron-builder can
+    // wire pino to process-warning 4/5 instead, causing require('process-warning')()
+    // to throw at runtime. Preserve the exact v1 dependency under pino.
+    {
+      from: '../../node_modules/.pnpm/process-warning@1.0.0/node_modules/process-warning',
+      to: './node_modules/@unblockneteasemusic/server/node_modules/pino/node_modules/process-warning',
+      filter: ['**/*'],
+    },
     {
       from: './dist',
       to: './main',
