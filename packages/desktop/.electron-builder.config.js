@@ -125,6 +125,15 @@ module.exports = {
     '!**/node_modules/better-sqlite3/bin/**',
     '!**/node_modules/better-sqlite3/build/**',
 
+    // parse5 (loaded by jsdom inside the NetEase API package) requires
+    // "entities/decode" at runtime. electron-builder's dependency walker can
+    // omit this transitive package with the hoisted pnpm layout + node_modules
+    // exclusion above, so copy it explicitly into the packaged app.
+    {
+      from: '../../node_modules/entities',
+      to: './node_modules/entities',
+      filter: ['**/*'],
+    },
     {
       from: './dist',
       to: './main',
