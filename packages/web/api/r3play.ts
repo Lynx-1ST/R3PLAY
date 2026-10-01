@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { appName } from '../utils/const'
+import type { PlaybackQuality } from '@/shared/api/Track'
 
 const request: AxiosInstance = axios.create({
   baseURL: `/${appName.toLowerCase()}`,
@@ -7,7 +8,12 @@ const request: AxiosInstance = axios.create({
   timeout: 15000,
 })
 
-export async function cacheAudio(id: number, audioUrl: string, bitrate?: number) {
+export async function cacheAudio(
+  id: number,
+  audioUrl: string,
+  bitrate?: number,
+  quality: PlaybackQuality = 'exhigh'
+) {
   const file = await axios.get(audioUrl, { responseType: 'arraybuffer' })
   if (file.status !== 200 && file.status !== 206) return
 
@@ -22,6 +28,7 @@ export async function cacheAudio(id: number, audioUrl: string, bitrate?: number)
     params: {
       url: audioUrl,
       bitrate,
+      quality,
     },
   })
 }
