@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeAudioSourceMode } from '@/shared/audioSources'
+import { normalizeAudioSourceMode } from '../../shared/audioSources'
 
 describe('audio source mode', () => {
   it('defaults unknown values to NetEase only', () => {
