@@ -58,6 +58,52 @@ jobs:
           }
           Write-Host "Verified entities/decode in packaged app.asar"
 
+      - name: Smoke-test packaged NetEase API with Electron Node
+        shell: pwsh
+        run: |
+          $app = Resolve-Path "./packages/desktop/release/win-unpacked/R3PLAYX.exe"
+          $resources = Resolve-Path "./packages/desktop/release/win-unpacked/resources"
+          Push-Location $resources
+          try {
+            $env:ELECTRON_RUN_AS_NODE = "1"
+            & $app -e "require('./app.asar/node_modules/@neteasecloudmusicapienhanced/api'); console.log('NETEASE_API_REQUIRE_OK')"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Packaged NetEase API failed to load under Electron Node (exit $LASTEXITCODE)"
+            }
+          } finally {
+            Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+            Pop-Location
+          }
+
+      - name: Dump packaged Express diagnostics on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          $asar = Get-ChildItem -Path ./packages/desktop/release -Filter app.asar -Recurse | Select-Object -First 1
+          if (-not $asar) { exit 0 }
+          New-Item -ItemType Directory -Force -Path ./asar-dump | Out-Null
+          pnpm dlx @electron/asar extract $asar.FullName ./asar-dump
+          Write-Host "--- root express package ---"
+          if (Test-Path ./asar-dump/node_modules/express/package.json) {
+            Get-Content ./asar-dump/node_modules/express/package.json
+          }
+          Write-Host "--- root express utils lines 90-130 ---"
+          if (Test-Path ./asar-dump/node_modules/express/lib/utils.js) {
+            $lines = Get-Content ./asar-dump/node_modules/express/lib/utils.js
+            for ($i = 89; $i -lt [Math]::Min(130, $lines.Count); $i++) {
+              Write-Host ("{0}: {1}" -f ($i + 1), $lines[$i])
+            }
+          }
+          Write-Host "--- nearby runtime package versions ---"
+          foreach ($pkg in @("depd","array-flatten","content-disposition","@neteasecloudmusicapienhanced/api")) {
+            $p = Join-Path ./asar-dump/node_modules $pkg
+            $p = Join-Path $p "package.json"
+            if (Test-Path $p) {
+              $json = Get-Content $p -Raw | ConvertFrom-Json
+              Write-Host "$($json.name)@$($json.version)"
+            }
+          }
+
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
