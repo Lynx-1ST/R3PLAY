@@ -66,14 +66,28 @@ jobs:
           Push-Location $resources
           try {
             $env:ELECTRON_RUN_AS_NODE = "1"
-            & $app -e "require('./app.asar/node_modules/@neteasecloudmusicapienhanced/api'); console.log('NETEASE_API_REQUIRE_OK')"
-            if ($LASTEXITCODE -ne 0) {
-              throw "Packaged NetEase API failed to load under Electron Node (exit $LASTEXITCODE)"
+            $output = (& $app -e "require('./app.asar/node_modules/@neteasecloudmusicapienhanced/api'); console.log('NETEASE_API_REQUIRE_OK')" 2>&1 | Out-String)
+            Write-Host $output
+            if ($output -notmatch "NETEASE_API_REQUIRE_OK") {
+              throw "Packaged NetEase API failed to load under Electron Node"
             }
           } finally {
             Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
             Pop-Location
           }
+
+      - name: Smoke-test packaged Windows app startup
+        shell: pwsh
+        run: |
+          $app = Resolve-Path "./packages/desktop/release/win-unpacked/R3PLAYX.exe"
+          $process = Start-Process -FilePath $app -ArgumentList "--disable-gpu" -PassThru
+          Start-Sleep -Seconds 10
+          $process.Refresh()
+          if ($process.HasExited) {
+            throw "R3PLAYX exited during startup smoke test (exit code $($process.ExitCode))"
+          }
+          Stop-Process -Id $process.Id -Force
+          Write-Host "R3PLAYX_STARTUP_OK"
 
       - name: Dump packaged Express diagnostics on failure
         if: failure()
