@@ -7,39 +7,44 @@ import cache from '@/desktop/main/cache'
 import fs from 'fs'
 import youtube from '@/desktop/main/youtube'
 import { CacheAPIs } from '@/shared/CacheAPIs'
-import { FetchTracksResponse } from '@/shared/api/Track'
+import { FetchTracksResponse, PlaybackQuality } from '@/shared/api/Track'
 import store from '@/desktop/main/store'
 import { db, Tables } from '@/desktop/main/db'
+import {
+  audioCacheFileName,
+  audioCacheKey,
+  normalizePlaybackQuality,
+} from '@/desktop/main/utils/audioCacheQuality'
 const match = require('@unblockneteasemusic/server')
 
 log.info('[electron] appServer/routes/r3play/audio.ts')
 
-const getAudioFromCache = async (id: number) => {
-  // get from cache
-  const cache = await db.find(Tables.Audio, id)
-  if (!cache) return
+const getAudioFromCache = async (id: number, requestedLevel?: SoundQualityType) => {
+  const quality = normalizePlaybackQuality(requestedLevel)
+  const cachedAudio = await db.find(Tables.Audio, audioCacheKey(id, quality))
+  if (!cachedAudio) return
 
-  const audioFileName = `${cache.id}-${cache.bitRate}.${cache.format}`
-
-  const isAudioFileExists = fs.existsSync(`${app.getPath('userData')}/audio_cache/${audioFileName}`)
+  const audioFileName = audioCacheFileName(id, quality, cachedAudio.bitRate, cachedAudio.format)
+  const isAudioFileExists = fs.existsSync(
+    `${app.getPath('userData')}/audio_cache/${audioFileName}`
+  )
   if (!isAudioFileExists) return
 
-  log.debug(`[server] Audio cache hit ${id}`)
-
+  log.debug(`[server] Audio cache hit ${id} (${quality})`)
   return {
     data: [
       {
-        source: cache.source,
-        id: cache.id,
+        source: cachedAudio.source,
+        id,
         url: `http://127.0.0.1:${
           process.env.ELECTRON_WEB_SERVER_PORT
         }/${appName.toLowerCase()}/audio/${audioFileName}`,
-        br: cache.bitRate,
+        br: cachedAudio.bitRate,
         size: 0,
         md5: '',
         code: 200,
         expi: 0,
-        type: cache.format,
+        type: cachedAudio.format,
         gain: 0,
         fee: 8,
         uf: null,
@@ -47,13 +52,9 @@ const getAudioFromCache = async (id: number) => {
         flag: 4,
         canExtend: false,
         freeTrialInfo: null,
-        level: 'standard',
-        encodeType: cache.format,
-        freeTrialPrivilege: {
-          resConsumable: false,
-          userConsumable: false,
-          listenType: null,
-        },
+        level: quality,
+        encodeType: cachedAudio.format,
+        freeTrialPrivilege: { resConsumable: false, userConsumable: false, listenType: null },
         freeTimeTrialPrivilege: {
           resConsumable: false,
           userConsumable: false,
@@ -161,7 +162,7 @@ async function audio(fastify: FastifyInstance) {
       // const res = getAudioFromYouTube(id)
       // console.log('youtube ',res);
 
-      const localCache = await getAudioFromCache(id)
+      const localCache = await getAudioFromCache(id, req.query.level)
       if (localCache) {
         return localCache
       }
@@ -272,12 +273,12 @@ async function audio(fastify: FastifyInstance) {
     async (
       req: FastifyRequest<{
         Params: { id: string }
-        Querystring: { url: string; bitrate: number }
+        Querystring: { url: string; bitrate: number; quality?: PlaybackQuality }
       }>,
       reply
     ) => {
       const id = Number(req.params.id)
-      const { url, bitrate } = req.query
+      const { url, bitrate, quality } = req.query
       if (isNaN(id)) {
         return reply.status(400).send({ error: 'Invalid param id' })
       }
@@ -292,7 +293,7 @@ async function audio(fastify: FastifyInstance) {
       }
 
       try {
-        await cache.setAudio(await data.toBuffer(), { id, url, bitrate })
+        await cache.setAudio(await data.toBuffer(), { id, url, bitrate, quality })
         reply.status(200).send('Audio cached!')
       } catch (error) {
         reply.status(500).send({ error })
