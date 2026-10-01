@@ -1,0 +1,62 @@
+name: Build-Clean-Windows
+
+on:
+  push:
+    branches:
+      - release/clean-quality-badge-v2.8.0-r3play.9
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8.6.12
+
+      - name: Install Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Copy Env
+        shell: pwsh
+        run: Copy-Item .env.example .env
+
+      - name: Build Windows installer
+        env:
+          ELECTRON_WEB_SERVER_PORT: 42710
+          ELECTRON_DEV_NETEASE_API_PORT: 30001
+          UNBLOCK_SERVER_PORT: 30003
+          VITE_APP_NETEASE_API_URL: /netease
+          ENABLE_FLAC: "true"
+          ENABLE_LOCAL_VIP: "svip"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm package
+
+      - name: Smoke-test packaged Windows app startup
+        shell: pwsh
+        run: |
+          $app = Resolve-Path "./packages/desktop/release/win-unpacked/R3PLAYX.exe"
+          $process = Start-Process -FilePath $app -ArgumentList "--disable-gpu" -PassThru
+          Start-Sleep -Seconds 12
+          $process.Refresh()
+          if ($process.HasExited) {
+            throw "R3PLAYX exited during startup smoke test (exit code $($process.ExitCode))"
+          }
+          Stop-Process -Id $process.Id -Force
+          Write-Host "R3PLAYX_STARTUP_OK"
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: R3PLAYX-clean-win
+          path: ./packages/desktop/release/*x64-Setup.exe
+          if-no-files-found: error
