@@ -19,6 +19,33 @@ const match = require('@unblockneteasemusic/server')
 
 log.info('[electron] appServer/routes/r3play/audio.ts')
 
+const getQualityFallbackOrder = (requested?: SoundQualityType): SoundQualityType[] => {
+  switch (requested) {
+    case 'hires':
+      return ['hires', 'lossless', 'exhigh']
+    case 'lossless':
+      return ['lossless', 'exhigh']
+    case 'exhigh':
+      return ['exhigh']
+    default:
+      return [requested ?? 'exhigh']
+  }
+}
+
+const normalizeUnblockResult = (id: number, data: any) => {
+  if (!data?.url) return
+  return {
+    ...data,
+    id,
+    source: data.source ?? 'unblock',
+    level: data.level ?? 'exhigh',
+    type: data.type ?? data.format ?? null,
+    encodeType: data.encodeType ?? data.type ?? data.format ?? null,
+    br: data.br ?? data.bitRate ?? 0,
+    freeTrialInfo: null,
+  }
+}
+
 const getAudioFromCache = async (id: number, requestedLevel?: SoundQualityType) => {
   const quality = normalizePlaybackQuality(requestedLevel)
   const cachedAudio = await db.find(Tables.Audio, audioCacheKey(id, quality))
@@ -168,32 +195,36 @@ async function audio(fastify: FastifyInstance) {
       }
 
       let fromNetease: any
-      try {
-        const { body }: { body: any } = await NeteaseCloudMusicApi.song_url_v1({
-          ...req.query,
-          crypto: 'weapi',
-          cookie: req.cookies as unknown as any,
-        } as any)
-        fromNetease = body
-      } catch (error) {
-        log.error('[audio] song_url_v1 request failed', error)
-      }
+      for (const level of getQualityFallbackOrder(req.query.level)) {
+        try {
+          const { body }: { body: any } = await NeteaseCloudMusicApi.song_url_v1({
+            ...req.query,
+            level,
+            crypto: 'weapi',
+            cookie: req.cookies as unknown as any,
+          } as any)
+          fromNetease = body
 
-      if (
-        fromNetease?.code === 200 &&
-        !fromNetease?.data?.[0]?.freeTrialInfo &&
-        fromNetease?.data?.[0]?.url
-      ) {
-        reply.status(200).send(fromNetease)
-        return
+          const source = body?.data?.[0]
+          if (body?.code === 200 && !source?.freeTrialInfo && source?.url) {
+            if (!source.level || source.level === 'null') source.level = level
+            log.info(`[audio] NetEase source hit ${id} at level ${source.level ?? level}`)
+            return reply.status(200).send(body)
+          }
+
+          log.info(`[audio] NetEase source miss ${id} at level ${level}`)
+        } catch (error) {
+          log.error(`[audio] song_url_v1 request failed at level ${level}`, error)
+        }
       }
-      // console.log(fromNetease);
 
       const trackID = id
-      // 先查缓存
-      const cacheData = await cache.get(CacheAPIs.Unblock, trackID)
-      if (cacheData) {
-        return cacheData
+      // Try a previously matched bypass source before doing another network match.
+      const cachedUnblock = await cache.get(CacheAPIs.Unblock, trackID)
+      const cachedSource = normalizeUnblockResult(trackID, cachedUnblock)
+      if (cachedSource) {
+        log.info(`[audio] Unblock cache hit ${trackID}`)
+        return reply.code(200).send({ code: 200, data: [cachedSource] })
       }
       if (!trackID) {
         reply.code(400).send({
@@ -242,10 +273,16 @@ async function audio(fastify: FastifyInstance) {
           return reply.status(fromNetease?.code ?? 500).send(fromNetease)
         }
 
-        cache.set(CacheAPIs.Unblock, { id: trackID, url: data?.url }, trackID)
+        const sourceData = normalizeUnblockResult(trackID, data)
+        if (!sourceData) {
+          return reply.status(fromNetease?.code ?? 500).send(fromNetease)
+        }
+
+        cache.set(CacheAPIs.Unblock, sourceData, trackID)
+        log.info(`[audio] Unblock source hit ${trackID} from ${sourceData.source}`)
         return reply.code(200).send({
           code: 200,
-          data: [data],
+          data: [sourceData],
         })
       } catch (err) {
         log.error('[audio] unblock match failed', err)
