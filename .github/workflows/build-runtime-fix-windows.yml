@@ -50,10 +50,10 @@ jobs:
             throw "app.asar was not found in packaged Windows output"
           }
           $entries = pnpm dlx @electron/asar list $asar.FullName
-          if (-not ($entries | Select-String -SimpleMatch "node_modules/entities/package.json")) {
+          if (-not ($entries | Select-String -Pattern 'node_modules[\\/]entities[\\/]package\.json')) {
             throw "entities runtime dependency is missing from app.asar"
           }
-          if (-not ($entries | Select-String -SimpleMatch "node_modules/entities/dist/commonjs/decode.js")) {
+          if (-not ($entries | Select-String -Pattern 'node_modules[\\/]entities[\\/]dist[\\/]commonjs[\\/]decode\.js')) {
             throw "entities/decode implementation is missing from app.asar"
           }
           Write-Host "Verified entities/decode in packaged app.asar"
