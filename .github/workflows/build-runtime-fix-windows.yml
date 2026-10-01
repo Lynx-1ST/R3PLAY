@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix/runtime-entities
+      - fix/playback-bypass
 
 jobs:
   windows:
@@ -76,18 +77,60 @@ jobs:
             Pop-Location
           }
 
-      - name: Smoke-test packaged Windows app startup
+      - name: Smoke-test packaged UnblockNeteaseMusic module
+        shell: pwsh
+        run: |
+          $app = Resolve-Path "./packages/desktop/release/win-unpacked/R3PLAYX.exe"
+          $resources = Resolve-Path "./packages/desktop/release/win-unpacked/resources"
+          Push-Location $resources
+          try {
+            $env:ELECTRON_RUN_AS_NODE = "1"
+            $output = (& $app -e "const match=require('./app.asar/node_modules/@unblockneteasemusic/server'); console.log('UNBLOCK_MATCH_TYPE='+typeof match)" 2>&1 | Out-String)
+            Write-Host $output
+            if ($output -notmatch "UNBLOCK_MATCH_TYPE=function") {
+              throw "Packaged UnblockNeteaseMusic module is unavailable"
+            }
+          } finally {
+            Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+            Pop-Location
+          }
+
+      - name: Smoke-test packaged Windows playback route
         shell: pwsh
         run: |
           $app = Resolve-Path "./packages/desktop/release/win-unpacked/R3PLAYX.exe"
           $process = Start-Process -FilePath $app -ArgumentList "--disable-gpu" -PassThru
-          Start-Sleep -Seconds 10
-          $process.Refresh()
-          if ($process.HasExited) {
-            throw "R3PLAYX exited during startup smoke test (exit code $($process.ExitCode))"
+          try {
+            $ready = $false
+            for ($i = 0; $i -lt 30; $i++) {
+              Start-Sleep -Seconds 1
+              $process.Refresh()
+              if ($process.HasExited) {
+                throw "R3PLAYX exited during startup smoke test (exit code $($process.ExitCode))"
+              }
+              try {
+                $health = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 -Uri "http://127.0.0.1:42710/netease"
+                if ($health.StatusCode -eq 200) {
+                  $ready = $true
+                  break
+                }
+              } catch {}
+            }
+            if (-not $ready) {
+              throw "R3PLAYX local NetEase server did not become ready"
+            }
+
+            $source = Invoke-RestMethod -TimeoutSec 45 -Uri "http://127.0.0.1:42710/netease/song/url/v1?id=418602084&level=exhigh"
+            $url = $source.data[0].url
+            if (-not $url) {
+              throw "Playback route returned no audio URL for smoke-test track"
+            }
+            Write-Host "R3PLAYX_PLAYBACK_ROUTE_OK level=$($source.data[0].level) source=$($source.data[0].source)"
+          } finally {
+            if (-not $process.HasExited) {
+              Stop-Process -Id $process.Id -Force
+            }
           }
-          Stop-Process -Id $process.Id -Force
-          Write-Host "R3PLAYX_STARTUP_OK"
 
       - name: Dump packaged Express diagnostics on failure
         if: failure()
