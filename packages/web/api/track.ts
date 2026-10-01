@@ -44,8 +44,8 @@ export function fetchAudioSource(
     url: '/song/url/v1',
     method: 'get',
     params: {
-      level: 'exhigh',
       ...params,
+      level: params.level ?? 'exhigh',
       timestamp: Date.now(),
     },
   })
