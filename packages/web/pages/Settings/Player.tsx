@@ -5,7 +5,7 @@ import { useSnapshot } from 'valtio'
 import { BlockDescription, BlockTitle, Button, Option, OptionText, Select, Switch } from './Controls'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import type { AudioSourcePreference } from '@/shared/audioSources'
+import type { AudioSourceMode } from '@/shared/audioSources'
 
 function Player() {
   return (
@@ -19,48 +19,36 @@ function Player() {
 }
 
 function AudioSourceSelector() {
-  const { audioSourcePreference } = useSnapshot(settings)
+  const { audioSourceMode } = useSnapshot(settings)
 
-  const options: { name: string; value: AudioSourcePreference }[] = [
-    { name: 'Auto (R3PLAY default order)', value: 'auto' },
+  const options: { name: string; value: AudioSourceMode }[] = [
     { name: 'NetEase only', value: 'netease' },
-    { name: 'Kugou', value: 'kugou' },
-    { name: 'Bodian', value: 'bodian' },
-    { name: 'QQ Music', value: 'qq' },
-    { name: 'Migu', value: 'migu' },
-    { name: 'Kuwo', value: 'kuwo' },
-    { name: 'JOOX', value: 'joox' },
-    { name: 'Bilibili Video', value: 'bilivideo' },
+    { name: 'NetEase + fallback', value: 'fallback' },
   ]
 
   return (
     <div className='mb-12'>
       <BlockTitle>Audio Source</BlockTitle>
       <BlockDescription>
-        NetEase is used first. If it cannot provide a playable stream, this controls the preferred
-        UnblockNeteaseMusic fallback source. Manual choices bypass the local audio cache so a source
-        change takes effect immediately.
+        NetEase is always the primary source. Use NetEase only for official playback, or enable
+        fallback only if NetEase cannot provide a playable stream.
       </BlockDescription>
       <Option>
         <OptionText>Preferred source</OptionText>
         <Select
           options={options}
-          value={audioSourcePreference}
+          value={audioSourceMode}
           onChange={value => {
-            settings.audioSourcePreference = value
+            settings.audioSourceMode = value
             toast.success(
-              value === 'auto'
-                ? 'Audio source order reset to Auto'
-                : value === 'netease'
-                  ? 'Using NetEase only'
-                  : `Preferred fallback source: ${value}`
+              value === 'netease' ? 'Using NetEase only' : 'NetEase fallback enabled'
             )
           }}
         />
       </Option>
       <BlockDescription>
-        QQ, Migu and JOOX may require the cookies configured below. YouTube remains controlled by
-        the separate YouTube Unlock option.
+        Fallback keeps R3PLAY's original UnblockNeteaseMusic behavior. YouTube remains controlled
+        by the separate YouTube Unlock option.
       </BlockDescription>
     </div>
   )
