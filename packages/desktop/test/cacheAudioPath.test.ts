@@ -15,6 +15,9 @@ describe('resolveCacheAudioPath', () => {
       '1-0.unknown',
       '999-165000.opus',
       '42-980001.flac',
+      '42-lossless-980001.flac',
+      '42-hires-1850000.flac',
+      '99-exhigh-320000.mp3',
     ]) {
       const resolved = resolveCacheAudioPath(userData, fileName)
       expect(resolved).not.toBeNull()
