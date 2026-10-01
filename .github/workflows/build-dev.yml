@@ -5,6 +5,7 @@ on:
     branches:
       - dev
       - feature/hires-discord-rpc
+      - fix/runtime-entities
 
 jobs:
   release:
@@ -86,6 +87,20 @@ jobs:
       #     args: package
       #     # skip_package_manager_install: true
       #     package_manager: pnpm
+
+      - name: Verify packaged runtime dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $asar = Get-ChildItem -Path ./packages/desktop/release -Filter app.asar -Recurse | Select-Object -First 1
+          if (-not $asar) {
+            throw "app.asar was not found in packaged Windows output"
+          }
+          $entries = pnpm dlx @electron/asar list $asar.FullName
+          if (-not ($entries | Select-String -SimpleMatch "node_modules/entities/package.json")) {
+            throw "entities runtime dependency is missing from app.asar"
+          }
+          Write-Host "Verified entities package in $($asar.FullName)"
 
       - name: Upload Artifact (macOS universal)
         uses: actions/upload-artifact@v5
