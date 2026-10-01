@@ -12,8 +12,6 @@ interface Settings {
   miguCookie: string
   jooxCookie: string
   audioQuality: PlaybackQuality
-  discordRichPresence: boolean
-  discordApplicationId: string
   enableFindTrackOnYouTube: boolean
   httpProxyForYouTube?: {
     proxy: string
@@ -61,8 +59,6 @@ const initSettings: Settings = {
   miguCookie: '',
   jooxCookie: '',
   audioQuality: 'exhigh',
-  discordRichPresence: false,
-  discordApplicationId: '',
   enableFindTrackOnYouTube: false,
   playAnimatedArtworkFromApple: true,
   priorityDisplayOfAlbumArtistDescriptionFromAppleMusic: true,
