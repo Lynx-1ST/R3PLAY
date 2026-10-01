@@ -3,6 +3,7 @@ import { merge } from 'lodash-es'
 import { proxy, subscribe } from 'valtio'
 import i18n, { getInitLanguage, SupportedLanguage, supportedLanguages } from '../i18n/i18n'
 import { getKeyboardShortcutDefaultSettings } from '@/shared/defaultSettings'
+import type { AudioSourcePreference } from '@/shared/audioSources'
 
 interface Settings {
   accentColor: string
@@ -10,6 +11,7 @@ interface Settings {
   qqCookie: string
   miguCookie: string
   jooxCookie: string
+  audioSourcePreference: AudioSourcePreference
   enableFindTrackOnYouTube: boolean
   httpProxyForYouTube?: {
     proxy: string
@@ -56,6 +58,7 @@ const initSettings: Settings = {
   qqCookie: '',
   miguCookie: '',
   jooxCookie: '',
+  audioSourcePreference: 'auto',
   enableFindTrackOnYouTube: false,
   playAnimatedArtworkFromApple: true,
   priorityDisplayOfAlbumArtistDescriptionFromAppleMusic: true,
