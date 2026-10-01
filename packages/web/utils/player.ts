@@ -60,6 +60,11 @@ export class Player {
   fmTrackList: TrackID[] = []
   shuffle: boolean = false
   fmTrack: Track | null = null
+  audioInfo: {
+    bitrate?: number
+    format?: string | null
+    level?: string | null
+  } = {}
 
   /**
    * Persistence hook, set by the store (states/player.ts). Invoked after a
@@ -299,13 +304,17 @@ export class Player {
       // console.log(`[player] fetchAudioSourceWithReactQuery `, trackID)
       const response = await fetchAudioSourceWithReactQuery({ id: trackID })
       // console.log(`[player] fetchAudioSourceWithReactQuery `, response)
-      let audio = response.data?.[0]?.url
+      const source = response.data?.[0] as any
+      let audio = source?.url
       if (audio && audio.includes('126.net')) {
         audio = audio.replace('http://', 'https://')
       }
       return {
         audio,
         id: trackID,
+        bitrate: source?.br,
+        format: source?.type ?? source?.encodeType,
+        level: source?.level,
       }
     } catch {
       return {
@@ -338,7 +347,7 @@ export class Player {
    */
   private async _playAudio(autoplay: boolean = true) {
     this._progress = 0
-    const { audio, id } = await this._fetchAudioSource(this.trackID)
+    const { audio, id, bitrate, format, level } = await this._fetchAudioSource(this.trackID)
 
     if (!audio) {
       toast('无法播放此歌曲')
@@ -346,6 +355,7 @@ export class Player {
       return
     }
     if (this.trackID !== id) return
+    this.audioInfo = { bitrate, format, level }
     this._playAudioViaHowler(audio, id, autoplay)
   }
 
