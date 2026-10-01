@@ -2,14 +2,66 @@ import settings from '@/web/states/settings'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useSnapshot } from 'valtio'
-import { BlockDescription, BlockTitle, Button, Option, OptionText, Switch } from './Controls'
+import { BlockDescription, BlockTitle, Button, Option, OptionText, Select, Switch } from './Controls'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
+import type { AudioSourcePreference } from '@/shared/audioSources'
 
 function Player() {
   return (
     <div className='iterms-center flex w-full justify-between'>
-      <FindTrackOnYouTube />
+      <div className='w-full'>
+        <AudioSourceSelector />
+        <FindTrackOnYouTube />
+      </div>
+    </div>
+  )
+}
+
+function AudioSourceSelector() {
+  const { audioSourcePreference } = useSnapshot(settings)
+
+  const options: { name: string; value: AudioSourcePreference }[] = [
+    { name: 'Auto (R3PLAY default order)', value: 'auto' },
+    { name: 'NetEase only', value: 'netease' },
+    { name: 'Kugou', value: 'kugou' },
+    { name: 'Bodian', value: 'bodian' },
+    { name: 'QQ Music', value: 'qq' },
+    { name: 'Migu', value: 'migu' },
+    { name: 'Kuwo', value: 'kuwo' },
+    { name: 'JOOX', value: 'joox' },
+    { name: 'Bilibili Video', value: 'bilivideo' },
+  ]
+
+  return (
+    <div className='mb-12'>
+      <BlockTitle>Audio Source</BlockTitle>
+      <BlockDescription>
+        NetEase is used first. If it cannot provide a playable stream, this controls the preferred
+        UnblockNeteaseMusic fallback source. Manual choices bypass the local audio cache so a source
+        change takes effect immediately.
+      </BlockDescription>
+      <Option>
+        <OptionText>Preferred source</OptionText>
+        <Select
+          options={options}
+          value={audioSourcePreference}
+          onChange={value => {
+            settings.audioSourcePreference = value
+            toast.success(
+              value === 'auto'
+                ? 'Audio source order reset to Auto'
+                : value === 'netease'
+                  ? 'Using NetEase only'
+                  : `Preferred fallback source: ${value}`
+            )
+          }}
+        />
+      </Option>
+      <BlockDescription>
+        QQ, Migu and JOOX may require the cookies configured below. YouTube remains controlled by
+        the separate YouTube Unlock option.
+      </BlockDescription>
     </div>
   )
 }
