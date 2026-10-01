@@ -150,9 +150,33 @@ const Controls = () => {
             </div>
           )}
           {!mini && <VolumeSlider />}
+          {!mini && <StreamQualityBadge />}
         </div>
       </motion.div>
     </MotionConfig>
+  )
+}
+
+function StreamQualityBadge() {
+  const { track, state, audioInfo } = useSnapshot(player)
+
+  if (!track || state === PlayerState.Loading) return null
+
+  const format = audioInfo.format ? audioInfo.format.toUpperCase() : undefined
+  const bitrate = audioInfo.bitrate
+    ? `${Math.round(audioInfo.bitrate / 1000)} kbps`
+    : undefined
+
+  const streamInfo = [format, bitrate].filter(Boolean).join(' · ')
+  if (!streamInfo) return null
+
+  return (
+    <div
+      className='mx-auto mt-2 w-fit rounded-full bg-black/5 px-2.5 py-1 text-center
+      text-[10px] font-semibold tracking-wide text-black/35 dark:bg-white/5 dark:text-white/35'
+    >
+      {streamInfo}
+    </div>
   )
 }
 
