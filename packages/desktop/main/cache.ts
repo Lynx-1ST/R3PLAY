@@ -1,5 +1,5 @@
 import { db, Tables } from './db'
-import type { FetchTracksResponse } from '@/shared/api/Track'
+import type { FetchTracksResponse, PlaybackQuality } from '@/shared/api/Track'
 import { app } from 'electron'
 import log from './log'
 import fs from 'fs'
@@ -8,6 +8,12 @@ import { CacheAPIs, CacheAPIsParams } from '@/shared/CacheAPIs'
 import { TablesStructures } from './db'
 import { FastifyReply } from 'fastify'
 import { resolveCacheAudioPath } from './utils/cacheAudioPath'
+import {
+  audioCacheFileName,
+  audioCacheKey,
+  normalizePlaybackQuality,
+  parseQualityAudioCacheFileName,
+} from './utils/audioCacheQuality'
 
 log.info('[electron] cache.ts')
 
@@ -279,16 +285,19 @@ class Cache {
     if (!filePath) {
       return reply.status(400).send({ error: 'Invalid filename' })
     }
-    const id = Number(fileName.split('-')[0])
+    const qualityFile = parseQualityAudioCacheFileName(fileName)
+    const cacheId = qualityFile
+      ? audioCacheKey(qualityFile.trackId, qualityFile.quality)
+      : Number(fileName.split('-')[0])
 
     try {
       const audio = fs.readFileSync(filePath)
       if (audio.byteLength === 0) {
-        db.delete(Tables.Audio, id)
+        db.delete(Tables.Audio, cacheId)
         fs.unlinkSync(filePath)
         return reply.status(404).send({ error: 'Audio not found' })
       }
-      db.update(Tables.Audio, id, { queriedAt: Date.now() })
+      db.update(Tables.Audio, cacheId, { queriedAt: Date.now() })
       reply
         .status(206)
         .header('Accept-Ranges', 'bytes')
@@ -302,7 +311,17 @@ class Cache {
 
   async setAudio(
     buffer: Buffer,
-    { id, url, bitrate }: { id: number; url: string; bitrate: number }
+    {
+      id,
+      url,
+      bitrate,
+      quality,
+    }: {
+      id: number
+      url: string
+      bitrate: number
+      quality?: PlaybackQuality
+    }
   ) {
     const path = `${app.getPath('userData')}/audio_cache`
 
@@ -313,7 +332,10 @@ class Cache {
     }
 
     const meta = await musicMetadata.parseBuffer(buffer)
-    const bitRate = meta?.format?.codec === 'OPUS' ? 165000 : meta?.format?.bitrate ?? 0
+    const fallbackBitrate = Number.isFinite(Number(bitrate)) ? Number(bitrate) : 0
+    const bitRate = Math.round(
+      meta?.format?.codec === 'OPUS' ? 165000 : (meta?.format?.bitrate ?? fallbackBitrate)
+    )
     const type =
       {
         'MPEG 1 Layer 3': 'mp3',
@@ -327,21 +349,21 @@ class Cache {
     if (url.includes('googlevideo.com')) source = 'youtube'
     if (url.includes('126.net')) source = 'netease'
 
-    fs.writeFile(`${path}/${id}-${bitRate}.${type}`, buffer, error => {
-      if (error) {
-        return log.error(`[cache] cacheAudio failed: ${error}`)
-      }
-      log.info(`Audio file ${id}-${bitRate}.${type} cached!`)
+    const normalizedQuality = normalizePlaybackQuality(quality)
+    const cacheId = audioCacheKey(id, normalizedQuality)
+    const fileName = audioCacheFileName(id, normalizedQuality, bitRate, type)
+
+    fs.writeFile(`${path}/${fileName}`, buffer, error => {
+      if (error) return log.error(`[cache] cacheAudio failed: ${error}`)
+      log.info(`Audio file ${fileName} cached!`)
 
       db.upsert(Tables.Audio, {
-        id,
+        id: cacheId,
         bitRate,
         format: type as TablesStructures[Tables.Audio]['format'],
         source,
         queriedAt: Date.now(),
       })
-
-      log.info(`[cache] cacheAudio ${id}-${bitRate}.${type}`)
     })
   }
 }
