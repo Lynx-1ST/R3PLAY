@@ -18,7 +18,6 @@ import { getPlatform } from './utils'
 import { bindingKeyboardShortcuts } from './keyboardShortcuts'
 import { checkForUpdates } from './updateWindow'
 import main from '.'
-import discordPresence from './discordPresence'
 
 log.info('[electron] ipcMain.ts')
 
@@ -46,7 +45,6 @@ export function initIpcMain(
   initTrayIpcMain(tray)
   initTaskbarIpcMain(thumbar)
   initStoreIpcMain(win,store)
-  initDiscordPresenceIpcMain(store)
   initOtherIpcMain(win)
 }
 
@@ -174,35 +172,6 @@ function initStoreIpcMain(win: BrowserWindow | null,store: Store<TypedElectronSt
       main.tray?.updateTray()
     }
   })
-}
-
-let discordPresenceIpcInitialized = false
-
-function initDiscordPresenceIpcMain(store: Store<TypedElectronStore>) {
-  const saved = store.get('settings') as
-    | { discordRichPresence?: boolean; discordApplicationId?: string }
-    | undefined
-
-  discordPresence.configure(
-    Boolean(saved?.discordRichPresence),
-    String(saved?.discordApplicationId || '')
-  )
-
-  if (discordPresenceIpcInitialized) return
-  discordPresenceIpcInitialized = true
-
-  on(IpcChannels.MetaData, (_e, { track }) => discordPresence.setTrack(track))
-  on(IpcChannels.Play, () => discordPresence.setPlaying(true))
-  on(IpcChannels.Pause, () => discordPresence.setPlaying(false))
-  on(IpcChannels.SyncProgress, (_e, { progress }) => discordPresence.setProgress(progress))
-  on(IpcChannels.SyncSettings, (_e, settings) => {
-    discordPresence.configure(
-      Boolean(settings?.discordRichPresence),
-      String(settings?.discordApplicationId || '')
-    )
-  })
-
-  app.once('before-quit', () => discordPresence.shutdown())
 }
 
 /**
