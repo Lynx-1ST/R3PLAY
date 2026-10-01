@@ -186,15 +186,10 @@ class Cache {
         }
       }
       case CacheAPIs.Unblock: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.Unblock, params.id)
-        if (data?.json)
-          return {
-            resourceState: true,
-            songs: [],
-            code: 200,
-            album: JSON.parse(data.json),
-          }
+        const id = typeof params === 'number' ? params : Number(params?.id)
+        if (!Number.isFinite(id) || id <= 0) return
+        const data = db.find(Tables.Unblock, id)
+        if (data?.json) return JSON.parse(data.json)
         break
       }
       case CacheAPIs.Album: {
