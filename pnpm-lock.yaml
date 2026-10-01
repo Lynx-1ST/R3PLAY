@@ -95,6 +95,9 @@ importers:
       entities:
         specifier: 6.0.1
         version: 6.0.1
+      express:
+        specifier: 5.2.1
+        version: 5.2.1
       fast-folder-size:
         specifier: ^1.7.1
         version: 1.7.1
