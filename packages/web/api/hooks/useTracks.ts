@@ -98,15 +98,17 @@ export function fetchTracksWithReactQuery(params: FetchTracksParams) {
 }
 
 export function fetchAudioSourceWithReactQuery(params: FetchAudioSourceParams) {
-  params.qqCookie = settings.qqCookie
-  params.miguCookie = settings.miguCookie
-  params.jooxCookie = settings.jooxCookie
+  const requestParams: FetchAudioSourceParams = {
+    ...params,
+    level: params.level ?? settings.audioQuality,
+    qqCookie: settings.qqCookie,
+    miguCookie: settings.miguCookie,
+    jooxCookie: settings.jooxCookie,
+  }
   return reactQueryClient.fetchQuery({
-    queryKey: [TrackApiNames.FetchAudioSource, params],
-    queryFn: () => {
-      return fetchAudioSource(params)
-    },
+    queryKey: [TrackApiNames.FetchAudioSource, requestParams],
+    queryFn: () => fetchAudioSource(requestParams),
     retry: 1,
-    staleTime: 0, // TODO: Web版1小时缓存
+    staleTime: 0,
   })
 }
