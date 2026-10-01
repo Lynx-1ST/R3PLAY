@@ -134,6 +134,14 @@ module.exports = {
       to: './node_modules/entities',
       filter: ['**/*'],
     },
+    // Express 5 expects the pre-2.x callable content-disposition API.
+    // Fastify also needs content-disposition 2.x, so keep both versions:
+    // root 2.x for Fastify and nested 1.1.0 for Express.
+    {
+      from: '../../node_modules/.pnpm/content-disposition@1.1.0/node_modules/content-disposition',
+      to: './node_modules/express/node_modules/content-disposition',
+      filter: ['**/*'],
+    },
     {
       from: './dist',
       to: './main',
