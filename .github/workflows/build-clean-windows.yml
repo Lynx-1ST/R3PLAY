@@ -41,6 +41,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm package
 
+      - name: Smoke-test packaged NetEase API runtime
+        shell: pwsh
+        run: |
+          $app = Resolve-Path "./packages/desktop/release/win-unpacked/R3PLAYX.exe"
+          $resources = Resolve-Path "./packages/desktop/release/win-unpacked/resources"
+          Push-Location $resources
+          try {
+            $env:ELECTRON_RUN_AS_NODE = "1"
+            $output = (& $app -e "require('./app.asar/node_modules/@neteasecloudmusicapienhanced/api'); console.log('NETEASE_API_REQUIRE_OK')" 2>&1 | Out-String)
+            Write-Host $output
+            if ($output -notmatch "NETEASE_API_REQUIRE_OK") {
+              throw "Packaged NetEase API failed to load"
+            }
+          } finally {
+            Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+            Pop-Location
+          }
+
       - name: Smoke-test packaged Windows app startup
         shell: pwsh
         run: |
