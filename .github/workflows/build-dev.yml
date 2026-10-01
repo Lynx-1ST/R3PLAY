@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - feature/hires-discord-rpc
 
 jobs:
   release:
