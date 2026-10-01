@@ -12,17 +12,16 @@ function Player() {
   return (
     <div className='iterms-center flex w-full justify-between'>
       <div className='flex w-full flex-col'>
-        <PlaybackQualityAndDiscord />
+        <PlaybackQuality />
         <FindTrackOnYouTube />
       </div>
     </div>
   )
 }
 
-function PlaybackQualityAndDiscord() {
-  const { audioQuality, discordRichPresence, discordApplicationId } = useSnapshot(settings)
+function PlaybackQuality() {
+  const { audioQuality } = useSnapshot(settings)
   const { audioInfo } = useSnapshot(player)
-  const [clientId, setClientId] = useState<string>(discordApplicationId)
 
   const actual = [
     audioInfo.format?.toUpperCase(),
@@ -54,48 +53,6 @@ function PlaybackQualityAndDiscord() {
         {audioInfo.requested})
       </BlockDescription>
 
-      {window.env?.isElectron && (
-        <>
-          <div className='mt-10'>
-            <BlockTitle>Discord Rich Presence</BlockTitle>
-            <BlockDescription>
-              Shows song, artist, album and playback time in Discord Desktop.
-            </BlockDescription>
-          </div>
-          <Option>
-            <OptionText>Enable Discord Rich Presence</OptionText>
-            <Switch
-              enabled={discordRichPresence}
-              onChange={value => (settings.discordRichPresence = value)}
-            />
-          </Option>
-          <Option>
-            <OptionText>Discord Application ID</OptionText>
-            <div className='flex w-1/2 gap-2'>
-              <input
-                value={clientId}
-                onChange={e => setClientId(e.target.value)}
-                className='w-full grow appearance-none rounded-md bg-black/10 px-2 py-1 text-lg
-                placeholder:text-black/30 dark:bg-white/10 dark:placeholder:text-white/30'
-                placeholder='123456789012345678'
-              />
-              <Button
-                onClick={() => {
-                  const id = clientId.trim()
-                  if (id && !/^\d+$/.test(id)) {
-                    toast.error('Discord Application ID must contain digits only')
-                    return
-                  }
-                  settings.discordApplicationId = id
-                  toast.success(id ? 'Discord Application ID saved' : 'Discord ID cleared')
-                }}
-              >
-                Apply
-              </Button>
-            </div>
-          </Option>
-        </>
-      )}
     </div>
   )
 }
