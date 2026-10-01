@@ -80,6 +80,9 @@ importers:
       compare-versions:
         specifier: ^6.1.1
         version: 6.1.1
+      content-disposition:
+        specifier: 0.5.4
+        version: 0.5.4
       electron-log:
         specifier: ^5.4.4
         version: 5.4.4
@@ -95,6 +98,9 @@ importers:
       entities:
         specifier: 6.0.1
         version: 6.0.1
+      express:
+        specifier: 4.22.2
+        version: 4.22.2
       fast-folder-size:
         specifier: ^1.7.1
         version: 1.7.1
