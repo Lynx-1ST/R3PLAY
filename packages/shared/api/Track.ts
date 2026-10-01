@@ -5,6 +5,9 @@ export enum TrackApiNames {
   Unblock = 'unblock',
 }
 
+export type PlaybackQuality = 'exhigh' | 'lossless' | 'hires'
+export type NeteaseAudioLevel = 'standard' | 'higher' | PlaybackQuality
+
 // unblock music
 export interface UnblockParam {
   track_id: number
@@ -29,7 +32,7 @@ export interface FetchTracksResponse {
 
 export interface FetchAudioSourceParams {
   id: number
-  level?: 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires' // 128kbps 192kbps 320kbps Lossless Hi-Res
+  level?: NeteaseAudioLevel // 128kbps 192kbps 320kbps Lossless Hi-Res
   qqCookie?: string
   miguCookie?: string
   jooxCookie?: string
@@ -40,7 +43,7 @@ export interface FetchAudioSourceResponse {
     br: number
     canExtend: boolean
     code: number
-    encodeType: 'mp3' | null
+    encodeType: 'mp3' | 'flac' | 'aac' | 'm4a' | 'ogg' | 'opus' | null
     expi: number
     fee: number
     flag: number
@@ -53,14 +56,15 @@ export interface FetchAudioSourceResponse {
     freeTrialInfo: null
     gain: number
     id: number
-    level: 'standard' | 'null'
+    level: NeteaseAudioLevel | 'null'
     md5: string | null
     payed: number
     size: number
-    type: 'mp3' | null
+    type: 'mp3' | 'flac' | 'aac' | 'm4a' | 'ogg' | 'opus' | null
     uf: null
     url: string | null
     urlSource: number
+    source?: string
   }[]
 }
 
