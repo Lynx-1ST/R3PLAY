@@ -5,11 +5,97 @@ import { useSnapshot } from 'valtio'
 import { BlockDescription, BlockTitle, Button, Option, OptionText, Switch } from './Controls'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
+import type { PlaybackQuality } from '@/shared/api/Track'
+import player from '@/web/states/player'
 
 function Player() {
   return (
     <div className='iterms-center flex w-full justify-between'>
-      <FindTrackOnYouTube />
+      <div className='flex w-full flex-col'>
+        <PlaybackQualityAndDiscord />
+        <FindTrackOnYouTube />
+      </div>
+    </div>
+  )
+}
+
+function PlaybackQualityAndDiscord() {
+  const { audioQuality, discordRichPresence, discordApplicationId } = useSnapshot(settings)
+  const { audioInfo } = useSnapshot(player)
+  const [clientId, setClientId] = useState<string>(discordApplicationId)
+
+  const actual = [
+    audioInfo.format?.toUpperCase(),
+    audioInfo.level && audioInfo.level !== 'null' ? audioInfo.level : undefined,
+    audioInfo.bitrate ? `${Math.round(audioInfo.bitrate / 1000)} kbps` : undefined,
+  ].filter(Boolean)
+
+  return (
+    <div className='mb-10'>
+      <BlockTitle>NetEase Audio Quality</BlockTitle>
+      <BlockDescription>
+        Uses your signed-in NetEase account. NetEase may return a lower tier when the selected
+        quality is unavailable for the track or account.
+      </BlockDescription>
+      <Option>
+        <OptionText>Streaming quality</OptionText>
+        <select
+          value={audioQuality}
+          onChange={e => (settings.audioQuality = e.target.value as PlaybackQuality)}
+          className='rounded-md bg-black/10 px-3 py-2 text-base dark:bg-white/10'
+        >
+          <option value='exhigh'>320 kbps</option>
+          <option value='lossless'>Lossless (FLAC)</option>
+          <option value='hires'>Hi-Res</option>
+        </select>
+      </Option>
+      <BlockDescription>
+        Current stream: {actual.length ? actual.join(' · ') : 'Not loaded yet'} (requested:{' '}
+        {audioInfo.requested})
+      </BlockDescription>
+
+      {window.env?.isElectron && (
+        <>
+          <div className='mt-10'>
+            <BlockTitle>Discord Rich Presence</BlockTitle>
+            <BlockDescription>
+              Shows song, artist, album and playback time in Discord Desktop.
+            </BlockDescription>
+          </div>
+          <Option>
+            <OptionText>Enable Discord Rich Presence</OptionText>
+            <Switch
+              enabled={discordRichPresence}
+              onChange={value => (settings.discordRichPresence = value)}
+            />
+          </Option>
+          <Option>
+            <OptionText>Discord Application ID</OptionText>
+            <div className='flex w-1/2 gap-2'>
+              <input
+                value={clientId}
+                onChange={e => setClientId(e.target.value)}
+                className='w-full grow appearance-none rounded-md bg-black/10 px-2 py-1 text-lg
+                placeholder:text-black/30 dark:bg-white/10 dark:placeholder:text-white/30'
+                placeholder='123456789012345678'
+              />
+              <Button
+                onClick={() => {
+                  const id = clientId.trim()
+                  if (id && !/^\d+$/.test(id)) {
+                    toast.error('Discord Application ID must contain digits only')
+                    return
+                  }
+                  settings.discordApplicationId = id
+                  toast.success(id ? 'Discord Application ID saved' : 'Discord ID cleared')
+                }}
+              >
+                Apply
+              </Button>
+            </div>
+          </Option>
+        </>
+      )}
     </div>
   )
 }
