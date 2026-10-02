@@ -51,7 +51,7 @@ jobs:
         run: pnpm --filter desktop test:discord
 
       - name: Test listening sessions and queue behavior
-        run: pnpm --filter web exec vitest run test/utils/listeningSession.test.ts test/utils/playerSession.test.ts
+        run: pnpm --filter web exec vitest run test/utils/listeningSession.test.ts test/utils/playerSession.test.ts test/utils/audioOutput.test.ts
 
       - name: Build server
         run: pnpm --filter server build

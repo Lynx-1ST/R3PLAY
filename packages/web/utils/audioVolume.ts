@@ -89,7 +89,6 @@ function tryConnect(audioEl: HTMLMediaElement) {
         return
       }
       sharedCtx = new Ctor()
-      registerAudioOutputContext(sharedCtx)
     }
     if (!sharedAnalyser && sharedCtx) {
       sharedAnalyser = sharedCtx.createAnalyser()
@@ -104,6 +103,7 @@ function tryConnect(audioEl: HTMLMediaElement) {
       const source = sharedCtx.createMediaElementSource(audioEl)
       source.connect(sharedAnalyser)
       connectedElements.add(audioEl)
+      registerAudioOutputContext(sharedCtx, audioEl)
     }
     if (sharedCtx && sharedCtx.state === 'suspended') {
       void sharedCtx.resume()

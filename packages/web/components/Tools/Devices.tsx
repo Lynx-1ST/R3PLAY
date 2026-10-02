@@ -51,7 +51,8 @@ const AudioOutputDevices = () => {
     setChanging(true)
     try {
       await player.setDevice(deviceId)
-    } catch {
+    } catch (error) {
+      console.error('Audio output switch failed:', error)
       await player
         .setDevice(previous)
         .catch(() => player.setDevice(''))
