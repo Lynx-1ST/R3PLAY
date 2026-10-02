@@ -44,6 +44,20 @@
     "phone": "Điện thoại"
   },
   "player": {
+    "audio-effects": {
+      "title": "Chế độ âm thanh",
+      "off": "Tắt",
+      "jyeffect": "Spatial Audio",
+      "sky": "Surround Audio",
+      "note": "Áp dụng ngay cho bài hiện tại. Tùy bài và quyền tài khoản; nguồn không hỗ trợ sẽ dùng chất lượng thường.",
+      "vivid": "Audio Vivid",
+      "restricted": "Chỉ có bản nghe thử",
+      "unavailable": "Bài này không hỗ trợ",
+      "unknown": "Chưa kiểm tra được · thử lại",
+      "checking": "Đang kiểm tra…",
+      "available": "Có thể sử dụng",
+      "no-track": "Chọn một bài hát để sử dụng chế độ âm thanh."
+    },
     "play": "Phát",
     "pause": "Tạm dừng",
     "play-pause": "Phát/Tạm dừng",
@@ -155,9 +169,9 @@
     "audio-quality-streaming": "Chất lượng phát trực tuyến",
     "audio-quality-standard": "Tiêu chuẩn · 128 kbps",
     "audio-quality-higher": "Cao · 192 kbps",
-    "audio-quality-high": "Cao · 320 kbps",
-    "audio-quality-lossless": "Lossless · FLAC",
-    "audio-quality-hires": "Hi-Res · FLAC",
+    "audio-quality-high": "Cực cao · HQ · 320 kbps",
+    "audio-quality-lossless": "Lossless · SQ · FLAC",
+    "audio-quality-hires": "Độ phân giải cao · Hi-Res · FLAC",
     "audio-quality-updated": "Đã cập nhật chất lượng phát. Thiết lập sẽ áp dụng từ bài tiếp theo.",
     "player-youtube-desktop-only": "Tính năng này chỉ hỗ trợ ứng dụng desktop.",
     "player-youtube-proxy-note": "Tùy mạng đang sử dụng, nguồn dự phòng YouTube có thể cần HTTP proxy hoặc tunnel hệ thống hoạt động.",
@@ -235,5 +249,11 @@
   "coverrow": {
     "songs": "bài hát",
     "plays": "lượt phát"
+  },
+  "downloads": {
+    "master": "Master · 192kHz/24bit",
+    "quality-title": "Chọn chất lượng tải xuống",
+    "cancel": "Hủy",
+    "quality-fallback": "Nguồn yêu cầu không khả dụng. Đang tải chất lượng thực tế NetEase trả về."
   }
 }

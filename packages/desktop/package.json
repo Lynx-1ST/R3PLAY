@@ -2,7 +2,7 @@
   "name": "desktop",
   "productName": "R3PLAYX",
   "private": true,
-  "version": "2.8.8",
+  "version": "2.8.9",
   "main": "./main/index.js",
   "author": "Lynx-1ST",
   "homepage": "https://github.com/Lynx-1ST/R3PLAY",
@@ -16,7 +16,8 @@
     "test:discord": "tsx scripts/testDiscordRpc.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:cache": "tsx scripts/testAudioCache.ts"
   },
   "engines": {
     "node": ">=22.12"
@@ -38,12 +39,12 @@
     "electron-store": "^8.2.0",
     "electron-updater": "^6.8.9",
     "electron-window-state": "^5.0.3",
+    "entities": "6.0.1",
     "fast-folder-size": "^1.7.1",
     "fastify": "^5.12.0",
     "http-proxy-agent": "^9.1.0",
     "pretty-bytes": "^6.1.1",
-    "ytdl-core": "^4.11.5",
-    "entities": "6.0.1"
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
@@ -56,7 +57,7 @@
     "electron-devtools-installer": "^4.0.0",
     "esbuild": "^0.28.2",
     "minimist": "^1.2.8",
-    "music-metadata": "^8.3.0",
+    "music-metadata": "^11.16.1",
     "open-cli": "^7.2.0",
     "ora": "^6.3.1",
     "picocolors": "^1.1.1",

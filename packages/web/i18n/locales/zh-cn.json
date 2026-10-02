@@ -44,6 +44,20 @@
     "login-with-netease-qr": "请使用网易云音乐扫描二维码登录"
   },
   "player": {
+    "audio-effects": {
+      "title": "音质模式",
+      "off": "关闭",
+      "jyeffect": "高清臻音 · Spatial Audio",
+      "sky": "沉浸环绕声 · Surround Audio",
+      "note": "立即应用于当前歌曲。取决于歌曲和账号权限；不支持时使用普通音质。",
+      "vivid": "臻音全景声 · Audio Vivid",
+      "restricted": "仅可试听",
+      "unavailable": "此歌曲不支持",
+      "unknown": "未能确认 · 重试",
+      "checking": "正在检查…",
+      "available": "可用",
+      "no-track": "请先选择歌曲。"
+    },
     "play": "播放",
     "pause": "暂停",
     "play-pause": "播放/暂停",
@@ -170,8 +184,8 @@
     "audio-quality-streaming": "流媒体音质",
     "audio-quality-standard": "标准 · 128 kbps",
     "audio-quality-higher": "较高 · 192 kbps",
-    "audio-quality-high": "高 · 320 kbps",
-    "audio-quality-lossless": "无损 · FLAC",
+    "audio-quality-high": "极高 · HQ · 320 kbps",
+    "audio-quality-lossless": "无损 · SQ · FLAC",
     "audio-quality-hires": "Hi-Res · FLAC",
     "audio-quality-updated": "播放音质已更新，将从下一首歌曲开始生效。",
     "player-youtube-desktop-only": "此功能仅支持桌面版。",
@@ -235,5 +249,11 @@
   "coverrow": {
     "songs": "首歌曲",
     "plays": "次播放"
+  },
+  "downloads": {
+    "master": "Master · 192kHz/24bit",
+    "quality-title": "选择下载音质",
+    "cancel": "取消",
+    "quality-fallback": "所选音质不可用，下载实际返回的音质。"
   }
 }

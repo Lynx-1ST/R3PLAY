@@ -27,7 +27,8 @@ export interface FetchTracksResponse {
 
 // 获取音源URL
 
-export type PlaybackQuality = 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires'
+export type PlaybackQuality =
+  'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires' | 'jyeffect' | 'vivid' | 'sky'
 export type PlaybackFormat = 'mp3' | 'flac' | 'aac' | 'm4a' | 'ogg' | 'opus' | 'webm' | null
 
 export interface FetchAudioSourceParams {

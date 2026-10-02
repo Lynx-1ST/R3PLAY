@@ -63,16 +63,16 @@ Desktop lyrics have been removed. Synchronized lyrics remain available inside th
 
 ## Tech stack
 
-| Area | Main technologies |
-| --- | --- |
-| Web UI | React 19, Vite 7, TypeScript, Tailwind CSS 4 |
-| State/data | Valtio, TanStack Query |
-| Audio | Howler.js, hls.js |
-| Desktop | Electron 43 |
-| Desktop local API | Fastify 5, better-sqlite3 |
-| Standalone server | Fastify 5, Prisma 6, SQLite |
-| Build | pnpm workspaces, Turborepo |
-| Packaging | electron-builder, Docker |
+| Area              | Main technologies                            |
+| ----------------- | -------------------------------------------- |
+| Web UI            | React 19, Vite 7, TypeScript, Tailwind CSS 4 |
+| State/data        | Valtio, TanStack Query                       |
+| Audio             | Howler.js, hls.js                            |
+| Desktop           | Electron 43                                  |
+| Desktop local API | Fastify 5, better-sqlite3                    |
+| Standalone server | Fastify 5, Prisma 6, SQLite                  |
+| Build             | pnpm workspaces, Turborepo                   |
+| Packaging         | electron-builder, Docker                     |
 
 ## Repository structure
 
@@ -172,12 +172,12 @@ The backend remains inside the Compose network and stores its SQLite database in
 
 The root `.env.example` currently defines:
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `ELECTRON_WEB_SERVER_PORT` | `42710` | Electron/Vite web server |
-| `ELECTRON_DEV_NETEASE_API_PORT` | `30001` | NetEase API service used during Electron development |
-| `VITE_APP_NETEASE_API_URL` | `/netease` | Frontend API base path |
-| `DATABASE_URL` | `file:./musicInfo.db` | SQLite database URL |
+| Variable                        | Default               | Purpose                                              |
+| ------------------------------- | --------------------- | ---------------------------------------------------- |
+| `ELECTRON_WEB_SERVER_PORT`      | `42710`               | Electron/Vite web server                             |
+| `ELECTRON_DEV_NETEASE_API_PORT` | `30001`               | NetEase API service used during Electron development |
+| `VITE_APP_NETEASE_API_URL`      | `/netease`            | Frontend API base path                               |
+| `DATABASE_URL`                  | `file:./musicInfo.db` | SQLite database URL                                  |
 
 Docker deployments may also use `APPLE_MUSIC_TOKEN`.
 
@@ -185,15 +185,15 @@ Docker deployments may also use `APPLE_MUSIC_TOKEN`.
 
 This fork adds a persistent NetEase playback-quality setting:
 
-| Setting | Display |
-| --- | --- |
-| `standard` | 128K |
-| `higher` | 192K |
-| `exhigh` | 320K |
+| Setting    | Display  |
+| ---------- | -------- |
+| `standard` | 128K     |
+| `higher`   | 192K     |
+| `exhigh`   | 320K     |
 | `lossless` | Lossless |
-| `hires` | Hi-Res |
+| `hires`    | Hi-Res   |
 
-The desktop audio cache checks cached MP3 bitrate before reusing a file, so changing the requested quality does not silently return a lower-quality cached MP3. Lossless/Hi-Res cache matching is intentionally conservative because the current cache schema does not store enough metadata to reliably distinguish those tiers.
+The desktop cache stores separate audio variants per track, including the actual NetEase quality, format, bitrate, sample rate and bit depth. Lossless and Hi-Res are reused only when the saved quality matches the request. Legacy FLAC files without quality metadata remain unknown and are not promoted to either tier. Cached playback streams the requested byte range instead of loading the full file into memory.
 
 ## Useful commands
 
@@ -204,6 +204,7 @@ pnpm --filter web test
 pnpm --filter web test:types
 pnpm --filter desktop test
 pnpm --filter desktop test:types
+pnpm --filter desktop test:cache
 ```
 
 ## Upstream projects

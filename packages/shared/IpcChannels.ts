@@ -4,6 +4,7 @@ import { RepeatMode } from './playerDataTypes'
 import type { DiscordPlayback } from './discordPresence'
 
 export const enum IpcChannels {
+  RendererLog = 'RendererLog',
   DiscordPlayback = 'DiscordPlayback',
   ClearAPICache = 'ClearAPICache',
   Minimize = 'Minimize',
@@ -49,6 +50,10 @@ export const enum IpcChannels {
 
 // ipcMain.on params
 export interface IpcChannelsParams {
+  [IpcChannels.RendererLog]: {
+    level: 'error' | 'warn' | 'info' | 'debug' | 'verbose' | 'silly' | 'log'
+    args: unknown[]
+  }
   [IpcChannels.DiscordPlayback]: DiscordPlayback
   [IpcChannels.ClearAPICache]: void
   [IpcChannels.Minimize]: void

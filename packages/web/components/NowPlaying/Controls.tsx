@@ -11,6 +11,7 @@ import { ceil } from 'lodash'
 import { ease } from '@/web/utils/const'
 import { useTranslation } from 'react-i18next'
 import { IpcChannels } from '@/shared/IpcChannels'
+import AudioEffects from './AudioEffects'
 import { useRef } from 'react'
 const LikeButton = () => {
   const { track } = useSnapshot(player)
@@ -142,6 +143,7 @@ const Controls = () => {
 
             {/* Like */}
             <LikeButton />
+            <AudioEffects mini={mini} />
           </div>
 
           {!mini && <VolumeSlider />}
@@ -153,6 +155,7 @@ const Controls = () => {
 }
 
 function StreamQualityBadge() {
+  const { t } = useTranslation()
   const { track, state, audioInfo } = useSnapshot(player)
 
   if (!track || state === PlayerState.Loading) return null
@@ -160,9 +163,12 @@ function StreamQualityBadge() {
   const qualityLabels: Record<string, string> = {
     standard: '128K',
     higher: '192K',
-    exhigh: '320K',
-    lossless: 'LOSSLESS',
+    exhigh: 'HQ',
+    lossless: 'SQ',
     hires: 'HI-RES',
+    jyeffect: t('player.audio-effects.jyeffect'),
+    sky: t('player.audio-effects.sky'),
+    vivid: t('player.audio-effects.vivid'),
   }
   const level =
     audioInfo.level && audioInfo.level !== 'null'

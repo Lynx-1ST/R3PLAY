@@ -14,15 +14,15 @@ const unblock: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       request: FastifyRequest<{ Querystring: { [key: string]: string } }>,
       reply: FastifyReply
     ) => {
-      const trackID = request.query.track_id as string
+      const trackID = Number(request.query.track_id)
       log.info('query', trackID)
 
-      const cacheData = await cache.get(CacheAPIs.Unblock, trackID)
+      const cacheData = await cache.get(CacheAPIs.Unblock, { id: trackID })
       if (cacheData) {
         log.info('hit cache trackID: ', trackID)
         return cacheData
       }
-      if (!trackID) {
+      if (!Number.isSafeInteger(trackID) || trackID <= 0) {
         reply.code(400).send('param invalid: missing track_id')
         return
       }
@@ -48,7 +48,7 @@ const unblock: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           return reply.code(500).send('no track info, something bad happens')
         }
 
-        cache.set(CacheAPIs.Unblock, { id: trackID, url: data?.url }, trackID)
+        await cache.set(CacheAPIs.Unblock, { ...data, id: Number(trackID) }, { id: trackID })
         log.info('[server] unblock track ', trackID, ' success')
         return reply.code(200).send(data)
       } catch (err: any) {

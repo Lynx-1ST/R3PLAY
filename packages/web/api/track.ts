@@ -37,18 +37,32 @@ export function fetchTracks(params: FetchTracksParams): Promise<FetchTracksRespo
 }
 
 // 获取音源URL
-export function fetchAudioSource(
+export async function fetchAudioSource(
   params: FetchAudioSourceParams
 ): Promise<FetchAudioSourceResponse> {
-  return request({
-    url: '/song/url/v1',
-    method: 'get',
-    params: {
-      level: 'exhigh',
-      ...params,
-      timestamp: Date.now(),
-    },
-  })
+  const level = params.level ?? 'exhigh'
+  const effects = level === 'sky' || level === 'jyeffect' || level === 'vivid'
+  const fetchLevel = (quality: typeof level): Promise<FetchAudioSourceResponse> =>
+    request({
+      url: '/song/url/v1',
+      method: 'get',
+      params: {
+        ...params,
+        level: quality,
+        ...(quality === 'sky' ? { immerseType: 'ste' } : {}),
+        timestamp: Date.now(),
+      },
+    })
+  try {
+    const response = await fetchLevel(level)
+    const source = response.data?.[0]
+    if (!effects || (response.code === 200 && source?.url && !source.freeTrialInfo)) {
+      return response
+    }
+  } catch (error) {
+    if (!effects) throw error
+  }
+  return fetchLevel('exhigh')
 }
 
 // 获取歌词

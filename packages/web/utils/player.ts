@@ -378,7 +378,10 @@ export class Player {
       // console.log(`[player] fetchAudioSourceWithReactQuery `, trackID)
       const response = await fetchAudioSourceWithReactQuery({
         id: trackID,
-        level: settings.audioQuality,
+        level:
+          settings.audioEffect && settings.audioEffect !== 'off'
+            ? settings.audioEffect
+            : settings.audioQuality,
       })
       // console.log(`[player] fetchAudioSourceWithReactQuery `, response)
       const source = response.data?.[0] as any
@@ -452,6 +455,7 @@ export class Player {
   ) {
     Howler.unload()
 
+    const cachedInfo = { ...this.audioInfo }
     const url = audio.includes('?') ? `${audio}&dash-id=${id}` : `${audio}?dash-id=${id}`
     const howler = new Howl({
       src: [url],
@@ -510,7 +514,7 @@ export class Player {
       this.state = State.Playing
     }
     howler.once('load', () => {
-      if (_howler === howler) this._cacheAudio((howler as any)._src)
+      if (_howler === howler) this._cacheAudio((howler as any)._src, cachedInfo)
     })
 
     if (!this._progressInterval) {
@@ -527,17 +531,15 @@ export class Player {
     }
   }
 
-  private async _cacheAudio(audio: string) {
+  private async _cacheAudio(audio: string, info: { bitrate?: number; level?: string | null }) {
     if (audio.includes(appName.toLowerCase()) || !window.ipcRenderer) return
     const id = Number(new URL(audio).searchParams.get('dash-id'))
     if (isNaN(id) || !id) return
-    // audio info
-    const response = await fetchAudioSourceWithReactQuery({
-      id,
-      level: settings.audioQuality,
-    })
-    // 缓存
-    cacheAudio(id, audio, response?.data?.[0]?.br)
+    try {
+      await cacheAudio(id, audio, info.bitrate, info.level ?? undefined)
+    } catch {
+      // A cache write failure must not interrupt playback.
+    }
   }
 
   private async _nextFMTrack() {
@@ -570,6 +572,15 @@ export class Player {
    * Play current track
    * @param {boolean} fade fade in
    */
+  async reloadAudioSource() {
+    if (!this.trackID) return
+    const playing = this.state === State.Playing
+    const position = this.progress
+    this.pause()
+    this.state = State.Loading
+    await this._playAudio(playing, position)
+  }
+
   play(fade: boolean = false) {
     const fadeRequest = ++this._fadeRequest
     if (!this._audioPrepared) {

@@ -63,16 +63,16 @@ Chức năng lời bài hát trên desktop đã được bỏ. Lời bài hát �
 
 ## Công nghệ
 
-| Phần | Công nghệ chính |
-| --- | --- |
-| Web UI | React 19, Vite 7, TypeScript, Tailwind CSS 4 |
-| State/data | Valtio, TanStack Query |
-| Audio | Howler.js, hls.js |
-| Desktop | Electron 43 |
-| Local API trên desktop | Fastify 5, better-sqlite3 |
-| Server độc lập | Fastify 5, Prisma 6, SQLite |
-| Build | pnpm workspaces, Turborepo |
-| Đóng gói | electron-builder, Docker |
+| Phần                   | Công nghệ chính                              |
+| ---------------------- | -------------------------------------------- |
+| Web UI                 | React 19, Vite 7, TypeScript, Tailwind CSS 4 |
+| State/data             | Valtio, TanStack Query                       |
+| Audio                  | Howler.js, hls.js                            |
+| Desktop                | Electron 43                                  |
+| Local API trên desktop | Fastify 5, better-sqlite3                    |
+| Server độc lập         | Fastify 5, Prisma 6, SQLite                  |
+| Build                  | pnpm workspaces, Turborepo                   |
+| Đóng gói               | electron-builder, Docker                     |
 
 ## Cấu trúc repository
 
@@ -172,12 +172,12 @@ Backend chỉ được expose trong Docker Compose network và lưu SQLite datab
 
 File `.env.example` ở root hiện có:
 
-| Biến | Mặc định | Mục đích |
-| --- | --- | --- |
-| `ELECTRON_WEB_SERVER_PORT` | `42710` | Web server của Electron/Vite |
-| `ELECTRON_DEV_NETEASE_API_PORT` | `30001` | NetEase API dùng khi phát triển Electron |
-| `VITE_APP_NETEASE_API_URL` | `/netease` | API base path của frontend |
-| `DATABASE_URL` | `file:./musicInfo.db` | URL SQLite database |
+| Biến                            | Mặc định              | Mục đích                                 |
+| ------------------------------- | --------------------- | ---------------------------------------- |
+| `ELECTRON_WEB_SERVER_PORT`      | `42710`               | Web server của Electron/Vite             |
+| `ELECTRON_DEV_NETEASE_API_PORT` | `30001`               | NetEase API dùng khi phát triển Electron |
+| `VITE_APP_NETEASE_API_URL`      | `/netease`            | API base path của frontend               |
+| `DATABASE_URL`                  | `file:./musicInfo.db` | URL SQLite database                      |
 
 Khi deploy bằng Docker có thể dùng thêm `APPLE_MUSIC_TOKEN`.
 
@@ -185,15 +185,15 @@ Khi deploy bằng Docker có thể dùng thêm `APPLE_MUSIC_TOKEN`.
 
 Fork này bổ sung setting chất lượng phát NetEase và lưu lại lựa chọn của người dùng:
 
-| Setting | Hiển thị |
-| --- | --- |
-| `standard` | 128K |
-| `higher` | 192K |
-| `exhigh` | 320K |
+| Setting    | Hiển thị |
+| ---------- | -------- |
+| `standard` | 128K     |
+| `higher`   | 192K     |
+| `exhigh`   | 320K     |
 | `lossless` | Lossless |
-| `hires` | Hi-Res |
+| `hires`    | Hi-Res   |
 
-Audio cache trên desktop kiểm tra bitrate của file MP3 đã cache trước khi dùng lại, vì vậy khi đổi chất lượng sẽ không âm thầm trả về một file MP3 chất lượng thấp hơn. Với Lossless/Hi-Res, cơ chế cache hiện cố ý thận trọng vì schema hiện tại chưa lưu đủ metadata để phân biệt hai mức này một cách chắc chắn.
+Cache trên desktop lưu riêng từng phiên bản của bài hát, kèm chất lượng NetEase thực tế, định dạng, bitrate, sample rate và bit depth. Lossless/Hi-Res chỉ được dùng lại khi chất lượng lưu khớp yêu cầu. FLAC cũ thiếu thông tin chất lượng được giữ là unknown, không tự gán Lossless hoặc Hi-Res. Khi phát cache, ứng dụng đọc theo stream và trả đúng đoạn byte được yêu cầu thay vì nạp toàn bộ file vào RAM.
 
 ## Một số lệnh hữu ích
 
@@ -204,6 +204,7 @@ pnpm --filter web test
 pnpm --filter web test:types
 pnpm --filter desktop test
 pnpm --filter desktop test:types
+pnpm --filter desktop test:cache
 ```
 
 ## Các dự án upstream

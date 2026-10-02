@@ -6,8 +6,12 @@ import fs from 'fs'
 import * as musicMetadata from 'music-metadata'
 import { CacheAPIs, CacheAPIsParams } from '@/shared/CacheAPIs'
 import { TablesStructures } from './db'
-import { FastifyReply } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
+import { streamCachedAudio } from './utils/audioRange'
+import { getCacheLevel } from './utils/audioVariants'
+import { createHash, randomUUID } from 'node:crypto'
 import { resolveCacheAudioPath } from './utils/cacheAudioPath'
+import { readUnblockCache } from './utils/unblockCache'
 
 log.info('[electron] cache.ts')
 
@@ -180,16 +184,10 @@ class Cache {
         }
       }
       case CacheAPIs.Unblock: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.Unblock, params.id)
-        if (data?.json)
-          return {
-            resourceState: true,
-            songs: [],
-            code: 200,
-            album: JSON.parse(data.json),
-          }
-        break
+        const id = Number(params?.id)
+        if (!Number.isSafeInteger(id) || id <= 0) return
+        const row = db.find(Tables.Unblock, id)
+        return readUnblockCache(row)
       }
       case CacheAPIs.Album: {
         if (isNaN(Number(params?.id))) return
@@ -274,35 +272,23 @@ class Cache {
     }
   }
 
-  getAudio(fileName: string, reply: FastifyReply) {
+  async getAudio(fileName: string, request: FastifyRequest, reply: FastifyReply) {
     const filePath = resolveCacheAudioPath(app.getPath('userData'), fileName)
-    if (!filePath) {
-      return reply.status(400).send({ error: 'Invalid filename' })
-    }
-    const id = Number(fileName.split('-')[0])
-
-    try {
-      const audio = fs.readFileSync(filePath)
-      if (audio.byteLength === 0) {
-        db.delete(Tables.Audio, id)
-        fs.unlinkSync(filePath)
-        return reply.status(404).send({ error: 'Audio not found' })
-      }
-      db.update(Tables.Audio, id, { queriedAt: Date.now() })
-      reply
-        .status(206)
-        .header('Accept-Ranges', 'bytes')
-        .header('Connection', 'keep-alive')
-        .header('Content-Range', `bytes 0-${audio.byteLength - 1}/${audio.byteLength}`)
-        .send(audio)
-    } catch (error) {
-      reply.status(500).send({ error })
-    }
+    if (!filePath) return reply.code(400).send({ error: 'Invalid filename' })
+    db.sqlite
+      .prepare('UPDATE AudioVariant SET queriedAt = ? WHERE fileName = ?')
+      .run(Date.now(), fileName)
+    return streamCachedAudio(filePath, request, reply)
   }
 
   async setAudio(
     buffer: Buffer,
-    { id, url, bitrate }: { id: number; url: string; bitrate: number }
+    {
+      id,
+      url,
+      bitrate,
+      level: reportedLevel,
+    }: { id: number; url: string; bitrate: number; level?: string }
   ) {
     const path = `${app.getPath('userData')}/audio_cache`
 
@@ -313,7 +299,9 @@ class Cache {
     }
 
     const meta = await musicMetadata.parseBuffer(buffer)
-    const bitRate = meta?.format?.codec === 'OPUS' ? 165000 : meta?.format?.bitrate ?? 0
+    const bitRate = Math.round(
+      meta?.format?.codec === 'OPUS' ? 165000 : (meta?.format?.bitrate ?? bitrate ?? 0)
+    )
     const type =
       {
         'MPEG 1 Layer 3': 'mp3',
@@ -321,28 +309,44 @@ class Cache {
         AAC: 'm4a',
         FLAC: 'flac',
         OPUS: 'opus',
+        Opus: 'opus',
+        PCM: 'wav',
       }[meta?.format?.codec ?? ''] ?? 'unknown'
 
     let source: TablesStructures[Tables.Audio]['source'] = 'unknown'
-    if (url.includes('googlevideo.com')) source = 'youtube'
-    if (url.includes('126.net')) source = 'netease'
+    const hostname = new URL(url).hostname
+    if (hostname === 'googlevideo.com' || hostname.endsWith('.googlevideo.com')) source = 'youtube'
+    if (hostname === 'music.126.net' || hostname.endsWith('.music.126.net')) source = 'netease'
 
-    fs.writeFile(`${path}/${id}-${bitRate}.${type}`, buffer, error => {
-      if (error) {
-        return log.error(`[cache] cacheAudio failed: ${error}`)
-      }
-      log.info(`Audio file ${id}-${bitRate}.${type} cached!`)
-
-      db.upsert(Tables.Audio, {
-        id,
-        bitRate,
-        format: type as TablesStructures[Tables.Audio]['format'],
-        source,
-        queriedAt: Date.now(),
-      })
-
-      log.info(`[cache] cacheAudio ${id}-${bitRate}.${type}`)
+    const level = getCacheLevel(type, bitRate, source, reportedLevel)
+    const digest = createHash('sha256').update(buffer).digest('hex').slice(0, 16)
+    const fileName = `${id}-${bitRate}-${level}-${digest}.${type}`
+    const key = `${id}:${source}:${level}:${type}:${bitRate}:${meta.format.sampleRate ?? 0}:${meta.format.bitsPerSample ?? 0}`
+    const previous = db.find(Tables.AudioVariant, key)
+    const temporary = `${path}/${fileName}.${randomUUID()}.tmp`
+    await fs.promises.writeFile(temporary, buffer)
+    try {
+      await fs.promises.rename(temporary, `${path}/${fileName}`)
+    } catch (error) {
+      await fs.promises.unlink(temporary).catch(() => {})
+      throw error
+    }
+    db.upsert(Tables.AudioVariant, {
+      id: key,
+      trackId: id,
+      level,
+      fileName,
+      bitRate,
+      format: type,
+      source,
+      sampleRate: meta.format.sampleRate ?? null,
+      bitDepth: meta.format.bitsPerSample ?? null,
+      queriedAt: Date.now(),
     })
+    if (previous && previous.fileName !== fileName) {
+      const previousPath = resolveCacheAudioPath(app.getPath('userData'), previous.fileName)
+      if (previousPath) await fs.promises.unlink(previousPath).catch(() => {})
+    }
   }
 }
 

@@ -4,7 +4,12 @@ const mocks = vi.hoisted(() => ({
   tracks: vi.fn(),
   volume: vi.fn(),
   instances: [] as any[],
-  settings: { restoreListeningSession: true, audioOutputDeviceId: '', audioQuality: 'exhigh' },
+  settings: {
+    restoreListeningSession: true,
+    audioOutputDeviceId: '',
+    audioQuality: 'exhigh',
+    audioEffect: 'off',
+  },
 }))
 vi.mock('howler', () => ({
   Howler: { unload: vi.fn(), volume: mocks.volume },
@@ -55,7 +60,10 @@ vi.mock('howler', () => ({
     fade(from: number, to: number) {
       clearTimeout(this.fadeTimer)
       this.gain = from
-      this.fadeTimer = setTimeout(() => { this.gain = to; this.emit('fade') }, 200)
+      this.fadeTimer = setTimeout(() => {
+        this.gain = to
+        this.emit('fade')
+      }, 200)
     }
     play() {
       this.active = true
@@ -109,11 +117,10 @@ beforeEach(() => {
   mocks.audio
     .mockReset()
     .mockResolvedValue({ data: [{ url: 'https://example.test/song.mp3', br: 128000 }] })
-  mocks.tracks
-    .mockReset()
-    .mockImplementation(async ({ ids }: { ids: number[] }) => ({
-      songs: [{ ...track, id: ids[0] }],
-    }))
+  mocks.tracks.mockReset().mockImplementation(async ({ ids }: { ids: number[] }) => ({
+    songs: [{ ...track, id: ids[0] }],
+  }))
+  mocks.settings.audioEffect = 'off'
   mocks.settings.restoreListeningSession = true
 })
 afterEach(() => {
@@ -121,6 +128,45 @@ afterEach(() => {
   vi.useRealTimers()
 })
 describe('player session restoration', () => {
+  it.each([false, true])(
+    'turns effects off on the current song and preserves playback=%s',
+    async playing => {
+      mocks.settings.audioEffect = 'sky'
+      const player = new Player()
+      player.init(session)
+      await settle()
+      const old = mocks.instances.at(-1)
+      old.load()
+      if (playing) player.play()
+      mocks.settings.audioEffect = 'off'
+      await player.reloadAudioSource()
+      expect(mocks.audio).toHaveBeenLastCalledWith(
+        expect.objectContaining({ id: 2, level: 'exhigh' })
+      )
+      const next = mocks.instances.at(-1)
+      expect(next).not.toBe(old)
+      next.load()
+      expect(next.position).toBe(85)
+      expect(next.options.autoplay).toBe(playing)
+    }
+  )
+
+  it.each(['off', 'jyeffect', 'vivid', 'sky'])(
+    'requests the selected effect %s when loading a song',
+    async effect => {
+      mocks.settings.audioEffect = effect
+      const player = new Player()
+      player.init(session)
+      await settle()
+      expect(mocks.audio).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 2,
+          level: effect === 'off' ? 'exhigh' : effect,
+        })
+      )
+    }
+  )
+
   it('keeps the same effective volume after fade, lyric seek and manual adjustment', async () => {
     const player = new Player()
     player.init({ ...session, _volume: 0.5 })

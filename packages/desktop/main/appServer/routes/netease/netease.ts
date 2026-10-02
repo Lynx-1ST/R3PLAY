@@ -114,9 +114,12 @@ async function netease(fastify: FastifyInstance) {
   Object.entries(NeteaseCloudMusicApi).forEach(([nameInSnakeCase, neteaseApi]: [string, any]) => {
     // 例外
     if (
-      ['serveNcmApi', 'getModulesDefinitions', snakeCase(CacheAPIs.SongUrl)].includes(
-        nameInSnakeCase
-      )
+      [
+        'serveNcmApi',
+        'getModulesDefinitions',
+        snakeCase(CacheAPIs.SongUrl),
+        'song_download_url_v1',
+      ].includes(nameInSnakeCase)
     ) {
       return
     }

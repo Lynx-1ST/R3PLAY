@@ -50,8 +50,11 @@ jobs:
       - name: Test Discord Rich Presence
         run: pnpm --filter desktop test:discord
 
+      - name: Test audio cache, ranges and media CORS
+        run: pnpm --filter desktop test:cache
+
       - name: Test listening sessions and queue behavior
-        run: pnpm --filter web exec vitest run test/utils/listeningSession.test.ts test/utils/playerSession.test.ts test/utils/audioOutput.test.ts
+        run: pnpm --filter web exec vitest run test/utils/listeningSession.test.ts test/utils/playerSession.test.ts test/utils/audioOutput.test.ts test/api
 
       - name: Build server
         run: pnpm --filter server build
@@ -124,7 +127,7 @@ jobs:
           target_commitish: release
           draft: false
           prerelease: false
-          generate_release_notes: true
+          body_path: release-notes/v2.8.9.md
           fail_on_unmatched_files: true
           files: |
             release-assets/*-Setup.exe

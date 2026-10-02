@@ -17,34 +17,18 @@ const match = loadRuntimePackage('@unblockneteasemusic/server')
 
 log.info('[electron] appServer/routes/r3play/audio.ts')
 
-const cacheMatchesRequestedQuality = (format: string, bitRate: number, level?: PlaybackQuality) => {
-  if (!level) return true
-
-  if (level === 'standard') return format === 'mp3' && bitRate <= 160000
-  if (level === 'higher') return format === 'mp3' && bitRate > 160000 && bitRate < 256000
-  if (level === 'exhigh') return format === 'mp3' && bitRate >= 256000
-
-  // The current cache schema does not store enough metadata to distinguish
-  // Lossless from Hi-Res FLAC reliably. Fetch these tiers from NetEase again
-  // rather than silently serving the wrong cached quality.
-  return false
-}
-
-const cachedAudioLevel = (format: string, bitRate: number): PlaybackQuality => {
-  if (format === 'mp3') {
-    if (bitRate <= 160000) return 'standard'
-    if (bitRate < 256000) return 'higher'
-    return 'exhigh'
-  }
-  return 'lossless'
-}
-
 const getAudioFromCache = async (id: number, level?: PlaybackQuality) => {
   // get from cache
-  const cache = await db.find(Tables.Audio, id)
-  if (!cache || !cacheMatchesRequestedQuality(cache.format, cache.bitRate, level)) return
-
-  const audioFileName = `${cache.id}-${cache.bitRate}.${cache.format}`
+  const variants = db.sqlite
+    .prepare('SELECT * FROM AudioVariant WHERE trackId = ? ORDER BY queriedAt DESC')
+    .all(id) as import('../../../utils/audioVariants').AudioVariant[]
+  const cache = variants.find(
+    row =>
+      (!level || row.level === level) &&
+      fs.existsSync(`${app.getPath('userData')}/audio_cache/${row.fileName}`)
+  )
+  if (!cache) return
+  const audioFileName = cache.fileName
 
   const isAudioFileExists = fs.existsSync(`${app.getPath('userData')}/audio_cache/${audioFileName}`)
   if (!isAudioFileExists) return
@@ -55,10 +39,8 @@ const getAudioFromCache = async (id: number, level?: PlaybackQuality) => {
     data: [
       {
         source: cache.source,
-        id: cache.id,
-        url: `http://127.0.0.1:${
-          process.env.ELECTRON_WEB_SERVER_PORT
-        }/${appName.toLowerCase()}/audio/${audioFileName}`,
+        id: cache.trackId,
+        url: `/${appName.toLowerCase()}/audio/${audioFileName}`,
         br: cache.bitRate,
         size: 0,
         md5: '',
@@ -72,7 +54,7 @@ const getAudioFromCache = async (id: number, level?: PlaybackQuality) => {
         flag: 4,
         canExtend: false,
         freeTrialInfo: null,
-        level: cachedAudioLevel(cache.format, cache.bitRate),
+        level: cache.level === 'unknown' ? undefined : cache.level,
         encodeType: cache.format,
         freeTrialPrivilege: {
           resConsumable: false,
@@ -168,11 +150,50 @@ const getTrackInfo = async (id: number): Promise<Track | undefined> => {
   return track
 }
 async function audio(fastify: FastifyInstance) {
+  fastify.get(
+    '/netease/song/download/url/v1',
+    async (req: FastifyRequest<{ Querystring: { id: string; level: string } }>, reply) => {
+      const id = Number(req.query.id)
+      const level = req.query.level
+      const levels = [
+        'standard',
+        'exhigh',
+        'lossless',
+        'hires',
+        'jyeffect',
+        'vivid',
+        'jymaster',
+        'sky',
+      ]
+      if (!Number.isSafeInteger(id) || id <= 0 || !levels.includes(level)) {
+        return reply.code(400).send({ code: 400, data: null })
+      }
+      reply.header('Cache-Control', 'no-store')
+      try {
+        // Download rights are distinct from playback rights; never use cache or fallback audio.
+        const result = await (NeteaseCloudMusicApi as any).api({
+          uri: '/api/song/enhance/download/url/v1',
+          crypto: 'weapi',
+          timeout: 10000,
+          cookie:
+            level === 'vivid' ? { ...req.cookies, os: 'android', appver: '9.5.61' } : req.cookies,
+          data: { id, level, immerseType: 'c51' },
+        })
+        return result.body
+      } catch {
+        log.warn('[audio] download URL request failed', { id, level })
+        return reply.code(502).send({ code: 502, data: null })
+      }
+    }
+  )
+
   // 劫持网易云的song/url api，将url替换成缓存的音频文件url
   fastify.get(
     '/netease/song/url/v1',
     async (
-      req: FastifyRequest<{ Querystring: { id: string | number; level: PlaybackQuality } }>,
+      req: FastifyRequest<{
+        Querystring: { id: string | number; level: PlaybackQuality; probe?: string }
+      }>,
       reply
     ) => {
       const id = Number(req.query.id) || 0
@@ -186,21 +207,37 @@ async function audio(fastify: FastifyInstance) {
       // const res = getAudioFromYouTube(id)
       // console.log('youtube ',res);
 
-      const localCache = await getAudioFromCache(id, req.query.level)
+      const probing = req.query.probe === 'true'
+      const localCache = probing ? undefined : await getAudioFromCache(id, req.query.level)
       if (localCache) {
         return localCache
       }
 
       let fromNetease: any
       try {
-        const { body }: { body: any } = await NeteaseCloudMusicApi.song_url_v1({
-          ...req.query,
-          crypto: 'weapi',
-          cookie: req.cookies as unknown as any,
-        } as any)
-        fromNetease = body
+        // Match API Enhanced's vivid client requirements without changing other playback modes.
+        const result =
+          req.query.level === 'vivid'
+            ? await (NeteaseCloudMusicApi as any).api({
+                uri: '/api/song/enhance/player/url/v1',
+                crypto: 'xeapi',
+                cookie: { ...req.cookies, os: 'android', appver: '9.5.61' },
+                data: { ids: '[' + id + ']', level: 'vivid', encodeType: 'mp3' },
+              })
+            : await NeteaseCloudMusicApi.song_url_v1({
+                ...req.query,
+                crypto: 'weapi',
+                cookie: req.cookies as unknown as any,
+              } as any)
+        fromNetease = result.body
       } catch (error) {
         log.error('[audio] song_url_v1 request failed', error)
+      }
+
+      // Capability probes must never be satisfied by cache or fallback providers.
+      if (probing) {
+        if (!fromNetease) return reply.code(502).send({ code: 502, data: [] })
+        return reply.code(200).send(fromNetease)
       }
 
       if (
@@ -215,9 +252,9 @@ async function audio(fastify: FastifyInstance) {
 
       const trackID = id
       // 先查缓存
-      const cacheData = await cache.get(CacheAPIs.Unblock, trackID)
+      const cacheData = await cache.get(CacheAPIs.Unblock, { id: trackID })
       if (cacheData) {
-        return cacheData
+        return { code: 200, data: [cacheData] }
       }
       if (!trackID) {
         reply.code(400).send({
@@ -266,7 +303,7 @@ async function audio(fastify: FastifyInstance) {
           return reply.status(fromNetease?.code ?? 500).send(fromNetease)
         }
 
-        cache.set(CacheAPIs.Unblock, { id: trackID, url: data?.url }, trackID)
+        await cache.set(CacheAPIs.Unblock, { ...data, id: trackID }, { id: trackID })
         return reply.code(200).send({
           code: 200,
           data: [data],
@@ -287,7 +324,7 @@ async function audio(fastify: FastifyInstance) {
     `/${appName.toLowerCase()}/audio/:filename`,
     (req: FastifyRequest<{ Params: { filename: string } }>, reply) => {
       const filename = req.params.filename
-      cache.getAudio(filename, reply)
+      return cache.getAudio(filename, req, reply)
     }
   )
 
@@ -297,13 +334,13 @@ async function audio(fastify: FastifyInstance) {
     async (
       req: FastifyRequest<{
         Params: { id: string }
-        Querystring: { url: string; bitrate: number }
+        Querystring: { url: string; bitrate: number; level?: string }
       }>,
       reply
     ) => {
       const id = Number(req.params.id)
-      const { url, bitrate } = req.query
-      if (isNaN(id)) {
+      const { url, bitrate, level } = req.query
+      if (!Number.isSafeInteger(id) || id <= 0) {
         return reply.status(400).send({ error: 'Invalid param id' })
       }
       if (!url) {
@@ -317,10 +354,11 @@ async function audio(fastify: FastifyInstance) {
       }
 
       try {
-        await cache.setAudio(await data.toBuffer(), { id, url, bitrate })
+        await cache.setAudio(await data.toBuffer(), { id, url, bitrate, level })
         reply.status(200).send('Audio cached!')
       } catch (error) {
-        reply.status(500).send({ error })
+        log.error('[audio] cache upload failed', error)
+        reply.status(500).send({ error: 'Audio cache upload failed' })
       }
     }
   )

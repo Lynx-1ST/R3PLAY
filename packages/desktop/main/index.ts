@@ -117,7 +117,9 @@ class Main {
       title: appName,
       webPreferences: {
         preload: join(__dirname, 'rendererPreload.js'),
-        sandbox: false,
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
       },
       width: mainWindowStateKeeper.width || store.get('window.width'),
       height: mainWindowStateKeeper.height || store.get('window.height'),

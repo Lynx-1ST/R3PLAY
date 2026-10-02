@@ -44,6 +44,20 @@
     "phone": "Phone"
   },
   "player": {
+    "audio-effects": {
+      "title": "Audio modes",
+      "off": "Off",
+      "jyeffect": "Spatial Audio",
+      "sky": "Surround Audio",
+      "note": "Applies to the current track. Availability depends on the track and account; unsupported sources use normal quality.",
+      "vivid": "Audio Vivid",
+      "restricted": "Preview only",
+      "unavailable": "Unavailable for this track",
+      "unknown": "Unknown · retry",
+      "checking": "Checking…",
+      "available": "Available",
+      "no-track": "Select a song to use audio modes."
+    },
     "play": "Play",
     "pause": "Pause",
     "play-pause": "Play/Pause",
@@ -170,9 +184,9 @@
     "audio-quality-description": "Choose the quality requested from NetEase. The actual format and bitrate returned by NetEase are shown under the player.",
     "audio-quality-streaming": "Streaming quality",
     "audio-quality-standard": "Standard · 128 kbps",
-    "audio-quality-higher": "Higher · 192 kbps",
-    "audio-quality-high": "High · 320 kbps",
-    "audio-quality-lossless": "Lossless · FLAC",
+    "audio-quality-higher": "High · 192 kbps",
+    "audio-quality-high": "Very high · HQ · 320 kbps",
+    "audio-quality-lossless": "Lossless · SQ · FLAC",
     "audio-quality-hires": "Hi-Res · FLAC",
     "audio-quality-updated": "Playback quality updated. It will apply to the next track.",
     "player-youtube-desktop-only": "This feature is only available in the desktop app.",
@@ -235,5 +249,11 @@
   "coverrow": {
     "songs": "Songs",
     "plays": "Plays"
+  },
+  "downloads": {
+    "master": "Master · 192kHz/24bit",
+    "quality-title": "Download quality",
+    "cancel": "Cancel",
+    "quality-fallback": "Requested quality unavailable. Downloading the returned source quality."
   }
 }

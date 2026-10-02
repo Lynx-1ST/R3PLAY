@@ -1,4 +1,5 @@
-import player from '@/web/states/player'
+import { fetchDownloadSource, classifyDownload } from '@/web/api/download'
+import { selectDownloadQuality } from '@/web/components/Tools/DownloadQuality'
 import toast from 'react-hot-toast'
 import i18n from '@/web/i18n/i18n'
 import { fetchTracksWithReactQuery } from '@/web/api/hooks/useTracks'
@@ -12,22 +13,36 @@ import { fetchTracksWithReactQuery } from '@/web/api/hooks/useTracks'
  * fall back to a plain link and let the browser handle it.
  */
 export async function downloadTrack(trackID: number) {
+  const quality = await selectDownloadQuality(trackID)
+  if (!quality) return
   try {
-    const [source, tracks] = await Promise.all([
-      player.getAudioSource(trackID),
+    const [response, tracks] = await Promise.all([
+      fetchDownloadSource(trackID, quality),
       fetchTracksWithReactQuery({ ids: [trackID] }),
     ])
-    const url = source.audio
-    if (!url) {
+    const source = response.data
+    const url = source?.url
+    if (classifyDownload(response, quality) !== 'available' || !url || !source) {
       toast.error(i18n.t('toasts.download-failed'))
       return
     }
     const track = tracks?.songs?.[0]
     const artists = track?.ar?.map(a => a.name).join(', ')
-    const filename = `${artists ? `${artists} - ` : ''}${track?.name ?? String(trackID)}.mp3`
+    const format = source.type ?? source.encodeType
+    const extension = ['mp3', 'flac', 'aac', 'm4a', 'ogg', 'opus', 'webm', 'wav'].includes(
+      format ?? ''
+    )
+      ? format
+      : 'mp3'
+    const filename = `${artists ? `${artists} - ` : ''}${track?.name ?? String(trackID)}.${extension}`
     toast.success(i18n.t('toasts.download-started'))
     try {
-      const blob = await (await fetch(url)).blob()
+      const response = await fetch(url)
+      if (!response.ok) {
+        toast.error(i18n.t('toasts.download-failed'))
+        return
+      }
+      const blob = await response.blob()
       const blobUrl = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = blobUrl

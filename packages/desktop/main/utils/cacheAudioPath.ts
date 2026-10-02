@@ -5,7 +5,8 @@ export const AUDIO_CACHE_DIRNAME = 'audio_cache'
 // 音频缓存文件名统一由 cache.setAudio 生成：{数字id}-{数字码率}.{枚举扩展名}。
 // HTTP 路由的 :filename 参数必须先过这个白名单再做任何文件系统操作，
 // 否则 `..%2f` 之类的路径组件会读到 audio_cache 之外。
-const CACHE_AUDIO_FILENAME_PATTERN = /^\d+-\d+\.(mp3|ogg|m4a|flac|opus|unknown)$/
+const CACHE_AUDIO_FILENAME_PATTERN =
+  /^\d+-\d+(?:\.\d+)?(?:-(?:standard|higher|exhigh|lossless|hires|jyeffect|vivid|sky|unknown)-[a-f0-9]{16})?\.(mp3|ogg|m4a|flac|opus|wav|aac|unknown)$/
 
 /**
  * 把请求里的 filename 解析为 audio_cache 下的绝对路径。

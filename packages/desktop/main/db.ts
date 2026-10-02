@@ -8,6 +8,7 @@ import { isProd } from './env'
 import pkg from '../../../package.json'
 import { compare, validate } from 'compare-versions'
 import os from 'os'
+import { audioVariantsSchema, type AudioVariant } from './utils/audioVariants'
 
 log.info('[electron] db.ts')
 
@@ -19,6 +20,7 @@ export const enum Tables {
   ArtistAlbum = 'ArtistAlbum',
   Lyrics = 'Lyrics',
   Audio = 'Audio',
+  AudioVariant = 'AudioVariant',
   AccountData = 'AccountData',
   CoverColor = 'CoverColor',
   AppData = 'AppData',
@@ -32,6 +34,7 @@ interface CommonTableStructure {
   updatedAt: number
 }
 export interface TablesStructures {
+  [Tables.AudioVariant]: AudioVariant
   [Tables.Track]: CommonTableStructure
   [Tables.Album]: CommonTableStructure
   [Tables.Unblock]: CommonTableStructure
@@ -49,15 +52,7 @@ export interface TablesStructures {
     bitRate: number
     format: 'mp3' | 'flac' | 'ogg' | 'wav' | 'm4a' | 'aac' | 'unknown' | 'opus'
     source:
-      | 'unknown'
-      | 'netease'
-      | 'migu'
-      | 'kuwo'
-      | 'kugou'
-      | 'youtube'
-      | 'qq'
-      | 'bilibili'
-      | 'joox'
+      'unknown' | 'netease' | 'migu' | 'kuwo' | 'kugou' | 'youtube' | 'qq' | 'bilibili' | 'joox'
     queriedAt: number
   }
   [Tables.CoverColor]: {
@@ -123,6 +118,7 @@ class DB {
     log.info('[db] Initializing database tables...')
     const init = readSqlFile('init.sql')
     this.sqlite.exec(init)
+    this.sqlite.exec(audioVariantsSchema)
     this.sqlite.pragma('journal_mode=WAL')
     log.info('[db] Database tables initialized.')
   }
@@ -175,8 +171,7 @@ class DB {
     key: TablesStructures[T]['id']
   ): TablesStructures[T] | undefined {
     return this.sqlite.prepare(`SELECT * FROM ${table} WHERE id = ? LIMIT 1`).get(key) as
-      | TablesStructures[T]
-      | undefined
+      TablesStructures[T] | undefined
   }
 
   findMany<T extends TableNames>(
@@ -184,7 +179,9 @@ class DB {
     keys: TablesStructures[T]['id'][]
   ): TablesStructures[T][] {
     const idsQuery = keys.map(key => `id = ${key}`).join(' OR ')
-    return this.sqlite.prepare(`SELECT * FROM ${table} WHERE ${idsQuery}`).all() as unknown as TablesStructures[T][]
+    return this.sqlite
+      .prepare(`SELECT * FROM ${table} WHERE ${idsQuery}`)
+      .all() as unknown as TablesStructures[T][]
   }
 
   findAll<T extends TableNames>(table: T): TablesStructures[T][] {

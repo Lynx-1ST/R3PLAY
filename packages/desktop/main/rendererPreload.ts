@@ -48,11 +48,14 @@ const assertAllowedChannel = (channel: IpcChannels) => {
 }
 
 if (isProd) {
-  require('electron-log/preload')
-  const log = require('electron-log/renderer')
-  if (log.transports.ipc) log.transports.ipc.level = false
-  log.variables.process = 'renderer'
-  contextBridge.exposeInMainWorld('log', { ...log.functions, functions: log.functions })
+  // Sandboxed preload only requires Electron; privileged logging stays in main.
+  const functions = Object.fromEntries(
+    ['error', 'warn', 'info', 'debug', 'verbose', 'silly', 'log'].map(level => [
+      level,
+      (...args: unknown[]) => ipcRenderer.send(IpcChannels.RendererLog, { level, args }),
+    ])
+  )
+  contextBridge.exposeInMainWorld('log', { ...functions, functions })
 }
 
 contextBridge.exposeInMainWorld('ipcRenderer', {

@@ -42,6 +42,16 @@ export function initIpcMain(
   thumbar: Thumbar | null,
   store: Store<TypedElectronStore>
 ) {
+  on(IpcChannels.RendererLog, (event, message) => {
+    if (event.sender !== win?.webContents || event.senderFrame !== win.webContents.mainFrame) return
+    if (
+      !message ||
+      !['error', 'warn', 'info', 'debug', 'verbose', 'silly', 'log'].includes(message.level) ||
+      !Array.isArray(message.args)
+    )
+      return
+    log[message.level]('[renderer]', ...message.args.slice(0, 20))
+  })
   on(IpcChannels.DiscordPlayback, (event, playback) => {
     if (event.sender !== win?.webContents || event.senderFrame !== win.webContents.mainFrame) return
     discordPresence.update(playback)
@@ -183,6 +193,7 @@ function initOtherIpcMain(win: BrowserWindow | null) {
     db.truncate(Tables.ArtistAlbum)
     db.truncate(Tables.AccountData)
     db.truncate(Tables.Audio)
+    db.truncate(Tables.AudioVariant)
     db.vacuum()
   })
 

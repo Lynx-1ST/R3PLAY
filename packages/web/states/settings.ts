@@ -14,6 +14,7 @@ interface Settings {
   qqCookie: string
   miguCookie: string
   jooxCookie: string
+  audioEffect: 'off' | 'jyeffect' | 'vivid' | 'sky'
   audioQuality: PlaybackQuality
   audioOutputDeviceId: string
   enableFindTrackOnYouTube: boolean
@@ -64,6 +65,7 @@ const initSettings: Settings = {
   qqCookie: '',
   miguCookie: '',
   jooxCookie: '',
+  audioEffect: 'off',
   audioQuality: 'exhigh',
   enableFindTrackOnYouTube: false,
   playAnimatedArtworkFromApple: true,
