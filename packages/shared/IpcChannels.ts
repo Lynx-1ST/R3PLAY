@@ -1,8 +1,10 @@
 import { AppleMusicAlbum, AppleMusicArtist } from './AppleMusic'
 import { CacheAPIs } from './CacheAPIs'
 import { RepeatMode } from './playerDataTypes'
+import type { DiscordPlayback } from './discordPresence'
 
 export const enum IpcChannels {
+  DiscordPlayback = 'DiscordPlayback',
   ClearAPICache = 'ClearAPICache',
   Minimize = 'Minimize',
   LyricsWindowMinimize = 'LyricsWindowMinimize',
@@ -47,6 +49,7 @@ export const enum IpcChannels {
 
 // ipcMain.on params
 export interface IpcChannelsParams {
+  [IpcChannels.DiscordPlayback]: DiscordPlayback
   [IpcChannels.ClearAPICache]: void
   [IpcChannels.Minimize]: void
   [IpcChannels.LyricsWindowMinimize]: void

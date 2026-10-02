@@ -6,6 +6,9 @@ import { getKeyboardShortcutDefaultSettings } from '@/shared/defaultSettings'
 import type { PlaybackQuality } from '@/shared/api/Track'
 
 interface Settings {
+  showSearchSuggestions: boolean
+  restoreListeningSession: boolean
+  enableDiscordRpc: boolean
   accentColor: string
   language: SupportedLanguage
   qqCookie: string
@@ -53,6 +56,9 @@ export const isLowPowerDevice = () => {
 }
 
 const initSettings: Settings = {
+  showSearchSuggestions: true,
+  restoreListeningSession: true,
+  enableDiscordRpc: false,
   accentColor: 'yellow',
   language: getInitLanguage(),
   qqCookie: '',

@@ -6,15 +6,19 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import uiStates from '@/web/states/uiStates'
 import Icon from '@/web/components/Icon'
-import { useSearchHot } from '@/web/api/hooks/useSearch'
+import { useSearchHot, useSearchResults } from '@/web/api/hooks/useSearch'
 import useLockMainScroll from '@/web/hooks/useLockMainScroll'
 import useOSPlatform from '@/web/hooks/useOSPlatform'
 import { ease } from '@/web/utils/const'
+import settings from '@/web/states/settings'
+import player from '@/web/states/player'
+import { resizeImage } from '@/web/utils/common'
 
 const SUGGEST_DEBOUNCE_MS = 300
 
 const SearchModal = () => {
   const { showSearchModal } = useSnapshot(uiStates)
+  const { showSearchSuggestions } = useSnapshot(settings)
   const { t } = useTranslation()
   const navigate = useNavigate()
   const platform = useOSPlatform()
@@ -22,26 +26,53 @@ const SearchModal = () => {
   const debounceRef = useRef<number | undefined>(undefined)
 
   const [searchText, setSearchText] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [activeResult, setActiveResult] = useState(-1)
+  const liveQuery = useSearchResults(
+    debouncedSearch,
+    'Single',
+    6,
+    showSearchModal && showSearchSuggestions
+  )
+  const liveEnabled = showSearchModal && showSearchSuggestions && !!searchText.trim()
+  const waiting = debouncedSearch !== searchText.trim()
+  const songs =
+    !waiting && !liveQuery.isPlaceholderData ? (liveQuery.data?.result?.songs ?? []) : []
+  const playResult = (index: number) => {
+    const song = songs[index]
+    if (!song) return
+    player.playAList(
+      songs.map(track => track.id),
+      song.id
+    )
+    close()
+  }
 
   const close = () => {
     uiStates.showSearchModal = false
   }
 
-  // ── Debounce cleanup (input state itself is uncommitted — the modal
-  // never shows live results; Enter jumps to the full results page). ──
-  useEffect(
-    () => () => {
-      if (debounceRef.current) window.clearTimeout(debounceRef.current)
-    },
-    []
-  )
+  useEffect(() => {
+    setActiveResult(-1)
+    if (!showSearchModal || !showSearchSuggestions) {
+      setDebouncedSearch('')
+      return
+    }
+    debounceRef.current = window.setTimeout(
+      () => setDebouncedSearch(searchText.trim()),
+      SUGGEST_DEBOUNCE_MS
+    )
+    return () => window.clearTimeout(debounceRef.current)
+  }, [searchText, showSearchModal, showSearchSuggestions])
+
+  useEffect(() => {
+    document
+      .getElementById(`quick-search-song-${activeResult}`)
+      ?.scrollIntoView({ block: 'nearest' })
+  }, [activeResult])
 
   const handleChange = (text: string) => {
     setSearchText(text)
-    if (debounceRef.current) window.clearTimeout(debounceRef.current)
-    debounceRef.current = window.setTimeout(() => {
-      debounceRef.current = undefined
-    }, SUGGEST_DEBOUNCE_MS)
   }
 
   useLockMainScroll(showSearchModal)
@@ -51,8 +82,7 @@ const SearchModal = () => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== 'KeyF') return
-      const mod =
-        platform === 'darwin' ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey
+      const mod = platform === 'darwin' ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey
       if (!mod) return
       e.preventDefault()
       uiStates.showSearchModal = !uiStates.showSearchModal
@@ -119,7 +149,7 @@ const SearchModal = () => {
                 'app-region-no-drag pointer-events-auto flex flex-col rounded-24 shadow-2xl',
                 'border border-black/10 bg-white/95 dark:border-white/10 dark:bg-black/95',
                 'backdrop-blur-2xl',
-                'w-[min(640px,92vw)]'
+                'max-h-[80vh] w-[min(640px,92vw)] overflow-hidden'
               )}
               initial={{ opacity: 0, y: -16, scale: 0.98 }}
               animate={{
@@ -145,14 +175,32 @@ const SearchModal = () => {
               >
                 <Icon name='search' className='mr-3 h-6 w-6 shrink-0 opacity-50' />
                 <input
+                  data-quick-search
                   ref={inputRef}
                   placeholder={t`search.search`.toString()}
                   className='grow bg-transparent text-18 font-medium outline-hidden placeholder:text-black/40 dark:placeholder:text-white/40'
                   value={searchText}
+                  role='combobox'
+                  aria-label={t`search.search`}
+                  aria-expanded={liveEnabled && songs.length > 0}
+                  aria-controls='quick-search-results'
+                  aria-activedescendant={
+                    activeResult >= 0 ? `quick-search-song-${activeResult}` : undefined
+                  }
                   onChange={e => handleChange(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === 'Escape') {
                       close()
+                      return
+                    }
+                    if (e.nativeEvent.isComposing || e.keyCode === 229) return
+                    if (songs.length && ['ArrowDown', 'ArrowUp'].includes(e.key)) {
+                      e.preventDefault()
+                      setActiveResult(index =>
+                        e.key === 'ArrowDown'
+                          ? (index + 1) % songs.length
+                          : (index <= 0 ? songs.length : index) - 1
+                      )
                       return
                     }
                     if (e.key !== 'Enter') return
@@ -160,17 +208,78 @@ const SearchModal = () => {
                     // methods report isComposing / keyCode 229) must not navigate.
                     if (e.nativeEvent.isComposing || e.keyCode === 229) return
                     e.preventDefault()
-                    submit()
+                    if (liveEnabled && activeResult >= 0) playResult(activeResult)
+                    else submit()
                   }}
                 />
               </div>
+
+              {!empty && (
+                <div className='min-h-0 overflow-y-auto border-t border-black/10 p-3 dark:border-white/10'>
+                  {liveEnabled && (waiting || liveQuery.isFetching) && (
+                    <p role='status' className='p-3 opacity-60'>{t`search.quick-loading`}</p>
+                  )}
+                  {liveEnabled && !waiting && liveQuery.isError && (
+                    <div role='alert' className='p-3'>
+                      <p>{t`search.quick-error`}</p>
+                      <button
+                        type='button'
+                        className='mt-2 rounded-lg bg-black/10 px-3 py-2 dark:bg-white/10'
+                        onClick={() => liveQuery.refetch()}
+                      >{t`search.quick-retry`}</button>
+                    </div>
+                  )}
+                  {liveEnabled &&
+                    !waiting &&
+                    !liveQuery.isFetching &&
+                    !liveQuery.isError &&
+                    !songs.length && (
+                      <p role='status' className='p-3 opacity-60'>{t`search.quick-empty`}</p>
+                    )}
+                  <div id='quick-search-results' role='listbox' aria-label={t`search.song`}>
+                    {liveEnabled &&
+                      songs.map((song, index) => (
+                        <button
+                          type='button'
+                          role='option'
+                          aria-selected={index === activeResult}
+                          id={`quick-search-song-${index}`}
+                          key={song.id}
+                          onClick={() => playResult(index)}
+                          className={cx(
+                            'flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-black/5 dark:hover:bg-white/10',
+                            index === activeResult && 'bg-black/5 dark:bg-white/10'
+                          )}
+                        >
+                          <img
+                            alt=''
+                            src={resizeImage(song.al?.picUrl ?? '', 'sm')}
+                            className='h-12 w-12 shrink-0 rounded-lg'
+                          />
+                          <div className='min-w-0 flex-1'>
+                            <div className='truncate font-semibold'>{song.name}</div>
+                            <div className='truncate text-sm opacity-60'>
+                              {song.ar?.map(artist => artist.name).join(', ')} · {song.al?.name}
+                            </div>
+                          </div>
+                          <Icon name='play' className='h-5 w-5 shrink-0 opacity-60' />
+                        </button>
+                      ))}
+                  </div>
+                  <button
+                    type='button'
+                    className='mt-2 w-full rounded-xl bg-black/5 px-3 py-3 text-sm font-semibold dark:bg-white/5'
+                    onClick={() => submit()}
+                  >{t`search.quick-all-results`}</button>
+                </div>
+              )}
 
               {/* Empty state — hot search words; a click goes straight to
                   the full results page. No in-modal result lists: the modal
                   stays a launcher, results live on /search/:keywords. */}
               {empty && hotWords.length > 0 && (
                 <div className='p-3'>
-                  <div className='px-3 pb-1 pt-3 text-12 font-medium uppercase tracking-wider text-black/40 dark:text-white/40'>
+                  <div className='px-3 pt-3 pb-1 text-12 font-medium tracking-wider text-black/40 uppercase dark:text-white/40'>
                     {t`search.hot-search`}
                   </div>
                   <div className='flex flex-wrap gap-2 p-1 pt-1'>

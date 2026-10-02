@@ -66,7 +66,9 @@ const Background = () => {
         />
       )}
       {!enableBreathingEffect && (
-        <div className={cx('absolute inset-0 z-0', theme === 'dark' ? 'bg-black/50' : 'bg-white/50')} />
+        <div
+          className={cx('absolute inset-0 z-0', theme === 'dark' ? 'bg-black/50' : 'bg-white/50')}
+        />
       )}
     </div>
   )
@@ -81,10 +83,13 @@ const TopbarDesktop = () => {
       className={cx(
         // app-region-drag 删除后即可移动console
         'app-region-drag',
-        ' fixed left-0 right-0 top-0 z-20 flex items-center justify-between',
-        'pb-10 pr-6 pt-11',
+        'fixed top-0 right-0 left-0 z-20 flex items-center justify-between',
+        'pt-11 pr-6 pb-10',
         css`
           padding-left: 144px;
+          @media (min-width: 1024px) and (max-width: 1279px) {
+            padding-left: 112px;
+          }
         `
       )}
       onDoubleClick={maxRestore}

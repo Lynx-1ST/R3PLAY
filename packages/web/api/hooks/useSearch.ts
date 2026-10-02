@@ -1,8 +1,4 @@
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQuery,
-} from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   cloudSearch,
   fetchSearchHot,
@@ -34,8 +30,7 @@ const hasKeywords = (keywords: string) => keywords.trim().length > 0
 export function useSearchSuggestions(keywords: string) {
   return useQuery<FetchSearchSuggestionsResponse>({
     queryKey: [SearchApiNames.FetchSearchSuggestions, keywords],
-    queryFn: ({ signal }) =>
-      fetchSearchSuggestions({ keywords }, { signal }).then(ensureOk),
+    queryFn: ({ signal }) => fetchSearchSuggestions({ keywords }, { signal }).then(ensureOk),
     enabled: hasKeywords(keywords),
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -80,15 +75,14 @@ export function useSearchBestMatch(keywords: string) {
 export function useSearchResults(
   keywords: string,
   type: keyof typeof SearchTypes,
-  limit = 30
+  limit = 30,
+  enabled = true
 ) {
   return useQuery<CloudSearchResponse>({
     queryKey: [SearchApiNames.CloudSearch, keywords, type, limit],
     queryFn: ({ signal }) =>
-      cloudSearch({ keywords, limit, offset: 0, type }, { signal }).then(
-        ensureOk
-      ),
-    enabled: hasKeywords(keywords),
+      cloudSearch({ keywords, limit, offset: 0, type }, { signal }).then(ensureOk),
+    enabled: enabled && hasKeywords(keywords),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
@@ -122,9 +116,7 @@ export function useSearchTracksInfinite(keywords: string) {
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       const songCount = lastPage?.result?.songCount ?? 0
-      return pages.length * SEARCH_PAGE_SIZE < songCount
-        ? pages.length
-        : undefined
+      return pages.length * SEARCH_PAGE_SIZE < songCount ? pages.length : undefined
     },
   })
 }

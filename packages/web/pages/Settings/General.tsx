@@ -9,10 +9,28 @@ function General() {
   return (
     <div>
       <Language />
+      <QuickSearch />
       <AppleMusic />
       <NeteaseMusic />
       <Download />
       <CloseWindow />
+    </div>
+  )
+}
+
+function QuickSearch() {
+  const { t } = useTranslation()
+  const { showSearchSuggestions } = useSnapshot(settings)
+  return (
+    <div className='mb-12'>
+      <BlockTitle>{t`search.search`}</BlockTitle>
+      <Option>
+        <OptionText>{t`settings.search-live-results`}</OptionText>
+        <Switch
+          enabled={showSearchSuggestions}
+          onChange={value => (settings.showSearchSuggestions = value)}
+        />
+      </Option>
     </div>
   )
 }
@@ -99,10 +117,7 @@ function Download() {
       <BlockTitle>{t`settings.title-download`}</BlockTitle>
       <Option>
         <OptionText>{t`settings.show-download-actions`}</OptionText>
-        <Switch
-          enabled={showDownloadActions}
-          onChange={v => (settings.showDownloadActions = v)}
-        />
+        <Switch enabled={showDownloadActions} onChange={v => (settings.showDownloadActions = v)} />
       </Option>
     </div>
   )

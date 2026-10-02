@@ -2,10 +2,14 @@ import { Player } from '@/web/utils/player'
 import { proxy, subscribe } from 'valtio'
 import { isLyricsWindow } from '@/web/utils/isLyricsWindow'
 
-const playerInLocalStorage = localStorage.getItem('player')
 const player = proxy(new Player())
-
-player.init((playerInLocalStorage && JSON.parse(playerInLocalStorage)) || {})
+let restored: Record<string, unknown> = {}
+try {
+  restored = JSON.parse(localStorage.getItem('player') || '{}')
+} catch {
+  /* A damaged session must not prevent startup. */
+}
+player.init(restored)
 
 // --- persistence ------------------------------------------------------------
 // `player` is a large object (trackList can hold 1000+ ids), and `_progress`
@@ -25,7 +29,7 @@ if (!isLyricsWindow) {
     lastWrite = Date.now()
     timer = null
     try {
-      localStorage.setItem('player', JSON.stringify(player))
+      localStorage.setItem('player', JSON.stringify(player.exportSession()))
     } catch {
       /* storage unavailable — playback must not break */
     }
@@ -58,6 +62,11 @@ if (!isLyricsWindow) {
   // Flush the pending throttled write when the app is hidden or closing so
   // the last progress is never lost.
   window.addEventListener('beforeunload', flush)
+  window.addEventListener('pagehide', flush)
+  // Also checkpoint during playback so a crash loses at most a few seconds.
+  setInterval(() => {
+    if (player.state === 'playing') flush()
+  }, 5000)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') flush()
   })

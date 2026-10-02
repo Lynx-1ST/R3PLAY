@@ -37,12 +37,16 @@ const TrackListHeader = ({
     <div
       className={cx(
         className,
-        'mx-2.5 rounded-48 p-8 ',
+        'mx-2.5 rounded-48 p-8',
         // 'dark:bg-white/10',
-        'lg:mx-0 lg:grid lg:grid-rows-1 lg:gap-10 lg:rounded-none lg:p-0 ',
+        'lg:mx-0 lg:grid lg:grid-rows-1 lg:gap-10 lg:rounded-none lg:p-0',
         // 'lg:dark:bg-transparent',
         css`
           grid-template-columns: 318px auto;
+          @media (min-width: 1024px) and (max-width: 1279px) {
+            grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+            gap: 24px;
+          }
         `
       )}
     >

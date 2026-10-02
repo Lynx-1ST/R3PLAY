@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useEffectOnce } from 'react-use'
 import { useSnapshot } from 'valtio'
 import { appName } from './utils/const'
+import settings from './states/settings'
 
 // See utils/isLyricsWindow.ts — the lyrics window is a read-only consumer
 // of player state pushed from the main window; it never sends these events
@@ -15,11 +16,30 @@ import { appName } from './utils/const'
 // the component so we never violate the Rules of Hooks.
 const IpcRendererReact = () => {
   const [isPlaying, setIsPlaying] = useState(false)
-  // NOTE: `progress` is deliberately NOT read here — it mutates 2x/sec
-  // while playing; the valtio op subscription below forwards it to the
-  // main process without re-rendering this component.
+  // Sample progress for RPC without subscribing React to the playback clock.
   const { track, state, trackID } = useSnapshot(player)
+  const { enableDiscordRpc, language } = useSnapshot(settings)
   const trackIDRef = useRef(0)
+
+  useEffect(() => {
+    if (!window.env?.isElectron || isLyricsWindow || !enableDiscordRpc) return
+    const syncPresence = () => {
+      const current = player.track
+      window.ipcRenderer?.send(IpcChannels.DiscordPlayback, {
+        playing: player.state === PlayerState.Playing,
+        trackId: current?.id ?? 0,
+        title: current?.name ?? '',
+        artist: current?.ar?.map(artist => artist.name).join(', ') ?? '',
+        album: current?.al?.name ?? '',
+        cover: current?.al?.picUrl ?? '',
+        duration: (current?.dt ?? 0) / 1000,
+        progress: player.progress,
+      })
+    }
+    syncPresence()
+    const timer = setInterval(syncPresence, 5000)
+    return () => clearInterval(timer)
+  }, [enableDiscordRpc, track, state, language])
 
   // Liked songs ids
   const { data: userLikedSongs } = useUserLikedTracksIDs()

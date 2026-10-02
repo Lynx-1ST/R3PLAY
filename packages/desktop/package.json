@@ -2,7 +2,7 @@
   "name": "desktop",
   "productName": "R3PLAYX",
   "private": true,
-  "version": "2.8.2",
+  "version": "2.8.4",
   "main": "./main/index.js",
   "author": "Lynx-1ST",
   "homepage": "https://github.com/Lynx-1ST/R3PLAY",
@@ -13,6 +13,7 @@
     "package": "electron-builder build -c .electron-builder.config.js",
     "package:test": "electron-builder build -c .electron-builder.config.js --publish never --mac --dir --arm64",
     "test:types": "tsc --noEmit --project ./tsconfig.json",
+    "test:discord": "tsx scripts/testDiscordRpc.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage"

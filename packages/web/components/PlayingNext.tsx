@@ -16,6 +16,7 @@ import useHoverLightSpot from '../hooks/useHoverLightSpot'
 import { motion } from 'framer-motion'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { RepeatMode } from '@/shared/playerDataTypes'
+const QUEUE_DRAG_TYPE = 'application/x-r3play-queue'
 
 const FMButton = () => {
   const { buttonRef, buttonStyle } = useHoverLightSpot()
@@ -37,7 +38,7 @@ const FMButton = () => {
       )}
       style={buttonStyle}
     >
-      <div className='absolute top-1/2  left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0 blur group-hover:opacity-100'></div>
+      <div className='absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0 blur group-hover:opacity-100'></div>
       {!fm && <Icon name='fm' className='h-7 w-7' />}
       {fm && <Icon name='fm' className='h-7 w-7' />}
     </motion.button>
@@ -76,7 +77,7 @@ const RepeatButton = () => {
       )}
       style={buttonStyle}
     >
-      <div className='absolute top-1/2  left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0 blur group-hover:opacity-100'></div>
+      <div className='absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0 blur group-hover:opacity-100'></div>
       {repeat == 0 && <Icon name='repeat' className='h-7 w-7' />}
       {repeat == 1 && <Icon name='repeat' className='h-7 w-7' />}
       {repeat == 2 && <Icon name='repeat-1' className='h-7 w-7' />}
@@ -86,19 +87,17 @@ const RepeatButton = () => {
 
 const ShuffleButton = () => {
   const { buttonRef, buttonStyle } = useHoverLightSpot()
-  const { repeatMode } = useSnapshot(player)
-  const [shuffle, setShuffle] = useState(repeatMode == RepeatMode.Shuffle)
+  const { shuffle } = useSnapshot(player)
   return (
     <motion.button
       ref={buttonRef}
       onClick={() => {
-        setShuffle(!shuffle)
         player.shufflePlayList()
       }}
       className={cx(
         player.mode == Mode.FM ? 'hidden' : 'block',
         'group relative transition duration-300 ease-linear',
-        repeatMode == RepeatMode.Shuffle
+        shuffle
           ? 'text-brand-500 opacity-100 hover:opacity-90'
           : 'text-neutral-500 opacity-60 hover:opacity-100'
       )}
@@ -118,7 +117,7 @@ const Header = () => {
         'absolute top-0 left-0 z-20 flex w-full items-center justify-between bg-contain bg-repeat-x px-7 pb-6 text-14 font-bold lg:px-0'
       )}
     >
-      <div className='flex '>
+      <div className='flex'>
         <div className='bg-accent-color-700 mr-2 h-4 w-1 rounded-full'></div>
         {t`player.queue`}
       </div>
@@ -137,8 +136,7 @@ const Header = () => {
 // it in a closure.
 const onTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
   if (e.detail !== 2) return
-  const id = Number(e.currentTarget.dataset.trackId)
-  if (id) player.playTrack(id)
+  player.playQueueIndex(Number(e.currentTarget.dataset.queueIndex))
 }
 const onTrackContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
   const id = Number(event.currentTarget.dataset.trackId)
@@ -157,6 +155,7 @@ const Track = memo(
     index,
     isPlaying,
     isPlayingState,
+    reorderable,
   }: {
     track?: Track
     index: number
@@ -165,25 +164,74 @@ const Track = memo(
     // (controls the Wave animation). Other rows receive `false` and
     // never re-render when global player state flips.
     isPlayingState: boolean
+    reorderable: boolean
   }) => {
+    const { t } = useTranslation()
     return (
       <div
         className={cx('mb-5 flex items-center justify-between')}
         data-track-id={track?.id ?? ''}
+        data-queue-index={index}
         onClick={onTrackClick}
         onContextMenu={onTrackContextMenu}
+        onDragOver={e => {
+          if (reorderable && e.dataTransfer.types.includes(QUEUE_DRAG_TYPE)) {
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'move'
+            e.currentTarget.style.outline = '1px solid currentColor'
+          }
+        }}
+        onDragLeave={e => {
+          e.currentTarget.style.outline = ''
+        }}
+        onDrop={e => {
+          e.currentTarget.style.outline = ''
+          if (!reorderable) return
+          e.preventDefault()
+          try {
+            const drag = JSON.parse(e.dataTransfer.getData(QUEUE_DRAG_TYPE))
+            if (drag.queue === player.trackList.join(',')) player.moveQueueTrack(drag.index, index)
+          } catch {
+            /* Ignore external drags. */
+          }
+        }}
       >
+        {reorderable && (
+          <button
+            type='button'
+            draggable
+            data-queue-drag-handle
+            aria-label={t('player.queue-move', { title: track?.name ?? '', position: index + 1 })}
+            title={t`player.queue-drag-hint`}
+            className='mr-2 shrink-0 cursor-grab rounded px-1 py-3 text-lg opacity-40 hover:opacity-100 focus:opacity-100 active:cursor-grabbing'
+            onClick={e => e.stopPropagation()}
+            onDragStart={e => {
+              e.dataTransfer.effectAllowed = 'move'
+              e.dataTransfer.setData(
+                QUEUE_DRAG_TYPE,
+                JSON.stringify({ index, queue: player.trackList.join(',') })
+              )
+            }}
+            onKeyDown={e => {
+              if (!['ArrowUp', 'ArrowDown'].includes(e.key)) return
+              e.preventDefault()
+              player.moveQueueTrack(index, index + (e.key === 'ArrowUp' ? -1 : 1))
+            }}
+          >
+            ⋮⋮
+          </button>
+        )}
         {/* Cover */}
         <img
           alt='Cover'
-          className='mr-4 aspect-square h-14 w-14 shrink-0 rounded-12'
+          className='mr-3 aspect-square h-14 w-14 shrink-0 rounded-12'
           src={resizeImage(track?.al?.picUrl || '', 'sm')}
           loading='lazy'
           decoding='async'
         />
 
         {/* Track info */}
-        <div className='mr-3 grow'>
+        <div className='mr-3 min-w-0 grow'>
           <div
             className={cx(
               'line-clamp-1 text-16 font-medium transition-colors duration-500',
@@ -192,7 +240,7 @@ const Track = memo(
           >
             {track?.name}
           </div>
-          <div className='line-clamp-1 mt-1 text-14 font-bold text-black/80  dark:text-white/80'>
+          <div className='mt-1 line-clamp-1 text-14 font-bold text-black/80 dark:text-white/80'>
             {track?.ar.map(a => a.name).join(', ')}
           </div>
         </div>
@@ -221,10 +269,17 @@ const TrackList = ({ className }: { className?: string }) => {
   // inner songs array only changes when ids do. Pin it so Virtuoso's data
   // prop doesn't churn and remount rows on unrelated re-renders (e.g. when
   // `state` flips between paused/playing).
-  const tracks = useMemo(() => tracksRaw?.songs ?? [], [tracksRaw?.songs])
+  const tracks = useMemo(() => {
+    const byId = new Map<number, Track>(
+      (tracksRaw?.songs ?? []).map((track: Track) => [track.id, track])
+    )
+    return (trackMode ? trackList : fmTrackList).map(
+      id => byId.get(id) ?? ({ id, name: `#${id}`, ar: [], al: { picUrl: '' } } as unknown as Track)
+    )
+  }, [tracksRaw?.songs, trackMode, trackList, fmTrackList])
   const { height } = useWindowSize()
   const isMobile = useIsMobile()
-  const listHeight = height - topbarHeight - playerWidth - 24
+  const listHeight = Math.max(80, height - topbarHeight - playerWidth - 24)
   const listHeightMobile = height - 154 - 110 - (isIosPwa ? 34 : 0)
 
   const playingIndex = trackMode ? trackIndex : 0
@@ -252,9 +307,10 @@ const TrackList = ({ className }: { className?: string }) => {
         index={index}
         isPlaying={index === playingIndex}
         isPlayingState={index === playingIndex && isPlayingState}
+        reorderable={trackMode}
       />
     ),
-    [playingIndex, isPlayingState]
+    [playingIndex, isPlayingState, trackMode]
   )
 
   return (

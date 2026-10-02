@@ -59,7 +59,14 @@
     "queue": "播放列表",
     "favorite": "喜欢歌曲",
     "volume-up": "增加音量",
-    "volume-down": "减少音量"
+    "volume-down": "减少音量",
+    "restore-unavailable": "无法加载歌曲。点击播放重试。",
+    "queue-move": "移动 {{title}}，位置 {{position}}",
+    "queue-drag-hint": "拖动调整顺序；聚焦后使用 ↑/↓ 键",
+    "playlist-search": "在歌单中搜索歌曲、歌手或专辑",
+    "playlist-results": "{{count}} / {{total}} 首",
+    "search-clear": "清除搜索",
+    "search-empty": "没有匹配的歌曲"
   },
   "toasts": {
     "copied": "已复制",
@@ -85,7 +92,12 @@
     "double-click-to-play": "双击播放",
     "no-results": "没有找到相关结果",
     "error": "加载失败，请重试",
-    "retry": "重试"
+    "retry": "重试",
+    "quick-loading": "正在搜索歌曲…",
+    "quick-error": "无法加载结果，请检查网络后重试。",
+    "quick-retry": "重试",
+    "quick-empty": "未找到歌曲。",
+    "quick-all-results": "查看全部结果 · Enter"
   },
   "my": {
     "xxxs-liked-tracks": "{{nickname}}喜欢的音乐",
@@ -93,6 +105,8 @@
     "recently-listened": "最近播放"
   },
   "settings": {
+    "discord-rpc-enable": "在 Discord 上显示正在收听的歌曲",
+    "discord-rpc-description": "需要运行 Discord 桌面客户端。显示歌曲、歌手、专辑封面和进度；暂停时隐藏。",
     "settings": "设置",
     "appearance": "外观",
     "theme": "主题",
@@ -178,7 +192,11 @@
     "about-up-to-date": "当前已是最新版本。",
     "about-update-available": "新版本 {{version}} 已发布",
     "about-open-releases": "查看 GitHub 发行版",
-    "about-update-error": "无法检查更新，请重试。"
+    "about-update-error": "无法检查更新，请重试。",
+    "session-title": "恢复收听会话",
+    "session-description": "记住播放队列、歌曲、进度、音量和循环模式。重新打开时暂停，点击播放即可继续。",
+    "session-enable": "启动时恢复收听会话",
+    "search-live-results": "输入搜索时显示歌曲"
   },
   "context-menu": {
     "share": "分享",

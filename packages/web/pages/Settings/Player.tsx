@@ -20,10 +20,48 @@ function Player() {
   return (
     <div className='iterms-center flex w-full justify-between'>
       <div className='w-full'>
+        <ListeningSessionSettings />
         <PlaybackQualitySelector />
         {window.env?.isElectron && <AudioOutputDevices />}
+        {window.env?.isElectron && <DiscordRpcSettings />}
         <FindTrackOnYouTube />
       </div>
+    </div>
+  )
+}
+
+function ListeningSessionSettings() {
+  const { t } = useTranslation()
+  const { restoreListeningSession } = useSnapshot(settings)
+  return (
+    <div className='mb-12'>
+      <BlockTitle>{t`settings.session-title`}</BlockTitle>
+      <BlockDescription>{t`settings.session-description`}</BlockDescription>
+      <Option>
+        <OptionText>{t`settings.session-enable`}</OptionText>
+        <Switch
+          enabled={restoreListeningSession}
+          onChange={value => (settings.restoreListeningSession = value)}
+        />
+      </Option>
+    </div>
+  )
+}
+
+function DiscordRpcSettings() {
+  const { t } = useTranslation()
+  const { enableDiscordRpc } = useSnapshot(settings)
+  return (
+    <div className='mb-12'>
+      <BlockTitle>Discord Rich Presence</BlockTitle>
+      <BlockDescription>{t`settings.discord-rpc-description`}</BlockDescription>
+      <Option>
+        <OptionText>{t`settings.discord-rpc-enable`}</OptionText>
+        <Switch
+          enabled={enableDiscordRpc}
+          onChange={value => (settings.enableDiscordRpc = value)}
+        />
+      </Option>
     </div>
   )
 }

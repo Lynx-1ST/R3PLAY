@@ -59,7 +59,14 @@
     "queue": "Hàng đợi",
     "volume-up": "Tăng âm lượng",
     "volume-down": "Giảm âm lượng",
-    "favorite": "Yêu thích"
+    "favorite": "Yêu thích",
+    "restore-unavailable": "Chưa thể tải bài hát. Nhấn Phát để thử lại.",
+    "queue-move": "Di chuyển {{title}}, vị trí {{position}}",
+    "queue-drag-hint": "Kéo để đổi thứ tự; dùng phím ↑/↓ khi chọn tay nắm",
+    "playlist-search": "Tìm bài, nghệ sĩ hoặc album trong playlist",
+    "playlist-results": "{{count}} / {{total}} bài",
+    "search-clear": "Xóa tìm kiếm",
+    "search-empty": "Không có bài hát phù hợp"
   },
   "toasts": {
     "copied": "Đã sao chép",
@@ -85,7 +92,12 @@
     "double-click-to-play": "Nhấp đúp để phát",
     "no-results": "Không tìm thấy kết quả",
     "error": "Đã xảy ra lỗi, vui lòng thử lại",
-    "retry": "Thử lại"
+    "retry": "Thử lại",
+    "quick-loading": "Đang tìm bài hát…",
+    "quick-error": "Không thể tải kết quả. Kiểm tra kết nối rồi thử lại.",
+    "quick-retry": "Thử lại",
+    "quick-empty": "Không tìm thấy bài hát.",
+    "quick-all-results": "Xem tất cả kết quả · Enter"
   },
   "my": {
     "xxxs-liked-tracks": "Bài hát yêu thích của {{nickname}}",
@@ -93,6 +105,8 @@
     "recently-listened": "NGHE GẦN ĐÂY"
   },
   "settings": {
+    "discord-rpc-enable": "Hiển thị bài đang nghe trên Discord",
+    "discord-rpc-description": "Cần mở Discord desktop. Hiển thị tên bài, nghệ sĩ, bìa album và tiến độ; tự ẩn khi tạm dừng.",
     "settings": "Cài đặt",
     "general": "Chung",
     "appearance": "Giao diện",
@@ -178,7 +192,11 @@
     "about-up-to-date": "Bạn đang dùng phiên bản mới nhất.",
     "about-update-available": "Có bản cập nhật v{{version}}",
     "about-open-releases": "Xem release trên GitHub",
-    "about-update-error": "Không thể kiểm tra cập nhật. Vui lòng thử lại."
+    "about-update-error": "Không thể kiểm tra cập nhật. Vui lòng thử lại.",
+    "session-title": "Khôi phục phiên nghe",
+    "session-description": "Nhớ hàng đợi, bài hát, vị trí phát, âm lượng và chế độ lặp. Mở lại ở trạng thái tạm dừng để bạn chủ động nghe tiếp.",
+    "session-enable": "Khôi phục phiên nghe khi mở ứng dụng",
+    "search-live-results": "Hiển thị bài hát ngay khi nhập tìm kiếm"
   },
   "context-menu": {
     "share": "Chia sẻ",

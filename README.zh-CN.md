@@ -15,16 +15,27 @@
         <br />
         <a href="https://music.xtify.top/" target="blank"><strong>🌎 访问最新DEMO</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
         <a href="https://r3play.app/" target="blank"><strong>🌎 访问原版DEMO</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="https://github.com/Sherlockouo/music/releases" target="blank"><strong>📦️ 下载安装包</strong></a>
+        <a href="https://github.com/Lynx-1ST/R3PLAY/releases/latest" target="blank"><strong>📦️ 下载安装包</strong></a>
         <br />
     </p>
 </p>
 <div align="center">
     <img src="https://github.com/sherlockouo/music/actions/workflows/build-dev.yml/badge.svg" />
     <img src="https://img.shields.io/badge/downloads-5.0k-deepgreen" />
-    <img src="https://img.shields.io/badge/latest_version-2.7.4-deepgreen" />
+    <img src="https://img.shields.io/badge/latest_version-2.8.4-deepgreen" />
     <img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat-square&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OSA0Ljk2MTU2Wk0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/Sherlockouo/music" />
 </div>
+
+## 2.8.4 更新与设置
+
+- 恢复播放队列、播放位置、音量、随机播放和循环设置；启动后保持暂停。可在 **设置 → 播放器** 中关闭。
+- 快速搜索可在输入时显示歌曲；可在 **设置 → 常规** 中开关。方向键选择结果，Enter 播放所选歌曲或打开全部结果。
+- 播放列表搜索支持歌曲名、歌手、专辑和忽略重音符号的匹配。
+- 使用队列拖动手柄调整顺序，也可聚焦手柄后按上下方向键。
+- **设置 → 播放器** 提供音频输出设备和 Discord Rich Presence。Discord 功能默认关闭，需要在同一台电脑运行 Discord；显示歌曲、歌手、封面和播放时间。
+- 优化紧凑窗口与迷你播放器布局。已移除桌面歌词，应用内同步歌词保留。
+
+Windows 安装包和应用更新来自 [Lynx-1ST/R3PLAY Releases](https://github.com/Lynx-1ST/R3PLAY/releases/latest)。
 
 ## 关于 Beta 版本
 

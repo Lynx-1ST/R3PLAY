@@ -7,7 +7,7 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 [English](README.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-CN.md)
 
 [![Build](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml)
-![Version](https://img.shields.io/badge/version-2.8.1-2ea44f)
+![Version](https://img.shields.io/badge/version-2.8.4-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
@@ -19,7 +19,12 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 
 - Đăng nhập NetEase Cloud Music, bao gồm đăng nhập bằng mã QR
 - Album, nghệ sĩ, playlist, tìm kiếm, Private FM và phát MV
-- Lời bài hát đồng bộ và cửa sổ desktop lyrics
+- Lời bài hát đồng bộ trong ứng dụng
+- Khôi phục hàng đợi, vị trí nghe, âm lượng, phát ngẫu nhiên và lặp lại; mở ứng dụng vẫn tạm dừng
+- Hiện bài hát ngay khi nhập tìm kiếm, tìm trong playlist không cần dấu
+- Kéo đổi thứ tự hàng đợi hoặc dùng bàn phím
+- Discord Rich Presence tùy chọn, hiển thị bài hát, nghệ sĩ, ảnh bìa và thời gian phát
+- Chọn thiết bị âm thanh trong Settings và miniplayer gọn hơn
 - Theme, màu nhấn và hình nền có thể tùy chỉnh
 - Hỗ trợ giao diện tiếng Anh, tiếng Việt và tiếng Trung giản thể
 - Nhiều nguồn nhạc dự phòng thông qua UnblockNeteaseMusic
@@ -31,6 +36,16 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 - Hỗ trợ web/PWA
 - Triển khai bằng Docker
 - Đóng gói ứng dụng cho Windows, macOS và Linux
+
+## Tải ứng dụng và thiết lập mới
+
+Tải bộ cài Windows tại [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases/latest). Chức năng cập nhật trong ứng dụng cũng lấy bản phát hành từ repository này.
+
+- **Settings → Chung:** bật hiển thị bài hát ngay khi nhập tìm kiếm. Enter mở toàn bộ kết quả; phím mũi tên chọn gợi ý và Enter phát bài đã chọn.
+- **Settings → Trình phát:** khôi phục phiên nghe (mặc định bật), chọn thiết bị âm thanh và Discord Rich Presence (mặc định tắt). Discord cần chạy trên cùng máy.
+- Kéo tay nắm ở hàng đợi để đổi thứ tự, hoặc chọn tay nắm và nhấn mũi tên lên/xuống. Tìm trong playlist hỗ trợ tên bài, nghệ sĩ, album và nhập không dấu.
+
+Chức năng lời bài hát trên desktop đã được bỏ. Lời bài hát đồng bộ trong ứng dụng vẫn được giữ lại.
 
 ## Ảnh chụp màn hình
 

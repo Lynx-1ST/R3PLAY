@@ -7,7 +7,7 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 [English](README.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-CN.md)
 
 [![Build](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml)
-![Version](https://img.shields.io/badge/version-2.8.1-2ea44f)
+![Version](https://img.shields.io/badge/version-2.8.4-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
@@ -19,7 +19,12 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 
 - NetEase Cloud Music login, including QR-code login
 - Album, artist, playlist, search, private FM and MV playback
-- Synchronized lyrics and desktop lyrics
+- Synchronized lyrics inside the player
+- Restore the listening queue, position, volume, shuffle and repeat settings; startup stays paused
+- Live song suggestions in quick search, plus accent-insensitive playlist filtering
+- Reorder the listening queue by dragging or using the keyboard
+- Optional Discord Rich Presence with track, artist, artwork and playback time
+- Audio output selection in Settings and a compact miniplayer
 - Configurable themes, accent colors and background artwork
 - English, Vietnamese and Simplified Chinese interface
 - Multiple audio-source fallbacks through UnblockNeteaseMusic
@@ -31,6 +36,16 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 - Web/PWA support
 - Docker deployment
 - Windows, macOS and Linux desktop packaging
+
+## Download and new settings
+
+Download the Windows installer from [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases/latest). The desktop updater also uses this repository's releases.
+
+- **Settings → General:** live song suggestions while typing. Enter opens all search results; arrow keys select a suggestion and Enter plays it.
+- **Settings → Player:** listening-session restoration (enabled by default), audio output device and Discord Rich Presence (disabled by default). Discord must be running on the same computer.
+- Drag a queue item's handle to move it, or focus the handle and press Up/Down. Playlist search matches titles, artists and albums without requiring accents.
+
+Desktop lyrics have been removed. Synchronized lyrics remain available inside the app.
 
 ## Screenshots
 

@@ -47,6 +47,12 @@ jobs:
       - name: Typecheck desktop
         run: pnpm --filter desktop test:types
 
+      - name: Test Discord Rich Presence
+        run: pnpm --filter desktop test:discord
+
+      - name: Test listening sessions and queue behavior
+        run: pnpm --filter web exec vitest run test/utils/listeningSession.test.ts test/utils/playerSession.test.ts
+
       - name: Build server
         run: pnpm --filter server build
 

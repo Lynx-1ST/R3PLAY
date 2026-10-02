@@ -16,6 +16,9 @@ import { bindingKeyboardShortcuts } from './keyboardShortcuts'
 import { checkForUpdates } from './updateWindow'
 import { createMenu } from './menu'
 import { createDockMenu } from './dockMenu'
+import { DiscordPresence } from './discordRpc'
+
+const discordPresence = new DiscordPresence()
 
 log.info('[electron] ipcMain.ts')
 
@@ -39,6 +42,15 @@ export function initIpcMain(
   thumbar: Thumbar | null,
   store: Store<TypedElectronStore>
 ) {
+  on(IpcChannels.DiscordPlayback, (event, playback) => {
+    if (event.sender !== win?.webContents || event.senderFrame !== win.webContents.mainFrame) return
+    discordPresence.update(playback)
+  })
+  win?.webContents.on('did-start-loading', () => discordPresence.update(null))
+  win?.webContents.on('render-process-gone', () => discordPresence.update(null))
+  win?.on('closed', () => discordPresence.stop())
+  app.once('before-quit', () => discordPresence.stop())
+  app.once('will-quit', () => discordPresence.stop())
   initWindowIpcMain(win)
   initTrayIpcMain(tray)
   initTaskbarIpcMain(thumbar)
@@ -140,6 +152,8 @@ function initStoreIpcMain(
    * 同步设置到Main
    */
   on(IpcChannels.SyncSettings, (event, settings) => {
+    if (event.sender !== win?.webContents || event.senderFrame !== win.webContents.mainFrame) return
+    discordPresence.setEnabled(settings?.enableDiscordRpc === true)
     const previousLanguage = store.get('settings')?.language
     store.set('settings', settings)
     if (settings.language !== previousLanguage) {

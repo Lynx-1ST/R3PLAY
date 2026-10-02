@@ -19,6 +19,8 @@ import { appName } from './const'
 import { isLyricsWindow } from './isLyricsWindow'
 import settings from '@/web/states/settings'
 import { setAudioOutput } from './audioOutput'
+import { readListeningSession, moveQueueItem } from './listeningSession'
+import i18n from '@/web/i18n/i18n'
 
 type TrackID = number
 export enum TrackListSourceType {
@@ -53,6 +55,8 @@ export class Player {
   private _progressInterval: ReturnType<typeof setInterval> | undefined
   private _volume: number = 1 // 0 to 1
   private _repeatMode: RepeatMode = RepeatMode.Off
+  private _audioPrepared = false
+  private _audioRequest = 0
 
   state: State = State.Initializing
   mode: Mode = Mode.TrackList
@@ -77,20 +81,21 @@ export class Player {
   _onUserSeek: (() => void) | null = null
 
   init(params: { [key: string]: any }) {
-    if (params._track) this._track = params._track
-    if (params._trackIndex) this._trackIndex = params._trackIndex
-    if (params._volume) this._volume = params._volume
-    if (params._repeatMode) this._repeatMode = params._repeatMode
-    if (params.state) this.trackList = params.state
-    if (params.mode) this.mode = params.mode
-    if (params.trackList) this.trackList = params.trackList
-    if (params.trackListSource) this.trackListSource = params.trackListSource
-    if (params.fmTrackList) this.fmTrackList = params.fmTrackList
-    if (params.shuffle) {
-      this.shuffle = params.shuffle
-      this.shufflePlayList()
+    const restored = readListeningSession(params)
+    this.volume = restored._volume
+    this._repeatMode = restored._repeatMode
+    if (settings.restoreListeningSession) {
+      this._track = restored._track
+      this.fmTrack = restored.fmTrack
+      this._trackIndex = restored._trackIndex
+      this._progress = restored._progress
+      this.mode = restored.mode as Mode
+      this.trackList = restored.trackList
+      this.originTrackList = restored.originTrackList
+      this.trackListSource = restored.trackListSource as TrackListSource | null
+      this.fmTrackList = restored.fmTrackList
+      this.shuffle = restored.shuffle && this.originTrackList.length > 0
     }
-    if (params.fmTrack) this.fmTrack = params.fmTrack
 
     this.state = State.Ready
     // The desktop-lyrics window is a read-only consumer of player state
@@ -98,12 +103,72 @@ export class Player {
     // muted Howl with html5 preload=auto that downloads the full track, and
     // _initFM would fire network calls — all for a window that never plays.
     if (!isLyricsWindow) {
-      if (this.trackID) this._playAudio(false) // just load the audio, not play
-      this._initFM()
+      if (this.trackID) void this._restoreAudio()
+      if (this.mode === Mode.FM) void this._initFM().catch(() => {})
     }
     this._initMediaSession()
 
     // window.ipcRenderer?.send(IpcChannels.Repeat, { mode: this._repeatMode })
+  }
+
+  exportSession() {
+    return {
+      version: 2,
+      savedAt: Date.now(),
+      _track: this._track,
+      fmTrack: this.fmTrack,
+      _trackIndex: this._trackIndex,
+      _progress: this._progress,
+      _volume: this.volume,
+      _repeatMode: this.repeatMode,
+      mode: this.mode,
+      trackList: [...this.trackList],
+      originTrackList: [...this.originTrackList],
+      trackListSource: this.trackListSource,
+      fmTrackList: [...this.fmTrackList],
+      shuffle: this.shuffle,
+    }
+  }
+
+  private async _restoreAudio() {
+    const id = this.trackID
+    try {
+      if (!this.track) {
+        const track = await this._fetchTrack(id)
+        if (this.trackID !== id) return
+        if (!track) throw new Error('Track unavailable')
+        if (this.mode === Mode.FM) this.fmTrack = track
+        else this._track = track
+      }
+      this._updateMediaSessionMetaData()
+      await this._playAudio(false, this._progress)
+    } catch {
+      if (this.trackID === id) {
+        this.state = State.Paused
+        toast.error(i18n.t('player.restore-unavailable'))
+      }
+    }
+  }
+
+  moveQueueTrack(from: number, to: number) {
+    if (this.mode !== Mode.TrackList) return
+    const moved = moveQueueItem(this.trackList, this._trackIndex, from, to)
+    if (!moved) return
+    this.trackList = moved.queue
+    this._trackIndex = moved.index
+  }
+
+  playQueueIndex(index: number) {
+    if (
+      this.mode !== Mode.TrackList ||
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= this.trackList.length
+    )
+      return
+    this._setStateToLoading()
+    this._trackIndex = index
+    void this._playTrack()
   }
 
   get howler() {
@@ -200,6 +265,10 @@ export class Player {
     // The lyrics window has no Howl of its own (audio plays in the main
     // window); its progress is pushed via IPC into `_progress`.
     if (isLyricsWindow) return this._progress
+    // HTML audio applies a pending seek when playback starts. Keep the saved
+    // position visible while a restored session is waiting for the user.
+    if (this.state === State.Ready || this.state === State.Paused) return this._progress
+    if (!_howler || _howler.state() !== 'loaded') return this._progress
     try {
       const t = _howler.seek()
       if (typeof t === 'number' && !isNaN(t)) return t
@@ -239,6 +308,8 @@ export class Player {
   }
 
   private _setStateToLoading() {
+    this._audioRequest++
+    this._audioPrepared = false
     this._scrobble()
     this.state = State.Loading
     _howler.pause()
@@ -253,7 +324,10 @@ export class Player {
     // 500ms cuts valtio rerenders and IPC SyncProgress traffic by ~6x
     // vs. the old 80ms without any user-visible regression.
     this._progressInterval = setInterval(() => {
-      if (this.state === State.Playing) this._progress = _howler.seek()
+      if (this.state === State.Playing && _howler.state() === 'loaded') {
+        const position = _howler.seek()
+        if (typeof position === 'number' && Number.isFinite(position)) this._progress = position
+      }
     }, 500)
   }
 
@@ -330,6 +404,7 @@ export class Player {
     if (!id) return
     this.state = State.Loading
     const track = await this._fetchTrack(id)
+    if (id !== this.trackID) return
     if (!track) {
       toast('加载歌曲信息失败')
       return
@@ -337,27 +412,39 @@ export class Player {
     if (this.mode === Mode.TrackList) this._track = track
     if (this.mode === Mode.FM) this.fmTrack = track
     this._updateMediaSessionMetaData()
-    this._playAudio()
+    void this._playAudio().catch(() => {
+      if (this.trackID !== id) return
+      this.state = State.Paused
+      toast.error(i18n.t('player.restore-unavailable'))
+    })
   }
 
   /**
    * Play audio via howler
    */
-  private async _playAudio(autoplay: boolean = true) {
-    this._progress = 0
+  private async _playAudio(autoplay: boolean = true, resumePosition = 0) {
+    const request = ++this._audioRequest
+    this._progress = resumePosition
     const { audio, id, bitrate, format, level } = await this._fetchAudioSource(this.trackID)
 
+    if (request !== this._audioRequest || this.trackID !== id) return
+
     if (!audio) {
-      toast('无法播放此歌曲')
-      this.nextTrack()
+      this.state = State.Paused
+      toast.error(i18n.t('player.restore-unavailable'))
       return
     }
     if (this.trackID !== id) return
     this.audioInfo = { bitrate, format, level }
-    this._playAudioViaHowler(audio, id, autoplay)
+    await this._playAudioViaHowler(audio, id, autoplay, resumePosition)
   }
 
-  private async _playAudioViaHowler(audio: string, id: number, autoplay: boolean = true) {
+  private async _playAudioViaHowler(
+    audio: string,
+    id: number,
+    autoplay: boolean = true,
+    resumePosition = 0
+  ) {
     Howler.unload()
 
     const url = audio.includes('?') ? `${audio}&dash-id=${id}` : `${audio}?dash-id=${id}`
@@ -370,14 +457,27 @@ export class Player {
       onend: () => {
         this._howlerOnEndCallback()
       },
+      onloaderror: () => {
+        if (_howler !== howler) return
+        this._audioPrepared = false
+        this.state = State.Paused
+        toast.error(i18n.t('player.restore-unavailable'))
+      },
     })
     _howler = howler
+    this._audioPrepared = true
+    howler.once('load', () => {
+      if (_howler !== howler || this.trackID !== id) return
+      if (resumePosition > 0)
+        howler.seek(Math.min(this._progress, Math.max(0, howler.duration() - 0.1)))
+    })
     try {
       await this.setDevice(settings.audioOutputDeviceId)
     } catch (error) {
       console.error('Audio output device unavailable, using system default:', error)
       await this.setDevice('')
     }
+    if (_howler !== howler || this.trackID !== id) return
 
     // 设置 crossOrigin 以支持 Web Audio API 分析（呼吸灯效果）
     // 必须在 src 触发实际网络请求前设置，否则音频会被标记为跨域污染，
@@ -404,8 +504,8 @@ export class Player {
       this.play()
       this.state = State.Playing
     }
-    _howler.once('load', () => {
-      this._cacheAudio((_howler as any)._src)
+    howler.once('load', () => {
+      if (_howler === howler) this._cacheAudio((howler as any)._src)
     })
 
     if (!this._progressInterval) {
@@ -466,6 +566,15 @@ export class Player {
    * @param {boolean} fade fade in
    */
   play(fade: boolean = false) {
+    if (!this._audioPrepared) {
+      if (this.state === State.Loading) return
+      this.state = State.Loading
+      void this._playAudio(true, this._progress).catch(() => {
+        this.state = State.Paused
+        toast.error(i18n.t('player.restore-unavailable'))
+      })
+      return
+    }
     if (_howler.playing()) {
       this.state = State.Playing
       return
@@ -563,14 +672,14 @@ export class Player {
    * @param trackID
    */
   addToFirstPlay(trackID: number) {
-    console.log(`trackID:${trackID}`)
-    // 判重
-    if (this.trackList.includes(trackID)) {
-      this.trackList = this.trackList.filter(item => item != trackID)
-      this.trackList.splice(0, 0, trackID)
+    const index = this.trackList.indexOf(trackID)
+    if (index >= 0) {
+      this.moveQueueTrack(index, 0)
       return
     }
+    if (this.trackList.length) this._trackIndex++
     this.trackList.splice(0, 0, trackID)
+    if (this.shuffle) this.originTrackList.push(trackID)
   }
 
   /**
@@ -578,13 +687,17 @@ export class Player {
    * @param trackID
    */
   addToNextPlay(trackID: number) {
-    // 判重
-    if (this.trackList.includes(trackID)) {
-      this.trackList = this.trackList.filter(item => item != trackID)
-      this.trackList.splice(Number(this._nextTrackIndex), 0, trackID)
+    const index = this.trackList.indexOf(trackID)
+    if (index >= 0) {
+      if (index !== this._trackIndex)
+        this.moveQueueTrack(
+          index,
+          index < this._trackIndex ? this._trackIndex : this._trackIndex + 1
+        )
       return
     }
-    this.trackList.splice(Number(this._nextTrackIndex), 0, trackID)
+    this.trackList.splice(this.trackList.length ? this._trackIndex + 1 : 0, 0, trackID)
+    if (this.shuffle) this.originTrackList.push(trackID)
   }
 
   /**
@@ -594,19 +707,25 @@ export class Player {
    */
 
   deleteFromPlaylist(trackID: number) {
-    // Check if the song existed in the tracklist
-    if (!this.trackList.includes(trackID)) {
-      return
+    const index = this.trackID === trackID ? this._trackIndex : this.trackList.indexOf(trackID)
+    if (this.mode !== Mode.TrackList || index < 0) return
+    const current = index === this._trackIndex
+    const playing = this.state === State.Playing
+    this.trackList.splice(index, 1)
+    this.originTrackList = this.originTrackList.filter(id => this.trackList.includes(id))
+    if (index < this._trackIndex) this._trackIndex--
+    if (!current) return
+    this._audioRequest++
+    this._audioPrepared = false
+    _howler.stop()
+    this._progress = 0
+    this._trackIndex = Math.min(index, Math.max(0, this.trackList.length - 1))
+    this._track = null
+    this.state = State.Ready
+    if (this.trackList.length) {
+      if (playing) void this._playTrack()
+      else void this._restoreAudio()
     }
-    // Check whether we are deleting the content that we are playing
-    if (this.track?.id != undefined && this.track?.id != trackID) {
-      this.trackList = this.trackList.filter(item => item != trackID)
-      return
-    }
-    // If we are deleting current playing. Switch to the next first
-    this.prevTrack()
-    this.trackList = this.trackList.filter(item => item != trackID)
-    this.nextTrack()
   }
 
   /**
@@ -619,6 +738,7 @@ export class Player {
       return
     }
     this.trackList.push(trackID)
+    if (this.shuffle) this.originTrackList.push(trackID)
   }
 
   /**
@@ -742,7 +862,10 @@ export class Player {
   async playTrack(trackID: TrackID) {
     this._setStateToLoading()
     const index = this.trackList.findIndex(t => t === trackID)
-    if (index === -1) toast('播放失败，歌曲不在列表内')
+    if (index === -1) {
+      toast('播放失败，歌曲不在列表内')
+      return
+    }
     this._trackIndex = index
     this._playTrack()
   }

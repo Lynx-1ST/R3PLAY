@@ -4,6 +4,7 @@ import { isLinux, isMac, isProd, isWindows } from './env'
 const { contextBridge, ipcRenderer } = require('electron')
 
 const allowedChannels = new Set<IpcChannels>([
+  IpcChannels.DiscordPlayback,
   IpcChannels.ClearAPICache,
   IpcChannels.Minimize,
   IpcChannels.MaximizeOrUnmaximize,

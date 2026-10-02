@@ -36,6 +36,10 @@ const Main = () => {
             margin-left: 144px;
             margin-right: ${isMaxWidth || !playerSnapshot.track ? 92 : 382}px;
           }
+          @media (min-width: 1024px) and (max-width: 1279px) {
+            margin-left: 112px;
+            margin-right: ${isMaxWidth || !playerSnapshot.track ? 48 : 366}px;
+          }
         `
       )}
     >

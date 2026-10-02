@@ -22,7 +22,7 @@ export const categoryIds = [
   'lab',
   'about',
 ] as const
-export type Category = typeof categoryIds[number]
+export type Category = (typeof categoryIds)[number]
 
 const Sidebar = ({
   activeCategory,
@@ -50,12 +50,27 @@ const Sidebar = ({
   }, [activeCategory])
 
   return (
-    <div className={cx('relative flex flex-col', isMobile && 'w-2/5')}>
+    <div
+      className={cx(
+        'relative flex flex-col',
+        isMobile && 'w-2/5',
+        css`
+          @media (min-width: 1024px) and (max-width: 1279px) {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 4px;
+            .settings-category-indicator {
+              display: none;
+            }
+          }
+        `
+      )}
+    >
       <motion.div
         initial={{ y: 11.5 }}
         animate={indicatorAnimation}
         transition={{ type: 'spring', duration: 0.6, bounce: 0.36 }}
-        className='bg-accent-color-700 absolute top-0 left-3 mr-2 h-4 w-1 rounded-full transition-colors duration-500'
+        className='settings-category-indicator bg-accent-color-700 absolute top-0 left-3 mr-2 h-4 w-1 rounded-full transition-colors duration-500'
       ></motion.div>
 
       {categories.map(category => (
@@ -102,7 +117,11 @@ const Settings = () => {
             !isMobile && 'mt-8 grid gap-10',
             isMobile && 'z-10',
             css`
-              grid-template-columns: 11rem auto;
+              grid-template-columns: 11rem minmax(0, 1fr);
+              @media (min-width: 1024px) and (max-width: 1279px) {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 20px;
+              }
             `
           )}
         >
