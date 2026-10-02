@@ -15,7 +15,8 @@ import { LyricsWindow } from './lyricsWindow'
 import { getPlatform } from './utils'
 import { bindingKeyboardShortcuts } from './keyboardShortcuts'
 import { checkForUpdates } from './updateWindow'
-import main from '.'
+import { createMenu } from './menu'
+import { createDockMenu } from './dockMenu'
 
 log.info('[electron] ipcMain.ts')
 
@@ -42,7 +43,7 @@ export function initIpcMain(
   initWindowIpcMain(win)
   initTrayIpcMain(tray)
   initTaskbarIpcMain(thumbar)
-  initStoreIpcMain(win,store)
+  initStoreIpcMain(win, store, tray)
   initOtherIpcMain(win)
 }
 
@@ -138,7 +139,11 @@ function initTaskbarIpcMain(thumbar: Thumbar | null) {
  * 处理需要electron-store的事件
  * @param {Store<TypedElectronStore>} store
  */
-function initStoreIpcMain(win: BrowserWindow | null, store: Store<TypedElectronStore>) {
+function initStoreIpcMain(
+  win: BrowserWindow | null,
+  store: Store<TypedElectronStore>,
+  tray: YPMTray | null
+) {
   /**
    * 同步设置到Main
    */
@@ -146,7 +151,13 @@ function initStoreIpcMain(win: BrowserWindow | null, store: Store<TypedElectronS
     const previousLanguage = store.get('settings')?.language
     store.set('settings', settings)
     if (settings.language !== previousLanguage) {
-      main.tray?.updateTray()
+      tray?.updateTray()
+      if (win) {
+        createMenu(win.webContents)
+        if (process.platform === 'darwin' && app.dock) {
+          app.dock.setMenu(createDockMenu(win))
+        }
+      }
     }
   })
 }
