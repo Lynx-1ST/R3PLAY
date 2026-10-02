@@ -58,25 +58,30 @@ class YoutubeDownloader {
     }
 
     // @credit https://www.npmjs.com/package/@yimura/scraper
-    function _parseData(data) {
-      const results = {
+    function _parseData(data: any[]) {
+      const results: {
+        channels: any[]
+        playlists: any[]
+        streams: any[]
+        videos: { duration: number; id: string; title: string }[]
+      } = {
         channels: [],
         playlists: [],
         streams: [],
         videos: [],
       }
 
-      const isVideo = item => item.videoRenderer && item.videoRenderer.lengthText
-      const getVideoData = item => {
+      const isVideo = (item: any) => item.videoRenderer && item.videoRenderer.lengthText
+      const getVideoData = (item: any) => {
         const vRender = item.videoRenderer
-        const compress = key => {
-          return (key && key['runs'] ? key['runs'].map(v => v.text) : []).join('')
+        const compress = (key: any) => {
+          return (key && key['runs'] ? key['runs'].map((v: any) => v.text) : []).join('')
         }
-        const parseDuration = vRender => {
+        const parseDuration = (vRender: any) => {
           if (!vRender.lengthText?.simpleText) return 0
 
           const nums = vRender.lengthText.simpleText.split(':')
-          let time = nums.reduce((a, t) => 60 * a + +t) * 1e3
+          let time = nums.reduce((a: number, t: string) => 60 * a + +t, 0) * 1e3
 
           return time
         }
@@ -95,16 +100,16 @@ class YoutubeDownloader {
       return results
     }
 
-    function _extractData(json) {
+    function _extractData(json: any): any[] {
       json = json.contents.twoColumnSearchResultsRenderer.primaryContents
 
-      let contents = []
+      let contents: any[] = []
 
       if (json.sectionListRenderer) {
         contents = json.sectionListRenderer.contents
-          .filter(item =>
+          .filter((item: any) =>
             item?.itemSectionRenderer?.contents.filter(
-              x => x.videoRenderer || x.playlistRenderer || x.channelRenderer
+              (x: any) => x.videoRenderer || x.playlistRenderer || x.channelRenderer
             )
           )
           .shift().itemSectionRenderer.contents
@@ -113,7 +118,7 @@ class YoutubeDownloader {
       if (json.richGridRenderer) {
         contents = json.richGridRenderer.contents
           .filter(item => item.richItemRenderer && item.richItemRenderer.content)
-          .map(item => item.richItemRenderer.content)
+          .map((item: any) => item.richItemRenderer.content)
       }
 
       return contents
@@ -186,9 +191,10 @@ class YoutubeDownloader {
       console.time('[youtube] getInfo')
 
       const httpProxyForYouTubeSettings = store.get('settings.httpProxyForYouTube')
-      const agent = new HttpProxyAgent(httpProxyForYouTubeSettings?.proxy)
+      const proxyUrl = httpProxyForYouTubeSettings?.proxy
+      const requestOptions = proxyUrl ? { agent: new HttpProxyAgent(proxyUrl) } : undefined
       const info = await ytdl.getInfo(video.id, {
-        requestOptions: { agent },
+        requestOptions,
       })
       console.timeEnd('[youtube] getInfo')
       if (!info) return null
