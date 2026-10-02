@@ -117,7 +117,7 @@ class YoutubeDownloader {
 
       if (json.richGridRenderer) {
         contents = json.richGridRenderer.contents
-          .filter(item => item.richItemRenderer && item.richItemRenderer.content)
+          .filter((item: any) => item.richItemRenderer && item.richItemRenderer.content)
           .map((item: any) => item.richItemRenderer.content)
       }
 
