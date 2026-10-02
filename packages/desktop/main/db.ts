@@ -174,7 +174,9 @@ class DB {
     table: T,
     key: TablesStructures[T]['id']
   ): TablesStructures[T] | undefined {
-    return this.sqlite.prepare(`SELECT * FROM ${table} WHERE id = ? LIMIT 1`).get(key) as\n      | TablesStructures[T]\n      | undefined
+    return this.sqlite.prepare(`SELECT * FROM ${table} WHERE id = ? LIMIT 1`).get(key) as
+      | TablesStructures[T]
+      | undefined
   }
 
   findMany<T extends TableNames>(
