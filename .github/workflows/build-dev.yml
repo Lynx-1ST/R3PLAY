@@ -1,9 +1,7 @@
 name: Build-PreRelease
 
 on:
-  push:
-    branches:
-      - dev
+  workflow_dispatch:
 
 jobs:
   release:
