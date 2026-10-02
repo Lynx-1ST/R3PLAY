@@ -18,6 +18,13 @@ export interface TypedElectronStore {
   }
   settings?: {
     language?: string
+    qqCookie?: string
+    miguCookie?: string
+    jooxCookie?: string
+    enableFindTrackOnYouTube?: boolean
+    httpProxyForYouTube?: {
+      proxy?: string
+    }
     [key: string]: unknown
   }
 }
