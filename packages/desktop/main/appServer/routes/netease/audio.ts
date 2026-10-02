@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import NeteaseCloudMusicApi, { SoundQualityType } from '@neteasecloudmusicapienhanced/api'
+import NeteaseCloudMusicApi from '@neteasecloudmusicapienhanced/api'
 import { app } from 'electron'
 import log from '@/desktop/main/log'
 import { appName } from '@/desktop/main/env'
@@ -7,7 +7,7 @@ import cache from '@/desktop/main/cache'
 import fs from 'fs'
 import youtube from '@/desktop/main/youtube'
 import { CacheAPIs } from '@/shared/CacheAPIs'
-import { FetchTracksResponse } from '@/shared/api/Track'
+import { FetchTracksResponse, PlaybackQuality } from '@/shared/api/Track'
 import store from '@/desktop/main/store'
 import { db, Tables } from '@/desktop/main/db'
 const match = require('@unblockneteasemusic/server')
@@ -17,7 +17,7 @@ log.info('[electron] appServer/routes/r3play/audio.ts')
 const cacheMatchesRequestedQuality = (
   format: string,
   bitRate: number,
-  level?: SoundQualityType
+  level?: PlaybackQuality
 ) => {
   if (!level) return true
 
@@ -31,7 +31,7 @@ const cacheMatchesRequestedQuality = (
   return false
 }
 
-const cachedAudioLevel = (format: string, bitRate: number): SoundQualityType => {
+const cachedAudioLevel = (format: string, bitRate: number): PlaybackQuality => {
   if (format === 'mp3') {
     if (bitRate <= 160000) return 'standard'
     if (bitRate < 256000) return 'higher'
@@ -40,7 +40,7 @@ const cachedAudioLevel = (format: string, bitRate: number): SoundQualityType => 
   return 'lossless'
 }
 
-const getAudioFromCache = async (id: number, level?: SoundQualityType) => {
+const getAudioFromCache = async (id: number, level?: PlaybackQuality) => {
   // get from cache
   const cache = await db.find(Tables.Audio, id)
   if (!cache || !cacheMatchesRequestedQuality(cache.format, cache.bitRate, level)) return
@@ -173,7 +173,7 @@ async function audio(fastify: FastifyInstance) {
   fastify.get(
     '/netease/song/url/v1',
     async (
-      req: FastifyRequest<{ Querystring: { id: string | number; level: SoundQualityType } }>,
+      req: FastifyRequest<{ Querystring: { id: string | number; level: PlaybackQuality } }>,
       reply
     ) => {
       const id = Number(req.query.id) || 0
