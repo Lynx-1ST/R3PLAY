@@ -17,7 +17,9 @@ class YoutubeDownloader {
     }[]
   > {
     let proxy: AxiosProxyConfig | false = false
-    const httpProxyForYouTubeSettings = store.get('settings.httpProxyForYouTube') as\n        | { proxy?: string }\n        | undefined as\n      | { proxy?: string }\n      | undefined
+    const httpProxyForYouTubeSettings = store.get('settings.httpProxyForYouTube') as
+      | { proxy?: string }
+      | undefined
     if (httpProxyForYouTubeSettings) {
       const youtubeProxy = httpProxyForYouTubeSettings?.proxy
       // const host = store.get('settings.httpProxyForYouTube.host') as string | undefined
@@ -190,7 +192,9 @@ class YoutubeDownloader {
 
       console.time('[youtube] getInfo')
 
-      const httpProxyForYouTubeSettings = store.get('settings.httpProxyForYouTube')
+      const httpProxyForYouTubeSettings = store.get('settings.httpProxyForYouTube') as
+        | { proxy?: string }
+        | undefined
       const proxyUrl = httpProxyForYouTubeSettings?.proxy
       const requestOptions = proxyUrl ? { agent: new HttpProxyAgent(proxyUrl) } : undefined
       const info = await ytdl.getInfo(video.id, {
