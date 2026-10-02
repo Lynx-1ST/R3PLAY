@@ -20,6 +20,59 @@ enum MenuItemIDs {
   Unlike = 'unlike',
 }
 
+const trayLabels = {
+  'en-US': {
+    show: 'Show main panel',
+    play: 'Play',
+    pause: 'Pause',
+    previous: 'Previous',
+    next: 'Next',
+    repeat: 'Repeat Mode',
+    repeatOff: 'Repeat Off',
+    repeatOn: 'Repeat On',
+    repeatOne: 'Repeat One',
+    shuffle: 'Shuffle',
+    like: 'Like',
+    unlike: 'Dislike',
+    quit: 'Quit',
+  },
+  'vi-VN': {
+    show: 'Hiện cửa sổ chính',
+    play: 'Phát',
+    pause: 'Tạm dừng',
+    previous: 'Bài trước',
+    next: 'Bài tiếp theo',
+    repeat: 'Chế độ lặp',
+    repeatOff: 'Tắt lặp',
+    repeatOn: 'Lặp danh sách',
+    repeatOne: 'Lặp một bài',
+    shuffle: 'Phát ngẫu nhiên',
+    like: 'Yêu thích',
+    unlike: 'Bỏ yêu thích',
+    quit: 'Thoát',
+  },
+  'zh-CN': {
+    show: '显示主面板',
+    play: '播放',
+    pause: '暂停',
+    previous: '上一首',
+    next: '下一首',
+    repeat: '循环模式',
+    repeatOff: '关闭循环',
+    repeatOn: '列表循环',
+    repeatOne: '单曲循环',
+    shuffle: '随机播放',
+    like: '加入喜欢',
+    unlike: '取消喜欢',
+    quit: '退出',
+  },
+} as const
+
+const getTrayLabels = () => {
+  const language = store.get('settings')?.language as keyof typeof trayLabels | undefined
+  return trayLabels[language ?? 'en-US'] ?? trayLabels['en-US']
+}
+
 export interface YPMTray {
   setTooltip(text: string): void
   setCoverImg(coverImg: string): void
@@ -59,7 +112,7 @@ class YPMTrayImpl implements YPMTray {
     })
   }
 
-  updateTray(){
+  updateTray() {
     this._template = this.createMenuTemplate(this._win)
 
     this._contextMenu = Menu.buildFromTemplate(this._template)
@@ -71,13 +124,13 @@ class YPMTrayImpl implements YPMTray {
   }
 
   createMenuTemplate(win: BrowserWindow): MenuItemConstructorOptions[] {
-    const lang =  store.get("settings.language")
-    
+    const labels = getTrayLabels()
+
     const template: MenuItemConstructorOptions[] =
       process.platform === 'linux'
         ? [
             {
-              label: lang === 'en-US' ? 'Show main panel':'显示主面板',
+              label: labels.show,
               click: () => win.show(),
             },
             {
@@ -88,7 +141,7 @@ class YPMTrayImpl implements YPMTray {
 
     return template.concat([
       {
-        label: lang === 'en-US' ? 'Play':'播放',
+        label: labels.play,
         click: () => {
           win.webContents.send(IpcChannels.Play, {})
           this.setPlayState(true)
@@ -98,7 +151,7 @@ class YPMTrayImpl implements YPMTray {
         id: MenuItemIDs.Play,
       },
       {
-        label: lang === 'en-US' ? 'Pause':'暂停',
+        label: labels.pause,
         click: () => {
           win.webContents.send(IpcChannels.Pause)
           this.setPlayState(false)
@@ -108,40 +161,40 @@ class YPMTrayImpl implements YPMTray {
         visible: false,
       },
       {
-        label: lang === 'en-US' ? 'Prev':'上一首',
+        label: labels.previous,
         click: () => win.webContents.send(IpcChannels.Previous),
         icon: createNativeImage('left.png'),
       },
       {
-        label: lang === 'en-US' ? 'Next':'下一首',
+        label: labels.next,
         click: () => win.webContents.send(IpcChannels.Next),
         icon: createNativeImage('right.png'),
       },
       {
-        label: lang === 'en-US' ? 'Repeat Mode':'循环模式',
+        label: labels.repeat,
         icon: createNativeImage('repeat.png'),
         submenu: [
           {
-            label: lang === 'en-US' ? 'Repeat Off':'关闭循环',
+            label: labels.repeatOff,
             click: () => win.webContents.send(IpcChannels.Repeat, RepeatMode.Off),
             id: RepeatMode.Off,
             checked: true,
             type: 'radio',
           },
           {
-            label: lang === 'en-US' ? 'Repeat On':'列表循环',
+            label: labels.repeatOn,
             click: () => win.webContents.send(IpcChannels.Repeat, RepeatMode.On),
             id: RepeatMode.On,
             type: 'radio',
           },
           {
-            label: lang === 'en-US' ? 'Repeat One':'单曲循环',
+            label: labels.repeatOne,
             click: () => win.webContents.send(IpcChannels.Repeat, RepeatMode.One),
             id: RepeatMode.One,
             type: 'radio',
           },
           {
-            label: lang === 'en-US' ? 'Shuffle':'随机播放',
+            label: labels.shuffle,
             click: () => win.webContents.send(IpcChannels.Repeat, RepeatMode.Shuffle),
             id: RepeatMode.Shuffle,
             type: 'radio',
@@ -149,20 +202,20 @@ class YPMTrayImpl implements YPMTray {
         ],
       },
       {
-        label: lang === 'en-US' ? 'Like':'加入喜欢',
+        label: labels.like,
         click: () => win.webContents.send(IpcChannels.Like),
         icon: createNativeImage('like.png'),
         id: MenuItemIDs.Like,
       },
       {
-        label: lang === 'en-US' ? 'Dislike':'取消喜欢',
+        label: labels.unlike,
         click: () => win.webContents.send(IpcChannels.Like),
         icon: createNativeImage('unlike.png'),
         id: MenuItemIDs.Unlike,
         visible: false,
       },
       {
-        label: lang === 'en-US' ? 'Quit':'退出',
+        label: labels.quit,
         click: () => app.exit(),
         icon: createNativeImage('exit.png'),
       },
