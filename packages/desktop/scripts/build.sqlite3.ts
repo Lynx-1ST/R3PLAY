@@ -80,11 +80,14 @@ async function getElectronModuleVersion() {
   // Match on major version: the manifest may pin a different patch than the
   // lockfile resolved, and every x.y.z of the same major shares one ABI.
   const electronMajor = electronVersion.split('.')[0]
-  electronModuleVersion = releases.data.find((r: { version: string; modules: string }) => r.version.startsWith(`${electronMajor}.`))?.modules
-  if (!electronModuleVersion) {
+  const release = releases.data.find((r: { version: string; modules: string }) =>
+    r.version.startsWith(`${electronMajor}.`)
+  )
+  if (!release) {
     console.error(pc.red('Can not find electron module version in electron-releases'))
     process.exit(1)
   }
+  electronModuleVersion = release.modules
   console.log(pc.cyan(`electronModuleVersion=${electronModuleVersion}`))
 }
 
