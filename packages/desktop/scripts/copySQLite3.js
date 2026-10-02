@@ -6,59 +6,138 @@ const fs = require('fs')
 const archs = ['ia32', 'x64', 'armv7l', 'arm64', 'universal']
 
 const projectDir = path.resolve(process.cwd(), '../../')
-const binDir = `${projectDir}/tmp/bin`
+const binDir = path.join(projectDir, 'tmp/bin')
 console.log(pc.cyan(`projectDir=${projectDir}`))
 console.log(pc.cyan(`binDir=${binDir}`))
 
+function resolvePackageDir(packageName, fromDir) {
+  const packageJson = require.resolve(`${packageName}/package.json`, {
+    paths: [fromDir],
+  })
+  return path.dirname(packageJson)
+}
+
+function copyPackageWithoutNodeModules(sourceDir, destinationDir) {
+  fs.rmSync(destinationDir, { recursive: true, force: true })
+
+  fs.cpSync(sourceDir, destinationDir, {
+    recursive: true,
+    filter(source) {
+      const relative = path.relative(sourceDir, source)
+      if (!relative) return true
+      return !relative.split(path.sep).includes('node_modules')
+    },
+  })
+}
+
+function vendorResolvedPackage(sourceDir, destinationDir, ancestry = new Set()) {
+  const packageJsonPath = path.join(sourceDir, 'package.json')
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+
+  copyPackageWithoutNodeModules(sourceDir, destinationDir)
+
+  const nextAncestry = new Set(ancestry)
+  nextAncestry.add(sourceDir)
+
+  const dependencies = {
+    ...(packageJson.dependencies || {}),
+    ...(packageJson.optionalDependencies || {}),
+  }
+
+  for (const dependencyName of Object.keys(dependencies)) {
+    let dependencySource
+    try {
+      dependencySource = resolvePackageDir(dependencyName, sourceDir)
+    } catch (error) {
+      if (packageJson.optionalDependencies?.[dependencyName]) {
+        console.warn(
+          pc.yellow(
+            `Optional dependency ${dependencyName} was not installed for ${packageJson.name}`
+          )
+        )
+        continue
+      }
+      throw error
+    }
+
+    // For a circular dependency, Node can resolve the ancestor copy.
+    if (nextAncestry.has(dependencySource)) continue
+
+    const dependencyDestination = path.join(
+      destinationDir,
+      'node_modules',
+      ...dependencyName.split('/')
+    )
+
+    vendorResolvedPackage(dependencySource, dependencyDestination, nextAncestry)
+  }
+}
+
+function vendorExpressForConsumer(resourcesDir, consumerName) {
+  const consumerSource = resolvePackageDir(consumerName, projectDir)
+  const expressSource = resolvePackageDir('express', consumerSource)
+  const expressPackage = JSON.parse(
+    fs.readFileSync(path.join(expressSource, 'package.json'), 'utf8')
+  )
+
+  const consumerDestination = path.join(
+    resourcesDir,
+    'app.asar.unpacked',
+    'node_modules',
+    ...consumerName.split('/')
+  )
+  const expressDestination = path.join(consumerDestination, 'node_modules', 'express')
+
+  console.log(
+    pc.cyan(
+      `Vendoring express@${expressPackage.version} for ${consumerName} -> ${expressDestination}`
+    )
+  )
+
+  vendorResolvedPackage(expressSource, expressDestination)
+}
+
 exports.default = async function (context) {
-  // console.log(context)
   const platform = context.electronPlatformName
   const arch = archs?.[context.arch]
 
-  // Mac
   if (platform === 'darwin') {
-    if (arch === 'universal') return // Skip universal we already copy binary for x64 and arm64
-    if (arch !== 'x64' && arch !== 'arm64') return // Skip other archs
+    if (arch === 'universal') return
+    if (arch !== 'x64' && arch !== 'arm64') return
 
-    const from = `${binDir}/better_sqlite3_darwin_${arch}.node`
-    const to = `${context.appOutDir}/${context.packager.appInfo.productFilename}.app/Contents/Resources/bin/better_sqlite3.node`
+    const from = path.join(binDir, `better_sqlite3_darwin_${arch}.node`)
+    const to = path.join(
+      context.appOutDir,
+      `${context.packager.appInfo.productFilename}.app/Contents/Resources/bin/better_sqlite3.node`
+    )
     console.info(`copy ${from} to ${to}`)
 
-    const toFolder = to.replace('/better_sqlite3.node', '')
-    if (!fs.existsSync(toFolder)) {
-      fs.mkdirSync(toFolder, {
-        recursive: true,
-      })
-    }
-
-    try {
-      fs.copyFileSync(from, to)
-    } catch (e) {
-      console.log(pc.red('Copy failed! Process stopped.'))
-      throw e
-    }
+    fs.mkdirSync(path.dirname(to), { recursive: true })
+    fs.copyFileSync(from, to)
+    return
   }
 
-  // Windows and Linux
   if (platform === 'win32' || platform === 'linux') {
-    if (platform === 'win32' && arch !== 'x64') return // Skip windows arm
+    if (platform === 'win32' && arch !== 'x64') return
 
-    const from = `${binDir}/better_sqlite3_${platform}_${arch}.node`
-    const to = `${context.appOutDir}/resources/bin/better_sqlite3.node`
+    const from = path.join(binDir, `better_sqlite3_${platform}_${arch}.node`)
+    const to = path.join(context.appOutDir, 'resources/bin/better_sqlite3.node')
     console.info(`copy ${from} to ${to}`)
 
-    const toFolder = to.replace('/better_sqlite3.node', '')
-    if (!fs.existsSync(toFolder)) {
-      fs.mkdirSync(toFolder, {
-        recursive: true,
-      })
-    }
+    fs.mkdirSync(path.dirname(to), { recursive: true })
+    fs.copyFileSync(from, to)
 
-    try {
-      fs.copyFileSync(from, to)
-    } catch (e) {
-      console.log(pc.red('Copy failed! Process stopped.'))
-      throw e
+    if (platform === 'win32') {
+      const resourcesDir = path.join(context.appOutDir, 'resources')
+
+      // electron-builder's pnpm dependency collector can flatten incompatible
+      // transitive versions. These two consumers require different Express
+      // versions, so give each one a fully self-contained dependency tree.
+      vendorExpressForConsumer(resourcesDir, '@neteasecloudmusicapienhanced/api')
+      vendorExpressForConsumer(
+        resourcesDir,
+        '@neteasecloudmusicapienhanced/unblockmusic-utils'
+      )
     }
   }
 }
