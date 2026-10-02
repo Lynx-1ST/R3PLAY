@@ -21,6 +21,7 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 - Album, artist, playlist, search, private FM and MV playback
 - Synchronized lyrics and desktop lyrics
 - Configurable themes, accent colors and background artwork
+- English, Vietnamese and Simplified Chinese interface
 - Multiple audio-source fallbacks through UnblockNeteaseMusic
 - NetEase playback quality selection: 128K, 192K, 320K, Lossless and Hi-Res
 - Audio caching with quality-aware cache reuse
