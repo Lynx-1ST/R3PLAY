@@ -19,31 +19,29 @@ function Player() {
 }
 
 function PlaybackQualitySelector() {
+  const { t } = useTranslation()
   const { audioQuality } = useSnapshot(settings)
 
   const options: { name: string; value: PlaybackQuality }[] = [
-    { name: 'Standard · 128 kbps', value: 'standard' },
-    { name: 'Higher · 192 kbps', value: 'higher' },
-    { name: 'High · 320 kbps', value: 'exhigh' },
-    { name: 'Lossless · FLAC', value: 'lossless' },
-    { name: 'Hi-Res · FLAC', value: 'hires' },
+    { name: t`settings.audio-quality-standard`, value: 'standard' },
+    { name: t`settings.audio-quality-higher`, value: 'higher' },
+    { name: t`settings.audio-quality-high`, value: 'exhigh' },
+    { name: t`settings.audio-quality-lossless`, value: 'lossless' },
+    { name: t`settings.audio-quality-hires`, value: 'hires' },
   ]
 
   return (
     <div className='mb-12'>
-      <BlockTitle>NetEase Audio Quality</BlockTitle>
-      <BlockDescription>
-        Choose the quality requested from NetEase. The actual format and bitrate returned by
-        NetEase are shown under the player.
-      </BlockDescription>
+      <BlockTitle>{t`settings.audio-quality-title`}</BlockTitle>
+      <BlockDescription>{t`settings.audio-quality-description`}</BlockDescription>
       <Option>
-        <OptionText>Streaming quality</OptionText>
+        <OptionText>{t`settings.audio-quality-streaming`}</OptionText>
         <Select
           options={options}
           value={audioQuality}
           onChange={value => {
             settings.audioQuality = value
-            toast.success('Playback quality updated. It will apply to the next track.')
+            toast.success(t`settings.audio-quality-updated`)
           }}
         />
       </Option>
@@ -52,7 +50,7 @@ function PlaybackQualitySelector() {
 }
 
 function FindTrackOnYouTube() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
 
   const { enableFindTrackOnYouTube, qqCookie, miguCookie, jooxCookie, httpProxyForYouTube } =
     useSnapshot(settings)
@@ -65,7 +63,7 @@ function FindTrackOnYouTube() {
     <div className='flex w-full flex-col justify-between'>
       <div>
         <BlockTitle>{t`settings.player-youtube-unlock`}</BlockTitle>
-        <BlockDescription>{'此功能仅在桌面端支持 | Only support desktop'}</BlockDescription>
+        <BlockDescription>{t`settings.player-youtube-desktop-only`}</BlockDescription>
       </div>
       <div>
         {
@@ -74,16 +72,12 @@ function FindTrackOnYouTube() {
               <div className='mb-5'>
                 <BlockDescription>
                   {t`settings.player-find-alternative-track-on-youtube-if-not-available-on-netease`}
-                  {i18n.language === 'zh-CN' && (
-                    <>
-                      <br />
-                      此功能需要开启 Clash for Windows 的 TUN Mode 或 ClashX Pro 的增强模式。
-                    </>
-                  )}
+                  <br />
+                  {t`settings.player-youtube-proxy-note`}
                 </BlockDescription>
                 {/* Switch */}
                 <Option>
-                  <OptionText>Enable YouTube Unlock</OptionText>
+                  <OptionText>{t`settings.player-youtube-enable`}</OptionText>
                   <Switch
                     enabled={enableFindTrackOnYouTube}
                     onChange={value => (settings.enableFindTrackOnYouTube = value)}
@@ -92,18 +86,18 @@ function FindTrackOnYouTube() {
                 {/* Proxy */}
                 <Option>
                   <OptionText>
-                    HTTP Proxy config for connecting to YouTube{' '}
-                    {httpProxyForYouTube?.host && '(Configured)'}
+                    {t`settings.player-youtube-proxy-config`}{' '}
+                    {httpProxyForYouTube?.proxy && `(${t`settings.player-youtube-configured`})`}
                   </OptionText>
                   <Button
                     onClick={() => {
                       // todo: check regex
                       if (proxy === '') {
-                        toast.error('proxy is empty')
+                        toast.error(t`settings.player-youtube-proxy-empty`)
                         return
                       }
                       settings.httpProxyForYouTube!.proxy = proxy
-                      toast.success('proxy is' + proxy)
+                      toast.success(t`settings.player-youtube-proxy-saved`)
                     }}
                   >
                     Submit
@@ -226,20 +220,6 @@ function FindTrackOnYouTube() {
         </Option>
       </div>
 
-      {/* Proxy */}
-      <Option>
-        <OptionText>
-          HTTP Proxy config for connecting to YouTube {httpProxyForYouTube?.host && '(Configured)'}
-        </OptionText>
-        <Button
-          onClick={() => {
-            settings.httpProxyForYouTube!.proxy = proxy
-            toast.success('proxy is' + proxy)
-          }}
-        >
-          Submit
-        </Button>
-      </Option>
     </div>
   )
 }
