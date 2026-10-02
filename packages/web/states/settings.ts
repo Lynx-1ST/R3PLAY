@@ -3,7 +3,7 @@ import { merge } from 'lodash-es'
 import { proxy, subscribe } from 'valtio'
 import i18n, { getInitLanguage, SupportedLanguage, supportedLanguages } from '../i18n/i18n'
 import { getKeyboardShortcutDefaultSettings } from '@/shared/defaultSettings'
-import type { AudioSourceMode } from '@/shared/audioSources'
+import type { PlaybackQuality } from '@/shared/api/Track'
 
 interface Settings {
   accentColor: string
@@ -11,7 +11,7 @@ interface Settings {
   qqCookie: string
   miguCookie: string
   jooxCookie: string
-  audioSourceMode: AudioSourceMode
+  audioQuality: PlaybackQuality
   enableFindTrackOnYouTube: boolean
   httpProxyForYouTube?: {
     proxy: string
@@ -58,7 +58,7 @@ const initSettings: Settings = {
   qqCookie: '',
   miguCookie: '',
   jooxCookie: '',
-  audioSourceMode: 'netease',
+  audioQuality: 'exhigh',
   enableFindTrackOnYouTube: false,
   playAnimatedArtworkFromApple: true,
   priorityDisplayOfAlbumArtistDescriptionFromAppleMusic: true,
@@ -86,6 +86,8 @@ const STORAGE_KEY = 'settings'
 let statesInStorage = {}
 try {
   statesInStorage = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+  // Remove the short-lived audio-source experiment from older fork builds.
+  delete (statesInStorage as Record<string, unknown>).audioSourceMode
 } catch {
   // ignore
 }
