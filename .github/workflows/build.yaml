@@ -73,6 +73,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --win --x64 --publish never
 
+      - name: Verify packaged runtime dependencies
+        shell: pwsh
+        run: |
+          $entitiesDecode = "packages/desktop/release/win-unpacked/resources/app.asar.unpacked/node_modules/entities/dist/commonjs/decode.js"
+          if (-not (Test-Path $entitiesDecode)) {
+            throw "Packaged app is missing entities/decode runtime dependency."
+          }
+          Write-Host "Verified runtime dependency: $entitiesDecode"
+
       - name: Resolve release tag
         id: version
         shell: pwsh
@@ -94,6 +103,32 @@ jobs:
 
           Write-Host "--- Windows release assets ---"
           Get-ChildItem release-assets
+
+      - name: Remove existing release and tag
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ steps.version.outputs.tag }}"
+
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Deleting existing release $tag"
+            gh release delete $tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to delete existing release $tag"
+            }
+          }
+          else {
+            gh api "repos/$env:GITHUB_REPOSITORY/git/ref/tags/$tag" *> $null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Deleting existing tag $tag"
+              gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$tag"
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to delete existing tag $tag"
+              }
+            }
+          }
 
       - name: Publish Windows release
         uses: softprops/action-gh-release@v2
