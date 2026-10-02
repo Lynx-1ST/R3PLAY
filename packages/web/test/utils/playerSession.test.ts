@@ -12,6 +12,8 @@ vi.mock('howler', () => ({
     position = 0
     loaded = false
     active = false
+    gain = 1
+    fadeTimer: ReturnType<typeof setTimeout> | undefined
     handlers = new Map<string, (() => void)[]>()
     _src: string
     constructor(public options: any) {
@@ -38,8 +40,26 @@ vi.mock('howler', () => ({
     playing() {
       return this.active
     }
+    volume(value?: number) {
+      if (value !== undefined) {
+        clearTimeout(this.fadeTimer)
+        this.gain = value
+      }
+      return this.gain
+    }
+    emit(event: string) {
+      const handlers = this.handlers.get(event) ?? []
+      this.handlers.delete(event)
+      for (const handler of handlers) handler()
+    }
+    fade(from: number, to: number) {
+      clearTimeout(this.fadeTimer)
+      this.gain = from
+      this.fadeTimer = setTimeout(() => { this.gain = to; this.emit('fade') }, 200)
+    }
     play() {
       this.active = true
+      this.emit('play')
     }
     pause() {
       this.active = false
@@ -101,6 +121,30 @@ afterEach(() => {
   vi.useRealTimers()
 })
 describe('player session restoration', () => {
+  it('keeps the same effective volume after fade, lyric seek and manual adjustment', async () => {
+    const player = new Player()
+    player.init({ ...session, _volume: 0.5 })
+    await settle()
+    const howl = mocks.instances.at(-1)
+    howl.load()
+    player.play(true)
+    await vi.advanceTimersByTimeAsync(250)
+    expect(howl.gain * player.volume).toBe(0.5)
+    player.pause(true)
+    await vi.advanceTimersByTimeAsync(250)
+    expect(howl.active).toBe(false)
+    player.progress = 100
+    player.play(true)
+    await vi.advanceTimersByTimeAsync(250)
+    expect(howl.gain * player.volume).toBe(0.5)
+    player.volume = 0.6
+    expect(howl.gain * player.volume).toBe(0.6)
+    player.pause(true)
+    player.play()
+    await vi.advanceTimersByTimeAsync(250)
+    expect(howl.active).toBe(true)
+    expect(howl.gain * player.volume).toBe(0.6)
+  })
   it('restores paused, seeks after load and retains shuffle order and mute', async () => {
     const player = new Player()
     player.init(session)

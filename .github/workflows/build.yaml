@@ -98,6 +98,8 @@ jobs:
         run: |
           $version = node -p "require('./package.json').version"
           "tag=v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $releaseName = if ($version -eq '2.8.5') { "v$version — Hotfix: consistent playback volume" } else { "v$version" }
+          "name=$releaseName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Collect Windows artifacts
         shell: pwsh
@@ -118,7 +120,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.name }}
           target_commitish: release
           draft: false
           prerelease: false

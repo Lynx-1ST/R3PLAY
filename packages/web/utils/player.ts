@@ -57,6 +57,7 @@ export class Player {
   private _repeatMode: RepeatMode = RepeatMode.Off
   private _audioPrepared = false
   private _audioRequest = 0
+  private _fadeRequest = 0
 
   state: State = State.Initializing
   mode: Mode = Mode.TrackList
@@ -286,7 +287,11 @@ export class Player {
   }
   set volume(value) {
     this._volume = clamp(value, 0, 1)
+    this._fadeRequest++
+    // User volume is applied globally; the per-track gain is only for fades.
+    _howler.volume(1)
     Howler.volume(this._volume)
+    if (this.state === State.Paused) _howler.pause()
   }
 
   get repeatMode(): RepeatMode {
@@ -566,6 +571,7 @@ export class Player {
    * @param {boolean} fade fade in
    */
   play(fade: boolean = false) {
+    const fadeRequest = ++this._fadeRequest
     if (!this._audioPrepared) {
       if (this.state === State.Loading) return
       this.state = State.Loading
@@ -576,18 +582,20 @@ export class Player {
       return
     }
     if (_howler.playing()) {
+      _howler.volume(1)
       this.state = State.Playing
       return
     }
-    _howler.play()
+    const howler = _howler
+    howler.volume(fade ? 0 : 1)
+    this.state = State.Playing
     if (fade) {
-      this.state = State.Playing
-      _howler.once('play', () => {
-        _howler.fade(0, this._volume, PLAY_PAUSE_FADE_DURATION)
+      howler.once('play', () => {
+        if (fadeRequest !== this._fadeRequest || howler !== _howler) return
+        howler.fade(0, 1, PLAY_PAUSE_FADE_DURATION)
       })
-    } else {
-      this.state = State.Playing
     }
+    howler.play()
   }
 
   /**
@@ -595,15 +603,18 @@ export class Player {
    * @param {boolean} fade fade out
    */
   pause(fade: boolean = false) {
+    const fadeRequest = ++this._fadeRequest
+    const howler = _howler
+    this.state = State.Paused
     if (fade) {
-      _howler.fade(this._volume, 0, PLAY_PAUSE_FADE_DURATION)
-      this.state = State.Paused
-      _howler.once('fade', () => {
-        _howler.pause()
+      howler.once('fade', () => {
+        if (fadeRequest !== this._fadeRequest || howler !== _howler) return
+        howler.pause()
       })
+      howler.fade(howler.volume(), 0, PLAY_PAUSE_FADE_DURATION)
     } else {
-      this.state = State.Paused
-      _howler.pause()
+      howler.pause()
+      howler.volume(1)
     }
   }
 
