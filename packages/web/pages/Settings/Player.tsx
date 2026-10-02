@@ -100,7 +100,7 @@ function FindTrackOnYouTube() {
                       toast.success(t`settings.player-youtube-proxy-saved`)
                     }}
                   >
-                    Submit
+                    {t`settings.player-youtube-submit`}
                   </Button>
                 </Option>
                 <Option>
@@ -114,8 +114,8 @@ function FindTrackOnYouTube() {
                         className='w-full grow appearance-none rounded-md px-1 text-lg placeholder:pl-1
                         placeholder:text-black/30 bg-black/10
                         dark:placeholder:text-white/30 dark:bg-white/10'
-                        placeholder={'ext. https://192.168.10.1:8080'}
-                        type='proxy'
+                        placeholder={'e.g. http://127.0.0.1:7890'}
+                        type='text'
                         value={proxy}
                       />
                     </motion.div>
@@ -219,7 +219,6 @@ function FindTrackOnYouTube() {
           </AnimatePresence>
         </Option>
       </div>
-
     </div>
   )
 }
