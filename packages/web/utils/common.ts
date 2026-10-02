@@ -119,13 +119,13 @@ export function formatDuration(
         hours: 'hr',
         mins: 'min',
       },
+      'vi-VN': {
+        hours: 'giờ',
+        mins: 'phút',
+      },
       'zh-CN': {
         hours: '小时',
         mins: '分钟',
-      },
-      'zh-TW': {
-        hours: '小時',
-        mins: '分鐘',
       },
     } as const
 
