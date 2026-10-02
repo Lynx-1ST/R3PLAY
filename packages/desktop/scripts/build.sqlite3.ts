@@ -61,7 +61,7 @@ async function getElectronModuleVersion() {
     console.log(pc.yellow('node-abi lookup failed, falling back to releases.json'))
   }
 
-  const releases = await axios({
+  const releases: { data?: { version: string; modules: string }[] } = await axios({
     method: 'get',
     url: 'https://releases.electronjs.org/releases.json',
     headers: {
@@ -80,7 +80,7 @@ async function getElectronModuleVersion() {
   // Match on major version: the manifest may pin a different patch than the
   // lockfile resolved, and every x.y.z of the same major shares one ABI.
   const electronMajor = electronVersion.split('.')[0]
-  electronModuleVersion = releases.data.find(r => r.version.startsWith(`${electronMajor}.`))?.modules
+  electronModuleVersion = releases.data.find((r: { version: string; modules: string }) => r.version.startsWith(`${electronMajor}.`))?.modules
   if (!electronModuleVersion) {
     console.error(pc.red('Can not find electron module version in electron-releases'))
     process.exit(1)
@@ -211,7 +211,7 @@ async function build(arch: Arch) {
       console.info(`copy ${from} to ${to}`)
       fs.copyFileSync(from, to)
     })
-    .catch(e => {
+    .catch((e: unknown) => {
       console.error(pc.red('Build failed!'))
       console.error(pc.red(e))
     })
