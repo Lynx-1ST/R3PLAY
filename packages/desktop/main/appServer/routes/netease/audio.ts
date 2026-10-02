@@ -31,6 +31,15 @@ const cacheMatchesRequestedQuality = (
   return false
 }
 
+const cachedAudioLevel = (format: string, bitRate: number): SoundQualityType => {
+  if (format === 'mp3') {
+    if (bitRate <= 160000) return 'standard'
+    if (bitRate < 256000) return 'higher'
+    return 'exhigh'
+  }
+  return 'lossless'
+}
+
 const getAudioFromCache = async (id: number, level?: SoundQualityType) => {
   // get from cache
   const cache = await db.find(Tables.Audio, id)
@@ -64,7 +73,7 @@ const getAudioFromCache = async (id: number, level?: SoundQualityType) => {
         flag: 4,
         canExtend: false,
         freeTrialInfo: null,
-        level: 'standard',
+        level: cachedAudioLevel(cache.format, cache.bitRate),
         encodeType: cache.format,
         freeTrialPrivilege: {
           resConsumable: false,
