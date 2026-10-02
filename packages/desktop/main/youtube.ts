@@ -17,7 +17,7 @@ class YoutubeDownloader {
     }[]
   > {
     let proxy: AxiosProxyConfig | false = false
-    const httpProxyForYouTubeSettings = store.get('settings.httpProxyForYouTube')
+    const httpProxyForYouTubeSettings = store.get('settings.httpProxyForYouTube') as\n        | { proxy?: string }\n        | undefined as\n      | { proxy?: string }\n      | undefined
     if (httpProxyForYouTubeSettings) {
       const youtubeProxy = httpProxyForYouTubeSettings?.proxy
       // const host = store.get('settings.httpProxyForYouTube.host') as string | undefined
