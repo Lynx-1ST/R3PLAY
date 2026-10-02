@@ -196,26 +196,26 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
         {
           label: labels.reportIssue,
           click: async () => {
-            await shell.openExternal('https://github.com/qier222/YesPlayMusic/issues/new')
+            await shell.openExternal('https://github.com/Sherlockouo/music/issues/new')
           },
         },
         { type: 'separator' },
         {
           label: labels.repository,
           click: async () => {
-            await shell.openExternal('https://github.com/qier222/YesPlayMusic')
+            await shell.openExternal('https://github.com/Lynx-1ST/R3PLAY')
           },
         },
         {
           label: labels.forum,
           click: async () => {
-            await shell.openExternal('https://github.com/qier222/YesPlayMusic/discussions')
+            await shell.openExternal('https://github.com/Sherlockouo/music/discussions')
           },
         },
         {
           label: labels.community,
           click: async () => {
-            await shell.openExternal('https://github.com/qier222/YesPlayMusic/discussions')
+            await shell.openExternal('https://github.com/Sherlockouo/music/discussions')
           },
         },
       ],
