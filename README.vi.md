@@ -7,7 +7,7 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 [English](README.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-CN.md)
 
 [![Build](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml)
-![Version](https://img.shields.io/badge/version-2.8.6-2ea44f)
+![Version](https://img.shields.io/badge/version-2.8.9-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
@@ -29,6 +29,8 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 - Hỗ trợ giao diện tiếng Anh, tiếng Việt và tiếng Trung giản thể
 - Nhiều nguồn nhạc dự phòng thông qua UnblockNeteaseMusic
 - Chọn chất lượng phát NetEase: 128K, 192K, 320K, Lossless và Hi-Res
+- Chọn Spatial Audio, Audio Vivid và Surround Audio ngay trên miniplayer
+- Chọn 8 mức chất lượng tải xuống, kiểm tra quyền theo bài hát và tài khoản
 - Audio cache có kiểm tra chất lượng trước khi tái sử dụng
 - Tùy chọn dùng YouTube làm nguồn dự phòng trên desktop
 - Tích hợp metadata từ Apple Music
@@ -194,6 +196,29 @@ Fork này bổ sung setting chất lượng phát NetEase và lưu lại lựa c
 | `hires`    | Hi-Res   |
 
 Cache trên desktop lưu riêng từng phiên bản của bài hát, kèm chất lượng NetEase thực tế, định dạng, bitrate, sample rate và bit depth. Lossless/Hi-Res chỉ được dùng lại khi chất lượng lưu khớp yêu cầu. FLAC cũ thiếu thông tin chất lượng được giữ là unknown, không tự gán Lossless hoặc Hi-Res. Khi phát cache, ứng dụng đọc theo stream và trả đúng đoạn byte được yêu cầu thay vì nạp toàn bộ file vào RAM.
+
+## Chế độ âm thanh và tải xuống
+
+Nhấn icon chế độ âm thanh trên miniplayer để chọn **Tắt**, **Spatial Audio**, **Audio Vivid** hoặc **Surround Audio**. Đổi chế độ áp dụng cho bài hiện tại và giữ vị trí phát cùng trạng thái phát/tạm dừng. Menu nằm trong vùng màn hình ngay cả khi miniplayer thu gọn.
+
+Khi bật tùy chọn hiển thị nút tải xuống trong Settings, nhấn nút tải ở bài hát để chọn chất lượng:
+
+| Mức tải | Giá trị API |
+| --- | --- |
+| Spatial Audio | `jyeffect` |
+| Audio Vivid | `vivid` |
+| Surround Audio | `sky` |
+| Master | `jymaster` |
+| Hi-Res | `hires` |
+| Lossless | `lossless` |
+| HQ · 320 kbps | `exhigh` |
+| Tiêu chuẩn · 128 kbps | `standard` |
+
+Ứng dụng kiểm tra khả năng sử dụng theo bài hát và tài khoản NetEase hiện tại. Mục không hỗ trợ hoặc chưa kiểm tra được sẽ mờ; nhấn vào sẽ hiện thông báo. Quyền tải được kiểm tra riêng bằng API tải xuống và kiểm tra lại trước khi tải. Nếu không được cấp đúng chất lượng đã chọn, ứng dụng không tự tải bản thấp hơn, bản nghe thử hoặc nguồn thay thế. File giữ định dạng do API trả về.
+
+Khả năng sử dụng phụ thuộc quyền tài khoản, phiên bản âm thanh của từng bài và thiết bị đầu ra. Không phải bài nào cũng có đủ các mức chất lượng. Spatial Audio, Audio Vivid, Surround Audio và Lossless giữ nguyên tên trong giao diện tiếng Việt.
+
+Bản **v2.8.9** cũng sửa lỗi đăng ký trùng API tải xuống khiến bản EXE thử nghiệm không mở được. Xem [changelog tiếng Anh](https://github.com/Lynx-1ST/R3PLAY/releases/tag/v2.8.9) để biết đầy đủ thay đổi. Có thể cài đè bản hiện tại mà không cần gỡ app hoặc xóa dữ liệu; nếu bản cũ còn chạy nền, kết thúc R3PLAYX trong Task Manager trước khi cài.
 
 ## Một số lệnh hữu ích
 

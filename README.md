@@ -7,7 +7,7 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 [English](README.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-CN.md)
 
 [![Build](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml)
-![Version](https://img.shields.io/badge/version-2.8.6-2ea44f)
+![Version](https://img.shields.io/badge/version-2.8.9-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
@@ -29,6 +29,8 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 - English, Vietnamese and Simplified Chinese interface
 - Multiple audio-source fallbacks through UnblockNeteaseMusic
 - NetEase playback quality selection: 128K, 192K, 320K, Lossless and Hi-Res
+- Spatial Audio, Audio Vivid and Surround Audio selection on the miniplayer
+- Eight download quality levels with per-track and account availability checks
 - Audio caching with quality-aware cache reuse
 - Optional YouTube fallback on desktop
 - Apple Music metadata integration
@@ -194,6 +196,29 @@ This fork adds a persistent NetEase playback-quality setting:
 | `hires`    | Hi-Res   |
 
 The desktop cache stores separate audio variants per track, including the actual NetEase quality, format, bitrate, sample rate and bit depth. Lossless and Hi-Res are reused only when the saved quality matches the request. Legacy FLAC files without quality metadata remain unknown and are not promoted to either tier. Cached playback streams the requested byte range instead of loading the full file into memory.
+
+## Audio modes and downloads
+
+Use the audio mode icon on the miniplayer to select **Off**, **Spatial Audio**, **Audio Vivid**, or **Surround Audio**. Mode changes apply to the current track while preserving playback position and the playing/paused state. The menu stays within the viewport when the miniplayer is collapsed.
+
+Enable download actions in Settings, then click a track's download button to select its quality:
+
+| Download quality | API level |
+| --- | --- |
+| Spatial Audio | `jyeffect` |
+| Audio Vivid | `vivid` |
+| Surround Audio | `sky` |
+| Master | `jymaster` |
+| Hi-Res | `hires` |
+| Lossless | `lossless` |
+| HQ · 320 kbps | `exhigh` |
+| Standard · 128 kbps | `standard` |
+
+Availability is checked for the current track and NetEase account. Unsupported or unverified options appear dimmed; clicking them displays a notification. Download access is checked separately using the download API and checked again before downloading. If the selected quality is unavailable, the app does not silently download a lower-quality file, a preview, or an alternative source. The file keeps the format returned by the API.
+
+Availability depends on account permissions, the audio versions offered for each track, and the output device. Not every track offers every quality level. Spatial Audio, Audio Vivid, Surround Audio, and Lossless retain their names in the Vietnamese interface.
+
+**v2.8.9** also fixes duplicate download API registration that prevented the previous test installer from starting. See the [English changelog](https://github.com/Lynx-1ST/R3PLAY/releases/tag/v2.8.9) for all changes. Install over your existing version without uninstalling or deleting application data. If the old build is still running in the background, end R3PLAYX in Task Manager before installing.
 
 ## Useful commands
 
