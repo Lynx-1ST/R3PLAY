@@ -11,10 +11,31 @@ console.log(pc.cyan(`projectDir=${projectDir}`))
 console.log(pc.cyan(`binDir=${binDir}`))
 
 function resolvePackageDir(packageName, fromDir) {
-  const packageJson = require.resolve(`${packageName}/package.json`, {
-    paths: [fromDir],
-  })
-  return path.dirname(packageJson)
+  try {
+    const packageJson = require.resolve(`${packageName}/package.json`, {
+      paths: [fromDir],
+    })
+    return path.dirname(packageJson)
+  } catch (packageJsonError) {
+    const entry = require.resolve(packageName, { paths: [fromDir] })
+    let current = path.dirname(entry)
+
+    while (true) {
+      const packageJsonPath = path.join(current, 'package.json')
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        if (packageJson.name === packageName) {
+          return current
+        }
+      }
+
+      const parent = path.dirname(current)
+      if (parent === current) break
+      current = parent
+    }
+
+    throw packageJsonError
+  }
 }
 
 function copyPackageWithoutNodeModules(sourceDir, destinationDir) {
