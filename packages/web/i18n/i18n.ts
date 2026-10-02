@@ -30,10 +30,11 @@ export const getInitLanguage = () => {
   }
 
   // Get language from browser
-  if (navigator.language.startsWith('zh-')) {
+  const browserLanguage = navigator.language.toLowerCase()
+  if (browserLanguage.startsWith('zh')) {
     return 'zh-CN'
   }
-  if (navigator.language.startsWith('vi-')) {
+  if (browserLanguage.startsWith('vi')) {
     return 'vi-VN'
   }
 
