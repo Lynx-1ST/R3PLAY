@@ -94,28 +94,24 @@ function vendorResolvedPackage(sourceDir, destinationDir, ancestry = new Set()) 
   }
 }
 
-function vendorExpressForConsumer(resourcesDir, consumerName) {
-  const consumerSource = resolvePackageDir(consumerName, projectDir)
-  const expressSource = resolvePackageDir('express', consumerSource)
-  const expressPackage = JSON.parse(
-    fs.readFileSync(path.join(expressSource, 'package.json'), 'utf8')
-  )
+function vendorRuntimePackage(resourcesDir, packageName) {
+  const sourceDir = resolvePackageDir(packageName, projectDir)
+  const packageJson = JSON.parse(fs.readFileSync(path.join(sourceDir, 'package.json'), 'utf8'))
 
-  const consumerDestination = path.join(
+  const destinationDir = path.join(
     resourcesDir,
     'app.asar.unpacked',
     'node_modules',
-    ...consumerName.split('/')
+    ...packageName.split('/')
   )
-  const expressDestination = path.join(consumerDestination, 'node_modules', 'express')
 
   console.log(
     pc.cyan(
-      `Vendoring express@${expressPackage.version} for ${consumerName} -> ${expressDestination}`
+      `Vendoring ${packageJson.name}@${packageJson.version} with its exact runtime dependency tree -> ${destinationDir}`
     )
   )
 
-  vendorResolvedPackage(expressSource, expressDestination)
+  vendorResolvedPackage(sourceDir, destinationDir)
 }
 
 exports.default = async function (context) {
@@ -152,13 +148,11 @@ exports.default = async function (context) {
       const resourcesDir = path.join(context.appOutDir, 'resources')
 
       // electron-builder's pnpm dependency collector can flatten incompatible
-      // transitive versions. These two consumers require different Express
-      // versions, so give each one a fully self-contained dependency tree.
-      vendorExpressForConsumer(resourcesDir, '@neteasecloudmusicapienhanced/api')
-      vendorExpressForConsumer(
-        resourcesDir,
-        '@neteasecloudmusicapienhanced/unblockmusic-utils'
-      )
+      // transitive versions. Give the externally-required runtime packages
+      // fully self-contained dependency trees so Node resolves the same
+      // versions used during development.
+      vendorRuntimePackage(resourcesDir, '@neteasecloudmusicapienhanced/api')
+      vendorRuntimePackage(resourcesDir, '@unblockneteasemusic/server')
     }
   }
 }
