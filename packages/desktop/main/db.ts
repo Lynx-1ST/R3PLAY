@@ -148,7 +148,7 @@ class DB {
     const migrations = sqlFiles
       .map((sqlFile: string) => ({
         sqlFile,
-        version: sqlFile.split('.').shift() || '',
+        version: sqlFile.replace(/\.sql$/i, ''),
       }))
       .filter(({ version }) => validate(version))
       .filter(
