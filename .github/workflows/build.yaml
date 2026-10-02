@@ -1,4 +1,4 @@
-name: Build-Release
+name: Build-Release-Windows
 
 on:
   push:
@@ -9,80 +9,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: windows-release
   cancel-in-progress: false
 
 jobs:
-  validate:
-    name: Validate release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8.6.12
-
-      - name: Install Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Copy environment
-        run: cp .env.example .env
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Typecheck web
-        run: pnpm --filter web test:types
-
-      - name: Typecheck desktop
-        run: pnpm --filter desktop test:types
-
-      - name: Build server
-        run: pnpm --filter server build
-
-  prepare:
-    name: Create GitHub Release
-    needs: validate
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.version.outputs.tag }}
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Resolve release version
-        id: version
-        shell: bash
-        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
-          target_commitish: release
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build:
-    name: Build on ${{ matrix.os }}
-    needs: prepare
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+  windows:
+    name: Build Windows
+    runs-on: windows-latest
 
     steps:
       - name: Check out Git repository
@@ -101,12 +34,21 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
+      - name: Copy environment
+        shell: pwsh
+        run: Copy-Item .env.example .env
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Copy environment
-        run: cp .env.example .env
+      - name: Typecheck web
+        run: pnpm --filter web test:types
+
+      - name: Typecheck desktop
+        run: pnpm --filter desktop test:types
+
+      - name: Build server
+        run: pnpm --filter server build
 
       - name: Build workspaces
         env:
@@ -119,7 +61,7 @@ jobs:
           IS_ELECTRON: 'yes'
         run: pnpm exec turbo run build
 
-      - name: Package Electron app
+      - name: Package Windows app
         env:
           ELECTRON_WEB_SERVER_PORT: 42710
           ELECTRON_DEV_NETEASE_API_PORT: 30001
@@ -129,38 +71,50 @@ jobs:
           ENABLE_LOCAL_VIP: 'svip'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --publish never
+        run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --win --x64 --publish never
 
-      - name: Collect release artifacts
-        shell: bash
+      - name: Resolve release tag
+        id: version
+        shell: pwsh
         run: |
-          set -eu
-          mkdir -p release-assets
-          shopt -s nullglob
-          for f in \
-            packages/desktop/release/*.dmg \
-            packages/desktop/release/*-Setup.exe \
-            packages/desktop/release/*.AppImage \
-            packages/desktop/release/*.deb \
-            packages/desktop/release/latest*.yml ; do
-            cp "$f" release-assets/
-          done
-          echo "--- assets to upload ---"
-          ls -lah release-assets/ || true
+          $version = node -p "require('./package.json').version"
+          "tag=v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Attach artifacts to GitHub Release
+      - name: Collect Windows artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          Get-ChildItem packages/desktop/release/*-Setup.exe -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets
+          Get-ChildItem packages/desktop/release/latest.yml -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets
+
+          $installer = Get-ChildItem release-assets/*-Setup.exe -ErrorAction SilentlyContinue
+          if (-not $installer) {
+            throw "Windows installer was not produced."
+          }
+
+          Write-Host "--- Windows release assets ---"
+          Get-ChildItem release-assets
+
+      - name: Publish Windows release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.prepare.outputs.tag }}
-          fail_on_unmatched_files: false
-          files: release-assets/*
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          target_commitish: release
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/*-Setup.exe
+            release-assets/latest.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Actions artifact
+      - name: Upload Windows Actions artifact
         uses: actions/upload-artifact@v4
         with:
-          name: R3PLAYX-${{ runner.os }}
+          name: R3PLAYX-Windows-${{ steps.version.outputs.tag }}
           path: release-assets/*
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
