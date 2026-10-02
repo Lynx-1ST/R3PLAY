@@ -162,7 +162,8 @@
     "player-youtube-configured": "已配置",
     "player-youtube-submit": "保存",
     "player-youtube-proxy-empty": "代理地址不能为空",
-    "player-youtube-proxy-saved": "代理设置已保存"
+    "player-youtube-proxy-saved": "代理设置已保存",
+    "host": "代理"
   },
   "context-menu": {
     "share": "分享",
