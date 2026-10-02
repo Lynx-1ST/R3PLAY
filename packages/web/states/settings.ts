@@ -94,12 +94,18 @@ try {
 
 const settings = proxy<Settings>(merge(initSettings, statesInStorage))
 
-subscribe(settings, () => {
+const persistAndSyncSettings = () => {
   if (settings.language !== i18n.language && supportedLanguages.includes(settings.language)) {
     i18n.changeLanguage(settings.language)
   }
-  // 同步electron set settings
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-  window.ipcRenderer?.send(IpcChannels.SyncSettings, JSON.parse(JSON.stringify(settings)))
-})
+
+  const serializedSettings = JSON.parse(JSON.stringify(settings))
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(serializedSettings))
+  window.ipcRenderer?.send(IpcChannels.SyncSettings, serializedSettings)
+}
+
+subscribe(settings, persistAndSyncSettings)
+// Sync defaults/restored settings to Electron on first load as well as on later changes.
+persistAndSyncSettings()
+
 export default settings
