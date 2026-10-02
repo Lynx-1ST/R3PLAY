@@ -360,8 +360,8 @@ function initOtherIpcMain(win: BrowserWindow | null) {
   /**
    * 读取操作系统的平台类型
    */
-  handle(IpcChannels.GetPlatform, event => {
-    event.returnValue = getPlatform()
+  handle(IpcChannels.GetPlatform, () => {
+    return getPlatform()
   })
 
   /**
