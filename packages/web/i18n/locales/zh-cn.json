@@ -145,7 +145,25 @@
       "local-shortcut-invalid": "应用内快捷键需要一个非修饰键和可选的若干个修饰键",
       "restore-factory-settings": "恢复默认设置",
       "restore-factory-settings-success": "快捷键已恢复为默认设置"
-    }
+    },
+    "audio-quality-title": "网易云音质",
+    "audio-quality-description": "选择向网易云请求的播放音质。播放器下方会显示实际返回的格式和码率。",
+    "audio-quality-streaming": "流媒体音质",
+    "audio-quality-standard": "标准 · 128 kbps",
+    "audio-quality-higher": "较高 · 192 kbps",
+    "audio-quality-high": "高 · 320 kbps",
+    "audio-quality-lossless": "无损 · FLAC",
+    "audio-quality-hires": "Hi-Res · FLAC",
+    "audio-quality-updated": "播放音质已更新，将从下一首歌曲开始生效。",
+    "player-youtube-desktop-only": "此功能仅支持桌面版。",
+    "player-youtube-proxy-note": "根据网络环境，YouTube 备用音源可能需要可用的 HTTP 代理或系统隧道。",
+    "player-youtube-enable": "启用 YouTube 解锁",
+    "player-youtube-proxy-config": "YouTube HTTP 代理",
+    "player-youtube-configured": "已配置",
+    "player-youtube-submit": "保存",
+    "player-youtube-proxy-empty": "代理地址不能为空",
+    "player-youtube-proxy-saved": "代理设置已保存",
+    "host": "代理"
   },
   "context-menu": {
     "share": "分享",

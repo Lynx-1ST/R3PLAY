@@ -5,22 +5,85 @@ import { exec } from 'child_process'
 import log from './log'
 import { IpcChannels } from '@/shared/IpcChannels'
 import { formatForAccelerator, readKeyboardShortcuts } from './keyboardShortcuts'
-import { t } from 'i18next'
+import store from './store'
 
 log.info('[electron] menu.ts')
 
+const menuLabels = {
+  'en-US': {
+    controls: 'Controls',
+    playPause: 'Play/Pause',
+    next: 'Next',
+    previous: 'Previous',
+    favorite: 'Favorite',
+    volumeUp: 'Volume Up',
+    volumeDown: 'Volume Down',
+    closeWindow: 'Close Window',
+    help: 'Help',
+    openLogs: 'Open Logs Folder',
+    openData: 'Open App Data Folder',
+    devtools: 'Open Developer Tools',
+    reportIssue: 'Report an Issue',
+    repository: 'Visit GitHub Repository',
+    forum: 'Visit Discussions',
+    community: 'Community',
+  },
+  'vi-VN': {
+    controls: 'Điều khiển',
+    playPause: 'Phát/Tạm dừng',
+    next: 'Bài tiếp theo',
+    previous: 'Bài trước',
+    favorite: 'Yêu thích',
+    volumeUp: 'Tăng âm lượng',
+    volumeDown: 'Giảm âm lượng',
+    closeWindow: 'Đóng cửa sổ',
+    help: 'Trợ giúp',
+    openLogs: 'Mở thư mục log',
+    openData: 'Mở thư mục dữ liệu ứng dụng',
+    devtools: 'Mở công cụ nhà phát triển',
+    reportIssue: 'Báo lỗi',
+    repository: 'Mở GitHub repository',
+    forum: 'Mở khu vực thảo luận',
+    community: 'Cộng đồng',
+  },
+  'zh-CN': {
+    controls: '控制',
+    playPause: '播放/暂停',
+    next: '下一首',
+    previous: '上一首',
+    favorite: '喜欢',
+    volumeUp: '增加音量',
+    volumeDown: '减少音量',
+    closeWindow: '关闭窗口',
+    help: '帮助',
+    openLogs: '打开日志文件目录',
+    openData: '打开应用数据目录',
+    devtools: '打开开发者工具',
+    reportIssue: '反馈问题',
+    repository: '访问 GitHub 仓库',
+    forum: '访问论坛',
+    community: '加入交流群',
+  },
+} as const
+
+const getMenuLabels = () => {
+  const language = store.get('settings')?.language as keyof typeof menuLabels | undefined
+  return menuLabels[language ?? 'en-US'] ?? menuLabels['en-US']
+}
+
 export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean = true) => {
   const shortcuts = readKeyboardShortcuts()
+  const labels = getMenuLabels()
 
   const controlsMenuItem: MenuItemConstructorOptions | MenuItem | undefined = (() => {
     try {
       return {
         id: 'controls',
-        label: '控制',
+        label: labels.controls,
         submenu: [
           {
             id: 'playPause',
-            label: '播放/暂停',
+            label: labels.playPause,
             click: () => {
               webContexts.send(IpcChannels.PlayOrPause)
             },
@@ -29,7 +92,7 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
           },
           {
             id: 'nextSong',
-            label: '下一首',
+            label: labels.next,
             click: () => {
               webContexts.send(IpcChannels.Next)
             },
@@ -38,7 +101,7 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
           },
           {
             id: 'previousSong',
-            label: '上一首',
+            label: labels.previous,
             click: () => {
               webContexts.send(IpcChannels.Previous)
             },
@@ -47,7 +110,7 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
           },
           {
             id: 'favoriteSong',
-            label: '喜欢',
+            label: labels.favorite,
             click: () => {
               webContexts.send(IpcChannels.Like)
             },
@@ -56,7 +119,7 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
           },
           {
             id: 'volumeUp',
-            label: '增加音量',
+            label: labels.volumeUp,
             click: () => {
               webContexts.send(IpcChannels.VolumeUp)
             },
@@ -65,7 +128,7 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
           },
           {
             id: 'volumeDown',
-            label: '减少音量',
+            label: labels.volumeDown,
             click: () => {
               webContexts.send(IpcChannels.VolumeDown)
             },
@@ -92,17 +155,17 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
       submenu: [
         // close window shortcut for all platforms
         {
-          label: t`common.close-window`,
+          label: labels.closeWindow,
           accelerator: 'CmdOrCtrl+W',
           role: 'close',
         },
       ],
     },
     {
-      label: '帮助',
+      label: labels.help,
       submenu: [
         {
-          label: '打开日志文件目录',
+          label: labels.openLogs,
           click: async () => {
             if (isMac) {
               exec(`open "${logsPath}"`)
@@ -113,7 +176,7 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
           },
         },
         {
-          label: '打开应用数据目录',
+          label: labels.openData,
           click: async () => {
             const path = app.getPath('userData')
             if (isMac) {
@@ -125,34 +188,34 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
           },
         },
         {
-          label: '打开开发者工具',
+          label: labels.devtools,
           click: async () => {
             webContexts.openDevTools()
           },
         },
         {
-          label: '反馈问题',
+          label: labels.reportIssue,
           click: async () => {
-            await shell.openExternal('https://github.com/qier222/YesPlayMusic/issues/new')
+            await shell.openExternal('https://github.com/Sherlockouo/music/issues/new')
           },
         },
         { type: 'separator' },
         {
-          label: '访问 GitHub 仓库',
+          label: labels.repository,
           click: async () => {
-            await shell.openExternal('https://github.com/qier222/YesPlayMusic')
+            await shell.openExternal('https://github.com/Lynx-1ST/R3PLAY')
           },
         },
         {
-          label: '访问论坛',
+          label: labels.forum,
           click: async () => {
-            await shell.openExternal('https://github.com/qier222/YesPlayMusic/discussions')
+            await shell.openExternal('https://github.com/Sherlockouo/music/discussions')
           },
         },
         {
-          label: '加入交流群',
+          label: labels.community,
           click: async () => {
-            await shell.openExternal('https://github.com/qier222/YesPlayMusic/discussions')
+            await shell.openExternal('https://github.com/Sherlockouo/music/discussions')
           },
         },
       ],

@@ -145,13 +145,24 @@ class DB {
     }
 
     const sqlFiles = fs.readdirSync(path.join(dirname, './migrations'))
-    sqlFiles.forEach((sqlFile: string) => {
-      const version = sqlFile.split('.').shift() || ''
-      if (!validate(version)) return
-      if (compare(version, pkg.version, '>')) {
-        const file = readSqlFile(sqlFile)
-        this.sqlite.exec(file)
-      }
+    const migrations = sqlFiles
+      .map((sqlFile: string) => ({
+        sqlFile,
+        version: sqlFile.replace(/\.sql$/i, ''),
+      }))
+      .filter(({ version }) => validate(version))
+      .filter(
+        ({ version }) =>
+          compare(version, appVersion.value, '>') && compare(version, pkg.version, '<=')
+      )
+      .sort((a, b) => {
+        if (a.version === b.version) return 0
+        return compare(a.version, b.version, '>') ? 1 : -1
+      })
+
+    migrations.forEach(({ sqlFile, version }) => {
+      log.info(`[db] Applying migration ${version}: ${sqlFile}`)
+      this.sqlite.exec(readSqlFile(sqlFile))
     })
 
     updateAppVersionInDB()
@@ -205,7 +216,13 @@ class DB {
     key: TablesStructures[T]['id'],
     data: Partial<TablesStructures[T]>
   ) {
-    // TODO:
+    const columns = Object.keys(data)
+    if (columns.length === 0) return
+
+    const setQuery = columns.map(column => `"${column}" = @${column}`).join(', ')
+    return this.sqlite
+      .prepare(`UPDATE "${table}" SET ${setQuery} WHERE id = @__id`)
+      .run({ ...data, __id: key })
   }
 
   upsert<T extends TableNames>(table: T, data: TablesStructures[T]) {

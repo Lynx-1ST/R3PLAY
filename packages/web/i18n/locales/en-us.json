@@ -145,7 +145,25 @@
       "local-shortcut-invalid": "Local Shortcut needs at least one modifier key and one non-modifier key",
       "restore-factory-settings": "Restore factory settings",
       "restore-factory-settings-success": "Factory settings restored"
-    }
+    },
+    "proxy": "Proxy",
+    "audio-quality-title": "NetEase Audio Quality",
+    "audio-quality-description": "Choose the quality requested from NetEase. The actual format and bitrate returned by NetEase are shown under the player.",
+    "audio-quality-streaming": "Streaming quality",
+    "audio-quality-standard": "Standard · 128 kbps",
+    "audio-quality-higher": "Higher · 192 kbps",
+    "audio-quality-high": "High · 320 kbps",
+    "audio-quality-lossless": "Lossless · FLAC",
+    "audio-quality-hires": "Hi-Res · FLAC",
+    "audio-quality-updated": "Playback quality updated. It will apply to the next track.",
+    "player-youtube-desktop-only": "This feature is only available in the desktop app.",
+    "player-youtube-proxy-note": "Depending on your network, YouTube fallback may require a working HTTP proxy or system tunnel.",
+    "player-youtube-enable": "Enable YouTube Unlock",
+    "player-youtube-proxy-config": "HTTP proxy for YouTube",
+    "player-youtube-configured": "Configured",
+    "player-youtube-submit": "Save",
+    "player-youtube-proxy-empty": "Proxy cannot be empty",
+    "player-youtube-proxy-saved": "Proxy settings saved"
   },
   "context-menu": {
     "share": "Share",

@@ -7,15 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 R3PLAYX is a third-party NetEase Cloud Music player built with React + Electron. It's a cross-platform desktop application that also has a web version. The project uses a monorepo architecture with Turborepo for build orchestration.
 
 **Key Technologies:**
-- **Desktop:** Electron 28, React 18, Fastify (local server), better-sqlite3
-- **Web:** React 18, Vite 4, Tailwind CSS, Framer Motion
-- **Server:** Fastify 4, Prisma, SQLite
+- **Desktop:** Electron 43, Fastify 5 (local server), better-sqlite3 12
+- **Web:** React 19, Vite 7, Tailwind CSS 4, Framer Motion 11
+- **Server:** Fastify 5, Prisma 6, SQLite
 - **Build:** Turborepo, PNPM workspaces
 
 ## Development Setup
 
 ### Prerequisites
-- Node.js >= 16.0.0 (v18.12.1 recommended)
+- Node.js >= 22.12
 - PNPM package manager (v8.6.12)
 
 ### Initial Setup
@@ -121,9 +121,8 @@ The application follows a **client-server architecture** with different communic
 
 1. **Desktop App:**
    - **Renderer Process (React UI)** ←→ **Main Process (Electron)** via IPC channels
-   - **Renderer Process** ←→ **Local Fastify Server** (localhost:42710) via HTTP
-   - **Main Process** runs a local Fastify server on port 42710
-   - **Main Process** runs NetEase API server on port 30001 (development)
+   - In development, Vite serves the renderer on port 42710 and proxies API requests to the Electron Fastify server on port 30001
+   - In production, the Electron Fastify server listens on port 42710 and serves both the built web assets and local API routes
 
 2. **Web App:**
    - **React UI** ←→ **Standalone Server** (port 35530) via HTTP
@@ -189,7 +188,7 @@ IPC channels are defined in `packages/shared/IpcChannels.ts`. This file contains
   - `My`, `Discover`, `Browse`, `Album`, `Playlist`, `Artist`, `Search`, `Settings`, `Lyrics`
 - `hooks/` - Custom React hooks
 - `states/` - Valtio state stores
-- `i18n/` - Internationalization files (supports zh-CN, en-US)
+- `i18n/` - Internationalization files (supports en-US, vi-VN, zh-CN)
 - `styles/` - CSS and Tailwind styles
 - `utils/` - Utility functions, player logic, React Query client
 
@@ -216,10 +215,10 @@ The project uses Turborepo for efficient builds:
 3. **Parallel Execution:** Development tasks run in parallel
 4. **Outputs:** Build artifacts in `dist/` directories
 
-**Build Order:**
-1. `shared` package (no dependencies)
-2. `server` and `web` (depend on `shared`)
-3. `desktop` (depends on `shared`, `server`, `web`)
+**Workspace note:**
+- `desktop`, `server`, and `web` are pnpm workspace packages with their own `package.json`.
+- `shared` is shared TypeScript source imported through aliases; it does not have its own `package.json` and is not a standalone Turborepo package.
+- Turborepo orchestrates the scripts exposed by the actual workspace packages.
 
 ## Working with Code
 
@@ -264,7 +263,7 @@ The desktop app runs a local Fastify server that proxies requests to external AP
 - Server: Prisma ORM with migrations in `packages/server/prisma/`
 
 ### Internationalization
-i18next configuration in `packages/web/i18n/`. Translation files follow the standard i18next pattern with `zh-CN` and `en-US` support.
+i18next configuration in `packages/web/i18n/`. Translation files follow the standard i18next pattern with `en-US`, `vi-VN`, and `zh-CN` support.
 
 ### Routing
 - Desktop & Web use **HashRouter** from react-router-dom
@@ -276,7 +275,7 @@ i18next configuration in `packages/web/i18n/`. Translation files follow the stan
 - Player logic in `packages/web/utils/player.ts`
 - Uses Howler.js for audio playback
 - State persisted to localStorage via Valtio proxy
-- Supports multiple audio quality levels (h/m/l)
+- Supports NetEase playback quality levels: 128K, 192K, 320K, Lossless, and Hi-Res
 
 ### Virtual Scrolling
 - Uses react-virtuoso for efficient list rendering
@@ -300,7 +299,7 @@ i18next configuration in `packages/web/i18n/`. Translation files follow the stan
 
 ## Important Notes
 
-- The project is in **Beta** stage (v2.7.6)
+- The project is in **Beta** stage (v2.8.0)
 - API source code from [Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi) (enhanced version)
 - Uses @unblockneteasemusic/server to bypass NetEase geo-restrictions
 - Licensed under AGPL - derivative works must mention this project

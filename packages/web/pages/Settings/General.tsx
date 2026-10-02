@@ -21,6 +21,7 @@ function Language() {
   const { t } = useTranslation()
   const supportedLanguages: { name: string; value: SupportedLanguage }[] = [
     { name: 'English', value: 'en-US' },
+    { name: 'Tiếng Việt', value: 'vi-VN' },
     { name: '简体中文', value: 'zh-CN' },
   ]
   const { language } = useSnapshot(settings)

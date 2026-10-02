@@ -1,6 +1,4 @@
-import { BrowserWindow, ipcMain, app, BrowserWindowConstructorOptions, App } from 'electron'
-import { join } from 'path'
-import store from './store'
+import { BrowserWindow, ipcMain, app } from 'electron'
 import { IpcChannels, IpcChannelsParams } from '@/shared/IpcChannels'
 import cache from './cache'
 import log from './log'
@@ -17,7 +15,8 @@ import { LyricsWindow } from './lyricsWindow'
 import { getPlatform } from './utils'
 import { bindingKeyboardShortcuts } from './keyboardShortcuts'
 import { checkForUpdates } from './updateWindow'
-import main from '.'
+import { createMenu } from './menu'
+import { createDockMenu } from './dockMenu'
 
 log.info('[electron] ipcMain.ts')
 
@@ -44,7 +43,7 @@ export function initIpcMain(
   initWindowIpcMain(win)
   initTrayIpcMain(tray)
   initTaskbarIpcMain(thumbar)
-  initStoreIpcMain(win,store)
+  initStoreIpcMain(win, store, tray)
   initOtherIpcMain(win)
 }
 
@@ -63,43 +62,24 @@ function initWindowIpcMain(win: BrowserWindow | null) {
     win?.minimize()
   })
 
-  let isMaximized = false
-  let unMaximizeSize: { width: number; height: number } | null = null
-  let windowPosition: { x: number; y: number } | null = null
   on(IpcChannels.MaximizeOrUnmaximize, () => {
-    if (!win) return false
+    if (!win) return
 
-    if (isMaximized) {
-      if (unMaximizeSize) {
-        win.setSize(unMaximizeSize.width, unMaximizeSize.width, true)
-      }
-      if (windowPosition) {
-        win.setPosition(windowPosition.x, windowPosition.y, true)
-      }
+    if (win.isMaximized()) {
       win.unmaximize()
     } else {
-      const size = win.getSize()
-      unMaximizeSize = { width: size[1], height: size[0] }
-      const position = win.getPosition()
-      windowPosition = { x: position[0], y: position[1] }
       win.maximize()
     }
-
-    isMaximized = !isMaximized
-    win.webContents.send(IpcChannels.IsMaximized, isMaximized)
   })
 
   on(IpcChannels.MinimizeOrUnminimize, () => {
-    if (!win) return false
+    if (!win) return
 
     if (win.isMinimized() || !win.isFocused()) {
       win.show()
     } else {
       win.minimize()
     }
-
-    isMaximized = !isMaximized
-    win.webContents.send(IpcChannels.IsMaximized, isMaximized)
   })
 
   on(IpcChannels.Close, () => {
@@ -116,8 +96,7 @@ function initWindowIpcMain(win: BrowserWindow | null) {
   })
 
   handle(IpcChannels.IsMaximized, () => {
-    if (!win) return
-    return isMaximized
+    return win?.isMaximized() ?? false
   })
 }
 
@@ -160,16 +139,25 @@ function initTaskbarIpcMain(thumbar: Thumbar | null) {
  * 处理需要electron-store的事件
  * @param {Store<TypedElectronStore>} store
  */
-function initStoreIpcMain(win: BrowserWindow | null,store: Store<TypedElectronStore>) {
+function initStoreIpcMain(
+  win: BrowserWindow | null,
+  store: Store<TypedElectronStore>,
+  tray: YPMTray | null
+) {
   /**
    * 同步设置到Main
    */
   on(IpcChannels.SyncSettings, (event, settings) => {
-    const lang = store.get('settigns.language')
+    const previousLanguage = store.get('settings')?.language
     store.set('settings', settings)
-    if(settings.language !== lang )
-    {
-      main.tray?.updateTray()
+    if (settings.language !== previousLanguage) {
+      tray?.updateTray()
+      if (win) {
+        createMenu(win.webContents)
+        if (process.platform === 'darwin' && app.dock) {
+          app.dock.setMenu(createDockMenu(win))
+        }
+      }
     }
   })
 }

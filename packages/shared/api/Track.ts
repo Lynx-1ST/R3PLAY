@@ -28,6 +28,7 @@ export interface FetchTracksResponse {
 // 获取音源URL
 
 export type PlaybackQuality = 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires'
+export type PlaybackFormat = 'mp3' | 'flac' | 'aac' | 'm4a' | 'ogg' | 'opus' | 'webm' | null
 
 export interface FetchAudioSourceParams {
   id: number
@@ -42,7 +43,7 @@ export interface FetchAudioSourceResponse {
     br: number
     canExtend: boolean
     code: number
-    encodeType: 'mp3' | null
+    encodeType: PlaybackFormat
     expi: number
     fee: number
     flag: number
@@ -55,11 +56,11 @@ export interface FetchAudioSourceResponse {
     freeTrialInfo: null
     gain: number
     id: number
-    level: 'standard' | 'null'
+    level: PlaybackQuality | 'null'
     md5: string | null
     payed: number
     size: number
-    type: 'mp3' | null
+    type: PlaybackFormat
     uf: null
     url: string | null
     urlSource: number

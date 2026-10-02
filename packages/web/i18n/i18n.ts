@@ -2,8 +2,9 @@ import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import zhCN from './locales/zh-cn.json'
 import enUS from './locales/en-us.json'
+import viVN from './locales/vi-vn.json'
 
-export const supportedLanguages = ['zh-CN', 'en-US'] as const
+export const supportedLanguages = ['en-US', 'vi-VN', 'zh-CN'] as const
 export type SupportedLanguage = typeof supportedLanguages[number]
 
 declare module 'react-i18next' {
@@ -12,6 +13,7 @@ declare module 'react-i18next' {
     resources: {
       'en-US': typeof enUS
       'zh-CN': typeof enUS
+      'vi-VN': typeof enUS
     }
   }
 }
@@ -28,8 +30,12 @@ export const getInitLanguage = () => {
   }
 
   // Get language from browser
-  if (navigator.language.startsWith('zh-')) {
+  const browserLanguage = navigator.language.toLowerCase()
+  if (browserLanguage.startsWith('zh')) {
     return 'zh-CN'
+  }
+  if (browserLanguage.startsWith('vi')) {
+    return 'vi-VN'
   }
 
   // Fallback to English
@@ -41,6 +47,7 @@ i18next.use(initReactI18next).init({
   resources: {
     'en-US': { translation: enUS },
     'zh-CN': { translation: zhCN },
+    'vi-VN': { translation: viVN },
   },
   lng: getInitLanguage(),
   fallbackLng: 'en-US',

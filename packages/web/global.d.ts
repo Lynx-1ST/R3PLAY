@@ -6,10 +6,6 @@ export {}
 declare global {
   interface Window {
     ipcRenderer?: {
-      sendSync: <T extends keyof IpcChannelsParams>(
-        channel: T,
-        params?: IpcChannelsParams[T]
-      ) => IpcChannelsReturns[T]
       invoke: <T extends keyof IpcChannelsParams>(
         channel: T,
         params?: IpcChannelsParams[T]
@@ -18,7 +14,7 @@ declare global {
       on: <T extends keyof IpcChannelsParams>(
         channel: T,
         listener: (event: Electron.IpcRendererEvent, value: IpcChannelsReturns[T]) => void
-      ) => void
+      ) => () => void
     }
     env?: {
       isElectron: boolean

@@ -35,7 +35,7 @@ export default defineConfig({
     tailwindcss(),
     visualizer({
       emitFile: true,
-      filename: "stats.html",
+      filename: 'stats.html',
     }) as PluginOption,
     react(),
     filenamesToType([
@@ -48,13 +48,13 @@ export default defineConfig({
     /**
      * @see https://vite-plugin-pwa.netlify.app/guide/generate.html
      */
-    IS_ELECTRON
+    !IS_ELECTRON
       ? VitePWA({
           registerType: 'autoUpdate',
           manifest: {
             name: appName,
             short_name: appName,
-            description: 'Description of your app',
+            description: 'A third-party NetEase Cloud Music player for desktop and web',
             theme_color: '#000',
             icons: [
               {

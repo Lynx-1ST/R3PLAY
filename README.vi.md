@@ -21,6 +21,7 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 - Album, nghệ sĩ, playlist, tìm kiếm, Private FM và phát MV
 - Lời bài hát đồng bộ và cửa sổ desktop lyrics
 - Theme, màu nhấn và hình nền có thể tùy chỉnh
+- Hỗ trợ giao diện tiếng Anh, tiếng Việt và tiếng Trung giản thể
 - Nhiều nguồn nhạc dự phòng thông qua UnblockNeteaseMusic
 - Chọn chất lượng phát NetEase: 128K, 192K, 320K, Lossless và Hi-Res
 - Audio cache có kiểm tra chất lượng trước khi tái sử dụng

@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "AGPL-3.0",
   "dependencies": {
     "@fastify/autoload": "^6.5.0",
     "@fastify/cookie": "^11.1.2",
