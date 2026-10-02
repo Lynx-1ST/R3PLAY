@@ -1,108 +1,216 @@
-<p align="center">
-    <h2 align="center" style="font-weight: 800">R3PLAYX</h2>
-    <h2 align="center">
-        <a href="https://t.me/+MrhsgG741wQxNjg9">💻 加入TG群组，参与开发讨论 👊</a> <br><br>
-        <a href="https://github.com/Sherlockouo/music/wiki/For-Developers">🧭 开发指南 👆 点这里，查看wiki </a>
-    </h2>
-    <p align="center">
-        高颜值的第三方音乐播放器
-        <br />
-        <a href="https://music.xtify.top/" target="blank"><strong>🌎 访问最新DEMO</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="https://r3play.app/" target="blank"><strong>🌎 访问原版DEMO</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="https://github.com/Sherlockouo/music/releases" target="blank"><strong>📦️ 下载安装包</strong></a>
-        <br />
-    </p>
-</p>
 <div align="center">
-    <img src="https://github.com/sherlockouo/music/actions/workflows/build-dev.yml/badge.svg" />
-    <img src="https://img.shields.io/badge/downloads-5.0k-deepgreen" />
-    <img src="https://img.shields.io/badge/latest_version-2.7.4-deepgreen" />
-    <img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat-square&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/Sherlockouo/music" />
+
+# R3PLAYX
+
+A polished third-party NetEase Cloud Music player for desktop and web.
+
+[English](README.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-CN.md)
+
+[![Build](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml)
+![Version](https://img.shields.io/badge/version-2.8.0-2ea44f)
+![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
+
 </div>
 
-## 关于 Beta 版本
+> [!NOTE]
+> R3PLAYX is under active development. This repository is a fork of [Sherlockouo/music](https://github.com/Sherlockouo/music), which itself is based on the YesPlayMusic ecosystem.
 
-目前 R3PLAYX 处于 Beta 阶段，仍在开发中，功能尚未完善。建议每次更新时，先卸载旧版本的 R3PLAY，再重新安装。如遇到问题，欢迎提 issue。
+## Features
 
-## ✨ 特性
+- NetEase Cloud Music login, including QR-code login
+- Album, artist, playlist, search, private FM and MV playback
+- Synchronized lyrics and desktop lyrics
+- Configurable themes, accent colors and background artwork
+- Multiple audio-source fallbacks through UnblockNeteaseMusic
+- NetEase playback quality selection: 128K, 192K, 320K, Lossless and Hi-Res
+- Audio caching with quality-aware cache reuse
+- Optional YouTube fallback on desktop
+- Apple Music metadata integration
+- Desktop media controls, tray controls and keyboard shortcuts
+- Web/PWA support
+- Docker deployment
+- Windows, macOS and Linux desktop packaging
 
-- ✅ 使用 React + Electron 开发
-- 🔴 网易云账号登录（扫码/手机/邮箱登录）
-- 📺 支持 MV 播放
-- 🚫🤝 无任何社交功能
-- 📖 支持歌词展示
-- 🎨 新增全局背景
-- 🎵 支持更多音源
-- 🐳 支持 docker 部署
-- 🔊 支持私人 FM
-- 🔧 更多特性，期待你的建议和加入
+## Screenshots
 
-## 📦️ 安装
+### Home
 
-访问本项目的 [Releases](https://github.com/qier222/YesPlayMusic/releases)
-页面下载安装包。
+<img width="1548" alt="R3PLAYX home" src="https://github.com/Sherlockouo/music/assets/34598208/a58b5c05-ce35-4f32-8b07-fb94df94fc62">
 
-对于 NixOS 上的安装，请参考 [EndCredits/R3PLAYX-nix](https://github.com/EndCredits/R3PLAYX-nix)
+### Discover
 
-## 📜 开源许可
+<img width="1548" alt="R3PLAYX discover" src="https://github.com/Sherlockouo/music/assets/34598208/4f8c3168-ac8a-476a-8db2-2aede6e85534">
 
-API 源代码来自 [Binaryify/NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
+### Lyrics
 
-本项目仅供个人学习研究之目的，不得用于任何商业或非法活动。
+![Lyrics](https://github.com/Sherlockouo/music/assets/34598208/82123958-db58-4026-ab4d-19f7c8e26495)
 
-基于 [AGPL license](https://opensource.org/licenses/AGPL) 许可进行开源。
+## Tech stack
 
-任何基于此项目开发的项目都必须遵守开源协议，在项目 README/应用内的关于页面和介绍网站中明确说明基于此项目开发，并附上此项目 GitHub 页面的链接。
+| Area | Main technologies |
+| --- | --- |
+| Web UI | React 19, Vite 7, TypeScript, Tailwind CSS 4 |
+| State/data | Valtio, TanStack Query |
+| Audio | Howler.js, hls.js |
+| Desktop | Electron 43 |
+| Desktop local API | Fastify 5, better-sqlite3 |
+| Standalone server | Fastify 5, Prisma 6, SQLite |
+| Build | pnpm workspaces, Turborepo |
+| Packaging | electron-builder, Docker |
 
-## 截图
+## Repository structure
 
-- 主页
-  <img width="1548" alt="image" src="https://github.com/Sherlockouo/music/assets/34598208/a58b5c05-ce35-4f32-8b07-fb94df94fc62">
-- 发现
-  <img width="1548" alt="image" src="https://github.com/Sherlockouo/music/assets/34598208/4f8c3168-ac8a-476a-8db2-2aede6e85534">
-- 新增歌词展示功能
-  ![lyrics-screenshot](https://github.com/Sherlockouo/music/assets/34598208/82123958-db58-4026-ab4d-19f7c8e26495)
-- 新增音源，全局背景
-  ![background](https://github.com/Sherlockouo/music/assets/34598208/87bbca8f-705a-4925-9ac7-7444ab11f0c0)
-- ~~新增歌词特效~~ 由于性能问题被干掉了
-  
+```text
+packages/
+├── desktop/   # Electron main process, local Fastify server, IPC, cache
+├── server/    # Standalone Fastify API server + Prisma/SQLite
+├── shared/    # Shared TypeScript types and IPC contracts
+└── web/       # React UI used by both the web and Electron builds
+```
 
-如果你遇到了任何问题，我会尽力帮助你解决。以下是一些常见问题的解决方案：
+The Electron application serves the React UI through a local Fastify server. The web build can run separately and communicate with the standalone backend/API services.
 
-1. **无法登录网易云账号**：请确保你的账号和密码输入正确，如果是扫码登录，请扫描二维码并在手机上确认登录。
+## Requirements
 
-2. **如何播放MV**：在播放器界面的右下角有一个 "MV" 按钮，点击它即可打开 MV 播放器。
+- Node.js **22.12 or newer**
+- pnpm **8.6.12**
+- Git
 
-3. **找不到歌词**：在播放器界面的右上角有一个 "歌词" 按钮，点击它即可显示当前歌曲的歌词。如果歌曲没有歌词信息，可能是因为该歌曲没有提供歌词。
+## Development setup
 
-4. **如何更改全局背景**：你可以在设置中选择一个背景图像作为全局背景。在播放器界面的右上角有一个 "设置" 按钮，点击它并在 "主题" 选项卡中选择一个背景图像。
+Clone the repository and install dependencies:
 
-如果你的问题不在上述范围内，请提供更多详细信息，我会尽力提供帮助。同时，你也可以加入我们的开发讨论群组，与其他开发者一起讨论问题和分享经验。
+```bash
+git clone https://github.com/Lynx-1ST/R3PLAY.git
+cd R3PLAY
+cp .env.example .env
+corepack enable
+pnpm install
+```
 
-希望以上解决方案对你有帮助！如果你还有其他问题，随时提问。
+### Run the desktop app
 
-## 赞赏(这将被用于为开发者充能，进行更加激情的创造)
+```bash
+pnpm dev
+```
 
-![赞赏](https://github.com/Sherlockouo/music/assets/34598208/54d3d073-341b-4977-a3a8-a1afd85fe3d2)
-<p align="center">
-   <h2> 免责声明 Disclaimer </h2>
-  <divider/>
+The root development command starts the workspace tasks needed by the Electron application.
 
-- 本代码库仅供个人用于在线学习和研究使用，不得用于商业用途。
-- 除了许可条款中规定的事项外，您还知道将本代码库用于商业或其他竞争行为可能会产生法律风险。
-- 如果您认为本代码库侵犯了您的知识产权，请发布 PR, Issue 或 DMCA 请求，表达您删除相关引擎或代码的意图。
-</p>
+### Run the web app
 
-## Star History
+For web-only development, start the NetEase API helper and Vite in separate terminals:
 
-<a href="https://star-history.com/#Sherlockouo/music&Date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Sherlockouo/music&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Sherlockouo/music&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Sherlockouo/music&type=Date" />
-  </picture>
-</a>
+```bash
+pnpm --filter web api:netease
+```
 
-## Credit
+```bash
+pnpm --filter web dev
+```
 
-Designed by [JACKCRING](https://jackcring.com)
+### Run the standalone server
+
+```bash
+pnpm --filter server dev
+```
+
+The standalone server listens on port `35530` by default.
+
+## Build and package
+
+Build all packages:
+
+```bash
+pnpm build
+```
+
+Build only the web application:
+
+```bash
+pnpm build:web
+```
+
+Package the Electron application:
+
+```bash
+pnpm package
+```
+
+## Docker
+
+Build and start the web frontend and backend:
+
+```bash
+docker compose up --build
+```
+
+The frontend is exposed at:
+
+```text
+http://localhost:2222
+```
+
+The backend remains inside the Compose network and stores its SQLite database in the `server-data` volume.
+
+## Environment variables
+
+The root `.env.example` currently defines:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ELECTRON_WEB_SERVER_PORT` | `42710` | Electron/Vite web server |
+| `ELECTRON_DEV_NETEASE_API_PORT` | `30001` | NetEase API service used during Electron development |
+| `VITE_APP_NETEASE_API_URL` | `/netease` | Frontend API base path |
+| `DATABASE_URL` | `file:./musicInfo.db` | SQLite database URL |
+
+Docker deployments may also use `APPLE_MUSIC_TOKEN`.
+
+## Playback quality
+
+This fork adds a persistent NetEase playback-quality setting:
+
+| Setting | Display |
+| --- | --- |
+| `standard` | 128K |
+| `higher` | 192K |
+| `exhigh` | 320K |
+| `lossless` | Lossless |
+| `hires` | Hi-Res |
+
+The desktop audio cache checks cached MP3 bitrate before reusing a file, so changing the requested quality does not silently return a lower-quality cached MP3. Lossless/Hi-Res cache matching is intentionally conservative because the current cache schema does not store enough metadata to reliably distinguish those tiers.
+
+## Useful commands
+
+```bash
+pnpm lint
+pnpm format
+pnpm --filter web test
+pnpm --filter web test:types
+pnpm --filter desktop test
+pnpm --filter desktop test:types
+```
+
+## Upstream projects
+
+R3PLAYX builds on work from several open-source projects, including:
+
+- [Sherlockouo/music](https://github.com/Sherlockouo/music)
+- [YesPlayMusic](https://github.com/qier222/YesPlayMusic)
+- [NeteaseCloudMusicApi Enhanced](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced)
+- [UnblockNeteaseMusic](https://github.com/UnblockNeteaseMusic/server)
+
+The original UI design credits [JACKCRING](https://jackcring.com).
+
+## License and disclaimer
+
+This repository is distributed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** as declared by the repository `LICENSE` file.
+
+This project is an unofficial client and is not affiliated with NetEase, Apple, YouTube, or other referenced service providers. Use it responsibly and comply with the terms of the services and the laws applicable in your jurisdiction.
+
+The upstream README also contains additional usage/disclaimer language. Review upstream notices before redistribution or deployment.
+
+## Development resources
+
+- [Upstream developer wiki](https://github.com/Sherlockouo/music/wiki/For-Developers)
+- [Upstream repository](https://github.com/Sherlockouo/music)
+- [Upstream web demo](https://music.xtify.top/)
