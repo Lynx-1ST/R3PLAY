@@ -17,6 +17,7 @@ import { scrobble } from '@/web/api/user'
 import { fetchArtistWithReactQuery } from '../api/hooks/useArtist'
 import { appName } from './const'
 import { isLyricsWindow } from './isLyricsWindow'
+import settings from '@/web/states/settings'
 
 type TrackID = number
 export enum TrackListSourceType {
@@ -302,7 +303,10 @@ export class Player {
   private async _fetchAudioSource(trackID: TrackID) {
     try {
       // console.log(`[player] fetchAudioSourceWithReactQuery `, trackID)
-      const response = await fetchAudioSourceWithReactQuery({ id: trackID })
+      const response = await fetchAudioSourceWithReactQuery({
+        id: trackID,
+        level: settings.audioQuality,
+      })
       // console.log(`[player] fetchAudioSourceWithReactQuery `, response)
       const source = response.data?.[0] as any
       let audio = source?.url
@@ -422,7 +426,10 @@ export class Player {
     const id = Number(new URL(audio).searchParams.get('dash-id'))
     if (isNaN(id) || !id) return
     // audio info
-    const response = await fetchAudioSourceWithReactQuery({ id })
+    const response = await fetchAudioSourceWithReactQuery({
+      id,
+      level: settings.audioQuality,
+    })
     // 缓存
     cacheAudio(id, audio, response?.data?.[0]?.br)
   }
