@@ -5,21 +5,27 @@ on:
     branches:
       - release
 
+permissions:
+  contents: write
+
 jobs:
   release:
+    name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
-      - uses: pnpm/action-setup@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 8.6.12
 
@@ -28,124 +34,78 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          
-      - name: Install global dependencies
-        run: npm i prisma fastify-cli turbo tsx electron-builder@23.6.0 -g 
-        
+
+      - name: Install global build tools
+        run: npm i prisma fastify-cli turbo tsx -g
+
       - name: Install dependencies
-        run: pnpm install
-      
-      - name: Copy Env
+        run: pnpm install --frozen-lockfile
+
+      - name: Copy environment
         run: cp .env.example .env
 
-      # - name: Build sqlite3 binaries
-      #   run: tsx ./scripts/build.sqlite3.ts
+      - name: Resolve release version
+        shell: bash
+        run: echo "RELEASE_TAG=v$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
 
-      # - name: Install RPM & Pacman (Linux)
-      #   if: runner.os == 'Linux'
-      #   run: |
-      #     sudo apt-get update &&
-      #     sudo apt-get install --no-install-recommends -y rpm &&
-      #     sudo apt-get install --no-install-recommends -y bsdtar &&
-      #     sudo apt-get install --no-install-recommends -y libopenjp2-tools
-
-      # - name: Install Snapcraft (Linux)
-      #   uses: samuelmeuli/action-snapcraft@v1
-      #   if: startsWith(matrix.os, 'ubuntu')
-        # with:
-        #   Disable since the Snapcraft token is currently not working
-        #   snapcraft_token: ${{ secrets.snapcraft_token }}
-        
-      - name: Build-Pre-Release Electron app
+      - name: Build workspaces
         env:
           ELECTRON_WEB_SERVER_PORT: 42710
           ELECTRON_DEV_NETEASE_API_PORT: 30001
           UNBLOCK_SERVER_PORT: 30003
           VITE_APP_NETEASE_API_URL: /netease
-          ENABLE_FLAC: "true"
-          ENABLE_LOCAL_VIP: "svip"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
-        run: pnpm package
-      # - name: Build-Release Electron app
-      #   uses: njzydark/action-electron-builder-pnpm@v1.2.0-pnpm
-      #   env:
-      #     ELECTRON_WEB_SERVER_PORT: 42710
-      #     ELECTRON_DEV_NETEASE_API_PORT: 30001
-      #     UNBLOCK_SERVER_PORT: 30003
-      #     VITE_APP_NETEASE_API_URL: /netease
-      #     ENABLE_FLAC: "true"
-      #     ENABLE_LOCAL_VIP: "svip"
-      #   with:
-      #     # GitHub token, automatically provided to the action
-      #     # (No need to define this secret in the repo settings)
-      #     github_token: ${{ secrets.github_token }}
-      #     # If the commit is tagged with a version (e.g. "v1.0.0"),
-      #     # release the app after building
-      #     release: ${{ startsWith(github.ref, 'refs/tags/v') }}
-      #     args: package
-      #     # skip_package_manager_install: true
-      #     package_manager: pnpm
+          ENABLE_FLAC: 'true'
+          ENABLE_LOCAL_VIP: 'svip'
+          IS_ELECTRON: 'yes'
+        run: turbo run build
 
-      - name: Upload Artifact (macOS universal)
-        uses: actions/upload-artifact@v5
-        with:
-          name: R3PLAYX-mac-universal
-          path: ./packages/desktop/release/*-universal.dmg
-          if-no-files-found: ignore
-          
-      - name: Upload Artifact (macOS x64)
-        uses: actions/upload-artifact@v5
-        with:
-          name: R3PLAYX-mac-x64
-          path: ./packages/desktop/release/*-x64.dmg
-          if-no-files-found: ignore
+      - name: Package Electron app
+        env:
+          ELECTRON_WEB_SERVER_PORT: 42710
+          ELECTRON_DEV_NETEASE_API_PORT: 30001
+          UNBLOCK_SERVER_PORT: 30003
+          VITE_APP_NETEASE_API_URL: /netease
+          ENABLE_FLAC: 'true'
+          ENABLE_LOCAL_VIP: 'svip'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --publish never
 
-      - name: Upload mac latest yml
-        uses: actions/upload-artifact@v5
-        with:
-          name: latest-mac
-          path: ./packages/desktop/release/latest-mac.yml
-          if-no-files-found: ignore
-      
-          
-      - name: Upload Artifact (macOS arm64)
-        uses: actions/upload-artifact@v5
-        with:
-          name: R3PLAYX-mac-arm64
-          path: ./packages/desktop/release/*-arm64.dmg
-          if-no-files-found: ignore
+      - name: Collect release artifacts
+        shell: bash
+        run: |
+          set -eu
+          mkdir -p release-assets
+          shopt -s nullglob
+          for f in \
+            packages/desktop/release/*.dmg \
+            packages/desktop/release/*-Setup.exe \
+            packages/desktop/release/*.AppImage \
+            packages/desktop/release/*.deb \
+            packages/desktop/release/latest*.yml ; do
+            cp "$f" release-assets/
+          done
+          echo "--- assets to upload ---"
+          ls -lah release-assets/ || true
 
-      - name: Upload Artifact (Windows)
-        uses: actions/upload-artifact@v5
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: R3PLAYX-win
-          path: ./packages/desktop/release/*x64-Setup.exe
-          if-no-files-found: ignore
-          
-      - name: Upload windows latest yml
-        uses: actions/upload-artifact@v5
-        with:
-          name: latest
-          path: ./packages/desktop/release/latest.yml
-          if-no-files-found: ignore
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TAG }}
+          target_commitish: release
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Artifact (Linux Appimage)
-        uses: actions/upload-artifact@v5
+      - name: Upload Actions artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: R3PLAYX-linux
-          path: ./packages/desktop/release/*.AppImage
-          if-no-files-found: ignore
-
-      - name: Upload Artifact (Linux deb)
-        uses: actions/upload-artifact@v5
-        with:
-          name: R3PLAYX-linux-deb
-          path: ./packages/desktop/release/*.deb
-          if-no-files-found: ignore
-
-      - name: Upload linux latest yml
-        uses: actions/upload-artifact@v5
-        with:
-          name: latest-linux
-          path: ./packages/desktop/release/latest-linux.yml
-          if-no-files-found: ignore
+          name: R3PLAYX-${{ runner.os }}
+          path: release-assets/*
+          if-no-files-found: warn
+          retention-days: 14
