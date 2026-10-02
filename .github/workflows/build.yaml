@@ -42,8 +42,11 @@ jobs:
           $version = node -p "require('./package.json').version"
           $tag = "v$version"
 
-          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
-          if ($LASTEXITCODE -eq 0) {
+          gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" --silent 2>$null
+          $releaseExists = $LASTEXITCODE -eq 0
+          $global:LASTEXITCODE = 0
+
+          if ($releaseExists) {
             Write-Host "Deleting broken release and tag $tag"
             gh release delete $tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
             if ($LASTEXITCODE -ne 0) {
@@ -51,15 +54,23 @@ jobs:
             }
           }
           else {
-            gh api "repos/$env:GITHUB_REPOSITORY/git/ref/tags/$tag" *> $null
-            if ($LASTEXITCODE -eq 0) {
+            gh api "repos/$env:GITHUB_REPOSITORY/git/ref/tags/$tag" --silent 2>$null
+            $tagExists = $LASTEXITCODE -eq 0
+            $global:LASTEXITCODE = 0
+
+            if ($tagExists) {
               Write-Host "Deleting existing tag $tag"
               gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$tag"
               if ($LASTEXITCODE -ne 0) {
                 throw "Failed to delete existing tag $tag"
               }
             }
+            else {
+              Write-Host "Release/tag $tag does not exist; continuing."
+            }
           }
+
+          exit 0
 
       - name: Copy environment
         shell: pwsh
