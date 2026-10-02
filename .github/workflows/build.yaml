@@ -121,22 +121,19 @@ jobs:
             throw "Packaged app is missing entities/decode runtime dependency."
           }
 
-          Write-Host "Checking every packaged Express copy and its local dependency graph..."
-          $expressPackages = Get-ChildItem $modules -Filter package.json -Recurse |
-            Where-Object { $_.Directory.Name -eq "express" }
+          $neteaseExpress = Join-Path $modules "@neteasecloudmusicapienhanced/api/node_modules/express"
+          $unblockExpress = Join-Path $modules "@neteasecloudmusicapienhanced/unblockmusic-utils/node_modules/express"
 
-          if (-not $expressPackages) {
-            throw "No packaged Express installation found."
+          Write-Host "Requiring vendored Express 5 for NetEase API..."
+          node -e "require(process.argv[1]); console.log('netease express load ok')" $neteaseExpress
+          if ($LASTEXITCODE -ne 0) {
+            throw "NetEase API Express dependency failed to load."
           }
 
-          foreach ($package in $expressPackages) {
-            $expressDir = $package.Directory.FullName
-            $version = (Get-Content $package.FullName | ConvertFrom-Json).version
-            Write-Host "Requiring Express $version from $expressDir"
-            node -e "require(process.argv[1]); console.log('express load ok')" $expressDir
-            if ($LASTEXITCODE -ne 0) {
-              throw "Express $version failed to load from packaged dependency tree."
-            }
+          Write-Host "Requiring vendored Express 4 for unblockmusic-utils..."
+          node -e "require(process.argv[1]); console.log('unblock express load ok')" $unblockExpress
+          if ($LASTEXITCODE -ne 0) {
+            throw "Unblockmusic Express dependency failed to load."
           }
 
           $neteaseApi = Join-Path $modules "@neteasecloudmusicapienhanced/api"
@@ -144,6 +141,13 @@ jobs:
           node -e "require(process.argv[1]); console.log('netease api load ok')" $neteaseApi
           if ($LASTEXITCODE -ne 0) {
             throw "Packaged NetEase API failed to load."
+          }
+
+          $unblockUtils = Join-Path $modules "@neteasecloudmusicapienhanced/unblockmusic-utils"
+          Write-Host "Requiring packaged unblockmusic-utils..."
+          node -e "require(process.argv[1]); console.log('unblock utils load ok')" $unblockUtils
+          if ($LASTEXITCODE -ne 0) {
+            throw "Packaged unblockmusic-utils failed to load."
           }
 
           $unblockApi = Join-Path $modules "@unblockneteasemusic/server"
