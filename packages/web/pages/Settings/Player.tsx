@@ -5,51 +5,48 @@ import { useSnapshot } from 'valtio'
 import { BlockDescription, BlockTitle, Button, Option, OptionText, Select, Switch } from './Controls'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import type { AudioSourceMode } from '@/shared/audioSources'
+import type { PlaybackQuality } from '@/shared/api/Track'
 
 function Player() {
   return (
     <div className='iterms-center flex w-full justify-between'>
       <div className='w-full'>
-        <AudioSourceSelector />
+        <PlaybackQualitySelector />
         <FindTrackOnYouTube />
       </div>
     </div>
   )
 }
 
-function AudioSourceSelector() {
-  const { audioSourceMode } = useSnapshot(settings)
+function PlaybackQualitySelector() {
+  const { audioQuality } = useSnapshot(settings)
 
-  const options: { name: string; value: AudioSourceMode }[] = [
-    { name: 'NetEase only', value: 'netease' },
-    { name: 'NetEase + fallback', value: 'fallback' },
+  const options: { name: string; value: PlaybackQuality }[] = [
+    { name: 'Standard · 128 kbps', value: 'standard' },
+    { name: 'Higher · 192 kbps', value: 'higher' },
+    { name: 'High · 320 kbps', value: 'exhigh' },
+    { name: 'Lossless · FLAC', value: 'lossless' },
+    { name: 'Hi-Res · FLAC', value: 'hires' },
   ]
 
   return (
     <div className='mb-12'>
-      <BlockTitle>Audio Source</BlockTitle>
+      <BlockTitle>NetEase Audio Quality</BlockTitle>
       <BlockDescription>
-        NetEase is always the primary source. Use NetEase only for official playback, or enable
-        fallback only if NetEase cannot provide a playable stream.
+        Choose the quality requested from NetEase. The actual format and bitrate returned by
+        NetEase are shown under the player.
       </BlockDescription>
       <Option>
-        <OptionText>Preferred source</OptionText>
+        <OptionText>Streaming quality</OptionText>
         <Select
           options={options}
-          value={audioSourceMode}
+          value={audioQuality}
           onChange={value => {
-            settings.audioSourceMode = value
-            toast.success(
-              value === 'netease' ? 'Using NetEase only' : 'NetEase fallback enabled'
-            )
+            settings.audioQuality = value
+            toast.success('Playback quality updated. It will apply to the next track.')
           }}
         />
       </Option>
-      <BlockDescription>
-        Fallback keeps R3PLAY's original UnblockNeteaseMusic behavior. YouTube remains controlled
-        by the separate YouTube Unlock option.
-      </BlockDescription>
     </div>
   )
 }
