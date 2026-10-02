@@ -9,8 +9,36 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  prepare:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          target_commitish: release
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
     name: Build on ${{ matrix.os }}
+    needs: prepare
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -43,10 +71,6 @@ jobs:
 
       - name: Copy environment
         run: cp .env.example .env
-
-      - name: Resolve release version
-        shell: bash
-        run: echo "RELEASE_TAG=v$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
 
       - name: Build workspaces
         env:
@@ -88,15 +112,10 @@ jobs:
           echo "--- assets to upload ---"
           ls -lah release-assets/ || true
 
-      - name: Publish GitHub Release
+      - name: Attach artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: ${{ env.RELEASE_TAG }}
-          target_commitish: release
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+          tag_name: ${{ needs.prepare.outputs.tag }}
           fail_on_unmatched_files: false
           files: release-assets/*
         env:
