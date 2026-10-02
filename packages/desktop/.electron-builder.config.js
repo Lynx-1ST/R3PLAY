@@ -12,7 +12,7 @@ module.exports = {
   executableName: pkg.productName,
   copyright: 'Copyright © 2023 feng',
   asar: true,
-  asarUnpack: ['node_modules/entities/**/*'],
+  asarUnpack: ['node_modules/**/*'],
   directories: {
     output: 'release',
     buildResources: 'build',
@@ -119,7 +119,6 @@ module.exports = {
     '!**/{pnpm-lock.yaml}',
     '!**/*.{map,debug.min.js}',
     '!**/unlock.js',
-    '!**/node_modules/*',
     // Dead weight: prod loads the binding from Resources/bin (afterPack copySQLite3).
     // Both-arch prebuilds here would also break the universal mac build
     // (@electron/universal rejects Mach-O files that are identical across x64/arm64 builds).
