@@ -12,6 +12,7 @@ module.exports = {
   executableName: pkg.productName,
   copyright: 'Copyright © 2023 feng',
   asar: true,
+  asarUnpack: ['node_modules/entities/**/*'],
   directories: {
     output: 'release',
     buildResources: 'build',
@@ -24,8 +25,8 @@ module.exports = {
   publish: [
     {
       provider: 'github',
-      owner: 'sherlockouo',
-      repo: 'music',
+      owner: 'Lynx-1ST',
+      repo: 'R3PLAY',
       vPrefixedTagName: true,
       releaseType: 'draft',
     },
