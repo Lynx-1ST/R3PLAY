@@ -6,6 +6,7 @@ interface PersistedUiStates {
   loginPhoneCountryCode: string
   loginType: 'phone' | 'email' | 'qrCode'
   minimizePlayer: boolean
+  collapseQueue: boolean
   librarySelectedTab: 'daily' | 'playlists' | 'albums' | 'artists' | 'videos' | 'cloud' | 'recent'
 }
 
@@ -14,6 +15,7 @@ const initPersistedUiStates: PersistedUiStates = {
   loginPhoneCountryCode: '+86',
   loginType: 'qrCode',
   minimizePlayer: false,
+  collapseQueue: false,
   librarySelectedTab: 'albums',
 }
 

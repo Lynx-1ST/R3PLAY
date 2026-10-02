@@ -46,7 +46,7 @@ const Sidebar = ({
   const indicatorAnimation = useAnimationControls()
   useEffect(() => {
     const index = categories.findIndex(category => category.id === activeCategory)
-    indicatorAnimation.start({ y: index * 40 + 11.5 })
+    indicatorAnimation.start({ y: index * 36 + 10 })
   }, [activeCategory])
 
   return (
@@ -76,13 +76,22 @@ const Sidebar = ({
       {categories.map(category => (
         <motion.div
           key={category.id}
+          role='button'
+          tabIndex={0}
+          aria-pressed={activeCategory === category.id}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setActiveCategory(category.id)
+            }
+          }}
           onClick={() => setActiveCategory(category.id)}
           initial={{ x: activeCategory === category.id ? 12 : 0 }}
           animate={{ x: activeCategory === category.id ? 12 : 0 }}
           className={cx(
-            'flex items-center rounded-lg px-3 py-2 font-medium transition-colors duration-500',
+            'flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current',
             activeCategory === category.id
-              ? 'text-accent-color-500'
+              ? 'text-accent-color-500 bg-black/5 dark:bg-white/5'
               : 'text-black/50 hover:text-black/90 dark:text-white/50 hover:dark:text-white/90'
           )}
         >
@@ -130,6 +139,18 @@ const Settings = () => {
             if (categoryAndComponent.id === activeCategory) {
               return (
                 <motion.div
+                  className={cx(
+                    'settings-content min-w-0 pb-8',
+                    css`
+                      div:has(> .settings-block-title) {
+                        border: 1px solid rgb(128 128 128 / 14%);
+                        border-radius: 16px;
+                        background: rgb(128 128 128 / 5%);
+                        padding: 20px;
+                        margin-bottom: 20px;
+                      }
+                    `
+                  )}
                   key={categoryAndComponent.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

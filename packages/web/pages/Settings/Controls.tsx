@@ -15,7 +15,7 @@ export function Switch({
       role='switch'
       aria-checked={enabled}
       className={cx(
-        'flex w-11 items-center justify-start rounded-full p-1 transition-colors duration-500',
+        'flex w-11 shrink-0 items-center justify-start rounded-full p-1 transition-colors duration-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current',
         enabled ? 'bg-brand-700' : 'bg-black/30 dark:bg-white/30'
       )}
       onClick={() => onChange(!enabled)}
@@ -65,17 +65,21 @@ export function Button({ children, onClick }: { children: React.ReactNode; onCli
 }
 
 export function BlockTitle({ children }: { children: React.ReactNode }) {
-  return <div className='text-21 font-medium'>{children}</div>
+  return <div className='settings-block-title text-lg leading-7 font-semibold'>{children}</div>
 }
 
 export function BlockDescription({ children }: { children: React.ReactNode }) {
-  return <div className='my-1 text-16 font-medium'>{children}</div>
+  return (
+    <div className='mt-1 mb-4 text-sm leading-6 font-normal text-black/60 dark:text-white/60'>
+      {children}
+    </div>
+  )
 }
 
 export function Option({ children }: { children: React.ReactNode }) {
-  return <div className='my-3 flex items-center justify-between'>{children}</div>
+  return <div className='my-3 flex items-center justify-between gap-5'>{children}</div>
 }
 
 export function OptionText({ children }: { children: React.ReactNode }) {
-  return <div className='text-16 font-medium'>{children}</div>
+  return <div className='min-w-0 text-sm leading-6 font-medium'>{children}</div>
 }

@@ -380,6 +380,14 @@
     @apply overscroll-contain;
   }
 
+  html:lang(vi) body,
+  html:lang(vi) input,
+  html:lang(vi) button,
+  html:lang(vi) select,
+  html:lang(vi) textarea {
+    font-family: 'Be Vietnam Pro', Roboto, ui-sans-serif, system-ui, sans-serif;
+  }
+
   html {
     @apply bg-transparent;
     min-height: calc(100% + env(safe-area-inset-top));

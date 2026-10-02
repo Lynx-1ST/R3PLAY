@@ -16,14 +16,14 @@ const Info = () => {
         className={cx(
           // blur 45px→12px + ~10% higher tint: same legibility for a
           // fraction of the backdrop-filter cost.
-          'm-3 flex flex-col items-center rounded-20 bg-white/70 px-6 py-5 font-medium backdrop-blur-xl dark:bg-black/80'
+          'm-3 flex flex-col items-center rounded-20 bg-white/80 px-4 py-5 font-medium backdrop-blur-xl dark:bg-black/80'
         )}
       >
         {/* Track Info */}
         <div className='line-clamp-1 text-lg text-black dark:text-white'>{track?.name}</div>
         <ArtistInline
           artists={track?.ar || []}
-          className='text-black/30 dark:text-white/30'
+          className='text-black/65 dark:text-white/65'
           hoverClassName='hover:text-black/50 dark:hover:text-white/70 transition-colors duration-400'
         />
 

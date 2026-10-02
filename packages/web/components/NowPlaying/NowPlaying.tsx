@@ -28,6 +28,7 @@ const NowPlaying = () => {
               'relative flex aspect-square h-full w-full flex-col justify-end overflow-hidden rounded-24 border',
               css`
                 border-color: hsl(0, 100%, 100%, 0.08);
+                min-height: 318px;
               `
             )}
           >

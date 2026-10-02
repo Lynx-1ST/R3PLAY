@@ -13,6 +13,7 @@ import {
 import * as Sentry from '@sentry/react'
 import 'virtual:svg-icons-register'
 import './styles/global.css'
+import './styles/vietnameseFont.css'
 import './styles/accentColor.css'
 import App from './App'
 import pkg from '../../package.json'

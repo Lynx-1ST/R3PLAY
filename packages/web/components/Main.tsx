@@ -38,7 +38,7 @@ const Main = () => {
           }
           @media (min-width: 1024px) and (max-width: 1279px) {
             margin-left: 112px;
-            margin-right: ${isMaxWidth || !playerSnapshot.track ? 48 : 366}px;
+            margin-right: ${isMaxWidth || !playerSnapshot.track ? 48 : 326}px;
           }
         `
       )}
@@ -46,6 +46,9 @@ const Main = () => {
       <div
         className={css`
           margin-top: 132px;
+          @media (max-height: 800px) {
+            margin-top: 104px;
+          }
         `}
       >
         <Router />

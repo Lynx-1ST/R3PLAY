@@ -16,6 +16,7 @@ import useHoverLightSpot from '../hooks/useHoverLightSpot'
 import { motion } from 'framer-motion'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { RepeatMode } from '@/shared/playerDataTypes'
+import persistedUiStates from '@/web/states/persistedUiStates'
 const QUEUE_DRAG_TYPE = 'application/x-r3play-queue'
 
 const FMButton = () => {
@@ -111,16 +112,25 @@ const ShuffleButton = () => {
 
 const Header = () => {
   const { t } = useTranslation()
+  const { collapseQueue } = useSnapshot(persistedUiStates)
   return (
     <div
       className={cx(
         'absolute top-0 left-0 z-20 flex w-full items-center justify-between bg-contain bg-repeat-x px-7 pb-6 text-14 font-bold lg:px-0'
       )}
     >
-      <div className='flex'>
+      <button
+        type='button'
+        data-queue-toggle
+        aria-expanded={!collapseQueue}
+        title={t(collapseQueue ? 'player.expand-queue' : 'player.collapse-queue')}
+        onClick={() => (persistedUiStates.collapseQueue = !collapseQueue)}
+        className='flex items-center gap-1 rounded-lg py-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current'
+      >
         <div className='bg-accent-color-700 mr-2 h-4 w-1 rounded-full'></div>
         {t`player.queue`}
-      </div>
+        <span className='ml-1 text-xs opacity-60'>{collapseQueue ? '+' : '−'}</span>
+      </button>
       <div className='flex gap-2'>
         <RepeatButton />
         <ShuffleButton />
@@ -351,11 +361,12 @@ const TrackList = ({ className }: { className?: string }) => {
 }
 
 const PlayingNext = () => {
+  const { collapseQueue } = useSnapshot(persistedUiStates)
   return (
-    <>
+    <div className={cx('relative', collapseQueue && 'h-14')}>
       <Header />
-      <TrackList />
-    </>
+      {!collapseQueue && <TrackList />}
+    </div>
   )
 }
 

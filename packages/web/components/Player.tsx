@@ -17,6 +17,9 @@ const Player = () => {
           'sm: hidden md:hidden lg:block',
           css`
             width: 318px;
+            @media (min-width: 1024px) and (max-width: 1279px) {
+              width: 278px;
+            }
           `
         )}
       >

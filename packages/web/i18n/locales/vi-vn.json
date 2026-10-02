@@ -66,7 +66,12 @@
     "playlist-search": "Tìm bài, nghệ sĩ hoặc album trong playlist",
     "playlist-results": "{{count}} / {{total}} bài",
     "search-clear": "Xóa tìm kiếm",
-    "search-empty": "Không có bài hát phù hợp"
+    "search-empty": "Không có bài hát phù hợp",
+    "expand-queue": "Mở hàng đợi",
+    "collapse-queue": "Thu gọn hàng đợi",
+    "mute": "Tắt tiếng",
+    "unmute": "Bật tiếng",
+    "volume-label": "Âm lượng"
   },
   "toasts": {
     "copied": "Đã sao chép",

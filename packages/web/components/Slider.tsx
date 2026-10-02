@@ -9,6 +9,7 @@ const Slider = ({
   onlyCallOnChangeAfterDragEnded = false,
   orientation = 'horizontal',
   alwaysShowThumb = false,
+  ariaLabel,
 }: {
   value: number
   min: number
@@ -18,6 +19,7 @@ const Slider = ({
   orientation?: 'horizontal' | 'vertical'
   alwaysShowTrack?: boolean
   alwaysShowThumb?: boolean
+  ariaLabel?: string
 }) => {
   const sliderRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -115,6 +117,29 @@ const Slider = ({
       )}
       ref={sliderRef}
       onClick={handleClick}
+      role={ariaLabel ? 'slider' : undefined}
+      tabIndex={ariaLabel ? 0 : undefined}
+      aria-label={ariaLabel}
+      aria-valuemin={ariaLabel ? min : undefined}
+      aria-valuemax={ariaLabel ? max : undefined}
+      aria-valuenow={ariaLabel ? memoedValue : undefined}
+      aria-orientation={ariaLabel ? orientation : undefined}
+      onKeyDown={e => {
+        if (!ariaLabel) return
+        const step = max <= 1 ? 0.05 : 5
+        const values: Record<string, number> = {
+          ArrowRight: value + step,
+          ArrowUp: value + step,
+          ArrowLeft: value - step,
+          ArrowDown: value - step,
+          Home: min,
+          End: max,
+        }
+        if (!(e.key in values)) return
+        e.preventDefault()
+        onChange(Math.min(max, Math.max(min, values[e.key])))
+      }}
+      style={{ outlineOffset: 5 }}
     >
       {/* Track */}
       <div

@@ -11,6 +11,7 @@ import { ceil } from 'lodash'
 import { ease } from '@/web/utils/const'
 import { useTranslation } from 'react-i18next'
 import { IpcChannels } from '@/shared/IpcChannels'
+import { useRef } from 'react'
 const LikeButton = () => {
   const { track } = useSnapshot(player)
   const { data: likedIDs } = useUserLikedTracksIDs()
@@ -31,6 +32,7 @@ const LikeButton = () => {
 }
 
 const Controls = () => {
+  const { t } = useTranslation()
   const { state, track } = useSnapshot(player)
   const { minimizePlayer: mini } = useSnapshot(persistedUiStates)
 
@@ -49,7 +51,13 @@ const Controls = () => {
                 height: 254px;
                 text-align: center;
               `
-            : undefined
+            : undefined,
+          css`
+            button:focus-visible {
+              outline: 2px solid currentColor;
+              outline-offset: 4px;
+            }
+          `
         )}
       >
         <div className={cx(mini ? 'flex flex-wrap gap-3' : 'flex w-full flex-col gap-3')}>
@@ -62,6 +70,8 @@ const Controls = () => {
             {/* Minimize */}
             <motion.button
               layout='position'
+              title={t`common.hide-show-player`}
+              aria-label={t`common.hide-show-player`}
               animate={{ rotate: mini ? 90 : 0 }}
               className={cx(
                 'text-black/90 transition-colors duration-400 dark:text-white/40 hover:dark:text-white/90',
@@ -84,6 +94,8 @@ const Controls = () => {
             >
               <motion.button
                 layout='position'
+                title={t`player.previous`}
+                aria-label={t`player.previous`}
                 animate={{ rotate: mini ? 90 : 0 }}
                 onClick={() => {
                   if (!track) return
@@ -96,12 +108,14 @@ const Controls = () => {
               </motion.button>
               <motion.button
                 layout='position'
+                title={t(state === PlayerState.Playing ? 'player.pause' : 'player.play')}
+                aria-label={t(state === PlayerState.Playing ? 'player.pause' : 'player.play')}
                 animate={{ rotate: mini ? 90 : 0 }}
                 onClick={() => {
                   track && player.playOrPause()
                   window.ipcRenderer?.send(IpcChannels.Pause)
                 }}
-                className='rounded-full bg-black/10 p-2.5 transition-colors duration-400 dark:bg-white/10 hover:dark:bg-white/20'
+                className='bg-accent-color-700 rounded-full p-2.5 text-white shadow-md transition-colors duration-200 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current'
               >
                 <Icon
                   name={
@@ -112,6 +126,8 @@ const Controls = () => {
               </motion.button>
               <motion.button
                 layout='position'
+                title={t`player.next`}
+                aria-label={t`player.next`}
                 animate={{ rotate: mini ? 90 : 0 }}
                 onClick={() => {
                   if (!track) return
@@ -159,7 +175,7 @@ function StreamQualityBadge() {
   if (!streamInfo) return null
 
   return (
-    <div className='mx-auto w-fit max-w-full rounded-full bg-black/5 px-2.5 py-1 text-center text-[10px] font-semibold tracking-wide text-black/35 dark:bg-white/5 dark:text-white/35'>
+    <div className='mx-auto w-fit max-w-full rounded-full bg-black/5 px-2.5 py-1 text-center text-[10px] font-semibold tracking-wide text-black/60 dark:bg-white/5 dark:text-white/60'>
       {streamInfo}
     </div>
   )
@@ -168,6 +184,7 @@ function StreamQualityBadge() {
 function VolumeSlider() {
   const { t } = useTranslation()
   const { volume } = useSnapshot(player)
+  const previousVolume = useRef(volume || 0.5)
   const onChange = (volume: number) => {
     player.volume = volume
   }
@@ -181,11 +198,27 @@ function VolumeSlider() {
         text-align: center;
       `)}
     >
-      <motion.button layout='position' className={cx()}>
+      <motion.button
+        layout='position'
+        className='shrink-0 rounded-md p-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current'
+        title={t(volume === 0 ? 'player.unmute' : 'player.mute')}
+        aria-label={t(volume === 0 ? 'player.unmute' : 'player.mute')}
+        aria-pressed={volume === 0}
+        onClick={() => {
+          if (volume > 0) {
+            previousVolume.current = volume
+            player.volume = 0
+          } else player.volume = previousVolume.current
+        }}
+      >
         <Icon name={player.volume == 0 ? 'volume-mute' : 'volume-half'} className={cx('h-5 w-5')} />
       </motion.button>
 
-      <motion.div className={cx('pr-1 pl-1', css(`width: 180px;`))} transition={{ ease }}>
+      <motion.div
+        className='mx-2 min-w-0 flex-1'
+        title={`${Math.round(volume * 100)}%`}
+        transition={{ ease }}
+      >
         <Slider
           value={volume}
           min={0}
@@ -193,18 +226,12 @@ function VolumeSlider() {
           onChange={onChange}
           alwaysShowTrack
           alwaysShowThumb={false}
+          ariaLabel={t`player.volume-label`}
         />
       </motion.div>
-      <motion.button
-        layout='position'
-        className={
-          cx('transition-colors duration-400')
-          // just dont need this I guess
-          // ' text-black dark:text-white'
-        }
-      >
-        <Icon name='volume' className={cx('h-5 w-5')} />
-      </motion.button>
+      <span className='w-8 shrink-0 text-right text-[11px] font-medium text-black/65 tabular-nums dark:text-white/65'>
+        {Math.round(volume * 100)}%
+      </span>
     </div>
   )
 }

@@ -42,6 +42,12 @@ export const getInitLanguage = () => {
   return 'en-US'
 }
 
+const initialLanguage = getInitLanguage()
+document.documentElement.lang = initialLanguage
+i18next.on('languageChanged', language => {
+  document.documentElement.lang = language
+})
+
 i18next.use(initReactI18next).init({
   returnNull: false,
   resources: {
@@ -49,7 +55,7 @@ i18next.use(initReactI18next).init({
     'zh-CN': { translation: zhCN },
     'vi-VN': { translation: viVN },
   },
-  lng: getInitLanguage(),
+  lng: initialLanguage,
   fallbackLng: 'en-US',
   supportedLngs: supportedLanguages,
   interpolation: {
