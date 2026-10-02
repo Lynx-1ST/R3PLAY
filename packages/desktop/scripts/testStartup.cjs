@@ -49,6 +49,8 @@ async function main() {
         assert.match(await page.text(), /<html/i)
         await new Promise(resolve => setTimeout(resolve, 2000))
         assert.ok(output.includes('[index] App ready'), output)
+        assert.ok(output.includes('[db] Database initialized.'), output)
+        assert.doesNotMatch(output, /Database initialization failed/i)
         assert.doesNotMatch(output, /Uncaught Exception|UnhandledPromiseRejection/i)
         console.log('Packaged application startup, SQLite initialization, API and web page passed.')
         return

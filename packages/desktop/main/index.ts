@@ -1,4 +1,5 @@
 import './preload' // must be first
+import { mediaUrlPatterns, allowMediaCors, mediaRequestHeaders } from './utils/mediaCors'
 import './sentry'
 import { app, BrowserWindow, BrowserWindowConstructorOptions, shell } from 'electron'
 import { release, type } from 'os'
@@ -21,6 +22,9 @@ import windowStateKeeper from 'electron-window-state'
 log.info('[electron] index.ts')
 
 class Main {
+  // Keep the page URL and media CORS origin identical. Switching the page
+  // from localhost to 127.0.0.1 would also lose its saved session and cookies.
+  private readonly appOrigin = `http://localhost:${process.env.ELECTRON_WEB_SERVER_PORT}`
   win: BrowserWindow | null = null
   tray: YPMTray | null = null
   thumbar: Thumbar | null = null
@@ -153,8 +157,7 @@ class Main {
     })
 
     // Web server, load the web server to the electron
-    const url = `http://localhost:${process.env.ELECTRON_WEB_SERVER_PORT}`
-    this.win.loadURL(url)
+    this.win.loadURL(this.appOrigin)
 
     // Make all links open with the browser, not with the application
     this.win.webContents.setWindowOpenHandler(({ url }) => {
@@ -179,52 +182,42 @@ class Main {
   disableCORS() {
     if (!this.win) return
 
-    const addCORSHeaders = (headers: Record<string, string | string[]>) => {
-      if (
-        headers['Access-Control-Allow-Origin']?.[0] !== '*' &&
-        headers['access-control-allow-origin']?.[0] !== '*'
-      ) {
-        headers['Access-Control-Allow-Origin'] = ['*']
-      }
-      return headers
-    }
-
-    // URL 过滤器：只有这三个域名的请求需要 header 改写（YouTube 音频
-    // 需要 Range/Sec-Fetch 才不会整段预载）。其余请求（封面图、同源 API
-    // 调用……）原本也只做一件无效的事——往请求头里塞 ACAO（CORS 是响应
-    // 侧语义，请求头里塞了等于没塞）。不过滤时每张封面图都要空跑一次
-    // 这个 JS 回调，滚动歌单墙时每分钟几百次；过滤后为零。
     this.win.webContents.session.webRequest.onBeforeSendHeaders(
-      {
-        urls: [
-          '*://*.googlevideo.com/*',
-          '*://googlevideo.com/*',
-          '*://*.github.com/*',
-          '*://github.com/*',
-          '*://*.music.126.net/*',
-          '*://music.126.net/*',
-        ],
-      },
+      { urls: mediaUrlPatterns },
       (details, callback) => {
-        const { requestHeaders } = details
-        requestHeaders['Sec-Fetch-Mode'] = 'no-cors'
-        requestHeaders['Sec-Fetch-Dest'] = 'audio'
-        requestHeaders['Range'] = 'bytes=0-'
+        const requestHeaders =
+          details.webContentsId === this.win?.webContents.id
+            ? mediaRequestHeaders(details.url, details.resourceType, details.requestHeaders)
+            : details.requestHeaders
         callback({ requestHeaders })
       }
     )
-
-    this.win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-      const { responseHeaders, url } = details
-      if (url.includes('sentry.io')) {
+    this.win.webContents.session.webRequest.onHeadersReceived(
+      { urls: mediaUrlPatterns },
+      (details, callback) => {
+        const responseHeaders = { ...details.responseHeaders }
+        const contentType =
+          Object.entries(responseHeaders).find(
+            ([key]) => key.toLowerCase() === 'content-type'
+          )?.[1]?.[0] ?? ''
+        if (
+          details.webContentsId === this.win?.webContents.id &&
+          allowMediaCors(details.url, details.resourceType, contentType)
+        ) {
+          for (const key of Object.keys(responseHeaders)) {
+            if (
+              ['access-control-allow-origin', 'access-control-allow-credentials'].includes(
+                key.toLowerCase()
+              )
+            )
+              delete responseHeaders[key]
+          }
+          responseHeaders['Access-Control-Allow-Origin'] = [this.appOrigin]
+          responseHeaders['Access-Control-Allow-Credentials'] = ['true']
+        }
         callback({ responseHeaders })
-        return
       }
-      if (responseHeaders) {
-        addCORSHeaders(responseHeaders)
-      }
-      callback({ responseHeaders })
-    })
+    )
   }
 
   handleWindowEvents() {

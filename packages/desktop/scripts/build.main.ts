@@ -31,11 +31,12 @@ const options: BuildOptions = {
   bundle: true,
   define: envForEsbuild,
   minify: true,
+  // Bundle better-sqlite3's JS wrapper. Only its native addon is shipped
+  // separately in resources/bin and loaded through the nativeBinding option.
   external: [
     ...builtinModules.filter(x => !/^_|^(internal|v8|node-inspect)\/|\//.test(x)),
     'electron',
     '@neteasecloudmusicapienhanced/api',
-    'better-sqlite3',
   ],
 }
 
