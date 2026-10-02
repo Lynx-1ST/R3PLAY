@@ -62,10 +62,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install global dependencies
-        run: npm i prisma fastify-cli turbo tsx electron-builder@23.6.0 -g
+        run: npm i prisma fastify-cli turbo tsx -g
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Copy Env
         run: cp .env.example .env
