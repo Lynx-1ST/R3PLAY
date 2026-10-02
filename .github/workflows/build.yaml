@@ -34,6 +34,33 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
+      - name: Remove broken v2.8.1 release and tag
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = node -p "require('./package.json').version"
+          $tag = "v$version"
+
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Deleting broken release and tag $tag"
+            gh release delete $tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to delete existing release $tag"
+            }
+          }
+          else {
+            gh api "repos/$env:GITHUB_REPOSITORY/git/ref/tags/$tag" *> $null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Deleting existing tag $tag"
+              gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$tag"
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to delete existing tag $tag"
+              }
+            }
+          }
+
       - name: Copy environment
         shell: pwsh
         run: Copy-Item .env.example .env
@@ -73,14 +100,49 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --win --x64 --publish never
 
-      - name: Verify packaged runtime dependencies
+      - name: Smoke test packaged runtime dependencies
         shell: pwsh
         run: |
-          $entitiesDecode = "packages/desktop/release/win-unpacked/resources/app.asar.unpacked/node_modules/entities/dist/commonjs/decode.js"
+          $modules = Resolve-Path "packages/desktop/release/win-unpacked/resources/app.asar.unpacked/node_modules"
+          $entitiesDecode = Join-Path $modules "entities/dist/commonjs/decode.js"
+
           if (-not (Test-Path $entitiesDecode)) {
             throw "Packaged app is missing entities/decode runtime dependency."
           }
-          Write-Host "Verified runtime dependency: $entitiesDecode"
+
+          Write-Host "Checking every packaged Express copy and its local dependency graph..."
+          $expressPackages = Get-ChildItem $modules -Filter package.json -Recurse |
+            Where-Object { $_.Directory.Name -eq "express" }
+
+          if (-not $expressPackages) {
+            throw "No packaged Express installation found."
+          }
+
+          foreach ($package in $expressPackages) {
+            $expressDir = $package.Directory.FullName
+            $version = (Get-Content $package.FullName | ConvertFrom-Json).version
+            Write-Host "Requiring Express $version from $expressDir"
+            node -e "require(process.argv[1]); console.log('express load ok')" $expressDir
+            if ($LASTEXITCODE -ne 0) {
+              throw "Express $version failed to load from packaged dependency tree."
+            }
+          }
+
+          $neteaseApi = Join-Path $modules "@neteasecloudmusicapienhanced/api"
+          Write-Host "Requiring packaged NetEase API..."
+          node -e "require(process.argv[1]); console.log('netease api load ok')" $neteaseApi
+          if ($LASTEXITCODE -ne 0) {
+            throw "Packaged NetEase API failed to load."
+          }
+
+          $unblockApi = Join-Path $modules "@unblockneteasemusic/server"
+          Write-Host "Requiring packaged UnblockNeteaseMusic server..."
+          node -e "require(process.argv[1]); console.log('unblock server load ok')" $unblockApi
+          if ($LASTEXITCODE -ne 0) {
+            throw "Packaged UnblockNeteaseMusic server failed to load."
+          }
+
+          Write-Host "Packaged runtime dependency smoke test passed."
 
       - name: Resolve release tag
         id: version
@@ -103,32 +165,6 @@ jobs:
 
           Write-Host "--- Windows release assets ---"
           Get-ChildItem release-assets
-
-      - name: Remove existing release and tag
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $tag = "${{ steps.version.outputs.tag }}"
-
-          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "Deleting existing release $tag"
-            gh release delete $tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
-            if ($LASTEXITCODE -ne 0) {
-              throw "Failed to delete existing release $tag"
-            }
-          }
-          else {
-            gh api "repos/$env:GITHUB_REPOSITORY/git/ref/tags/$tag" *> $null
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "Deleting existing tag $tag"
-              gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$tag"
-              if ($LASTEXITCODE -ne 0) {
-                throw "Failed to delete existing tag $tag"
-              }
-            }
-          }
 
       - name: Publish Windows release
         uses: softprops/action-gh-release@v2
