@@ -10,15 +10,31 @@ import { CacheAPIs } from '@/shared/CacheAPIs'
 import { FetchTracksResponse } from '@/shared/api/Track'
 import store from '@/desktop/main/store'
 import { db, Tables } from '@/desktop/main/db'
-import { normalizeAudioSourceMode } from '@/shared/audioSources'
 const match = require('@unblockneteasemusic/server')
 
 log.info('[electron] appServer/routes/r3play/audio.ts')
 
-const getAudioFromCache = async (id: number) => {
+const cacheMatchesRequestedQuality = (
+  format: string,
+  bitRate: number,
+  level?: SoundQualityType
+) => {
+  if (!level) return true
+
+  if (level === 'standard') return format === 'mp3' && bitRate <= 160000
+  if (level === 'higher') return format === 'mp3' && bitRate > 160000 && bitRate < 256000
+  if (level === 'exhigh') return format === 'mp3' && bitRate >= 256000
+
+  // The current cache schema does not store enough metadata to distinguish
+  // Lossless from Hi-Res FLAC reliably. Fetch these tiers from NetEase again
+  // rather than silently serving the wrong cached quality.
+  return false
+}
+
+const getAudioFromCache = async (id: number, level?: SoundQualityType) => {
   // get from cache
   const cache = await db.find(Tables.Audio, id)
-  if (!cache) return
+  if (!cache || !cacheMatchesRequestedQuality(cache.format, cache.bitRate, level)) return
 
   const audioFileName = `${cache.id}-${cache.bitRate}.${cache.format}`
 
@@ -162,13 +178,8 @@ async function audio(fastify: FastifyInstance) {
       // const res = getAudioFromYouTube(id)
       // console.log('youtube ',res);
 
-      const audioSourceMode = normalizeAudioSourceMode(store.get('settings.audioSourceMode'))
-
-      const localCache = await getAudioFromCache(id)
-      if (
-        localCache &&
-        (audioSourceMode === 'fallback' || localCache.data?.[0]?.source === 'netease')
-      ) {
+      const localCache = await getAudioFromCache(id, req.query.level)
+      if (localCache) {
         return localCache
       }
 
@@ -192,22 +203,10 @@ async function audio(fastify: FastifyInstance) {
         reply.status(200).send(fromNetease)
         return
       }
-
-      if (audioSourceMode === 'netease') {
-        if (fromNetease?.data?.[0]?.freeTrialInfo) {
-          fromNetease.data[0].url = ''
-        }
-        return reply.status(fromNetease?.code ?? 502).send(
-          fromNetease ?? {
-            code: 502,
-            msg: 'NetEase did not return a playable audio URL',
-          }
-        )
-      }
       // console.log(fromNetease);
 
       const trackID = id
-      // Only consult UnblockNeteaseMusic when fallback mode is enabled.
+      // 先查缓存
       const cacheData = await cache.get(CacheAPIs.Unblock, trackID)
       if (cacheData) {
         return cacheData
