@@ -1,0 +1,127 @@
+name: Build Quality Selector Windows
+
+on:
+  push:
+    branches:
+      - release/quality-v2.8.0-r3play.10
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8.6.12
+
+      - name: Install Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Desktop unit tests
+        run: pnpm --filter desktop exec vitest run
+
+      - name: Web typecheck
+        run: pnpm --filter web test:types
+
+      - name: Copy Env
+        shell: pwsh
+        run: Copy-Item .env.example .env
+
+      - name: Build Windows installer
+        env:
+          ELECTRON_WEB_SERVER_PORT: 42710
+          ELECTRON_DEV_NETEASE_API_PORT: 30001
+          UNBLOCK_SERVER_PORT: 30003
+          VITE_APP_NETEASE_API_URL: /netease
+          ENABLE_FLAC: "true"
+          ENABLE_LOCAL_VIP: "svip"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm package
+
+      - name: Smoke-test packaged NetEase API runtime
+        shell: pwsh
+        run: |
+          $app = Resolve-Path "./packages/desktop/release/win-unpacked/R3PLAYX.exe"
+          $resources = Resolve-Path "./packages/desktop/release/win-unpacked/resources"
+          Push-Location $resources
+          try {
+            $env:ELECTRON_RUN_AS_NODE = "1"
+            $output = (& $app -e "require('./app.asar/node_modules/@neteasecloudmusicapienhanced/api'); console.log('NETEASE_API_REQUIRE_OK')" 2>&1 | Out-String)
+            Write-Host $output
+            if ($output -notmatch "NETEASE_API_REQUIRE_OK") {
+              throw "Packaged NetEase API failed to load"
+            }
+          } finally {
+            Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+            Pop-Location
+          }
+
+      - name: Smoke-test packaged playback qualities and audio bytes
+        shell: pwsh
+        run: |
+          $app = Resolve-Path "./packages/desktop/release/win-unpacked/R3PLAYX.exe"
+          $process = Start-Process -FilePath $app -ArgumentList "--disable-gpu" -PassThru
+          try {
+            $ready = $false
+            for ($i = 0; $i -lt 30; $i++) {
+              Start-Sleep -Seconds 1
+              $process.Refresh()
+              if ($process.HasExited) {
+                throw "R3PLAYX exited during startup smoke test (exit code $($process.ExitCode))"
+              }
+              try {
+                $health = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 -Uri "http://127.0.0.1:42710/netease"
+                if ($health.StatusCode -eq 200) {
+                  $ready = $true
+                  break
+                }
+              } catch {}
+            }
+            if (-not $ready) {
+              throw "R3PLAYX local NetEase server did not become ready"
+            }
+
+            foreach ($level in @("standard", "exhigh")) {
+              $source = Invoke-RestMethod -TimeoutSec 45 -Uri "http://127.0.0.1:42710/netease/song/url/v1?id=418602084&level=$level"
+              $url = $source.data[0].url
+              if (-not $url) {
+                throw "Playback route returned no audio URL for level=$level"
+              }
+              Write-Host "QUALITY_ROUTE_OK requested=$level actual=$($source.data[0].level) bitrate=$($source.data[0].br)"
+            }
+
+            $source = Invoke-RestMethod -TimeoutSec 45 -Uri "http://127.0.0.1:42710/netease/song/url/v1?id=418602084&level=exhigh"
+            $sample = Join-Path $PWD "playback-sample.bin"
+            $status = (& curl.exe -L --silent --show-error --max-time 30 --range 0-65535 -o $sample -w "%{http_code}" $source.data[0].url | Out-String).Trim()
+            if ($LASTEXITCODE -ne 0) {
+              throw "Audio byte fetch failed with curl exit $LASTEXITCODE"
+            }
+            if ($status -notin @("200", "206")) {
+              throw "Audio byte fetch returned HTTP $status"
+            }
+            $bytes = (Get-Item $sample).Length
+            if ($bytes -lt 4096) {
+              throw "Audio byte fetch was too small: $bytes bytes"
+            }
+            Write-Host "PLAYBACK_BYTES_OK bytes=$bytes status=$status"
+          } finally {
+            if ($process -and -not $process.HasExited) {
+              Stop-Process -Id $process.Id -Force
+            }
+          }
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: R3PLAYX-quality-win
+          path: ./packages/desktop/release/*x64-Setup.exe
+          if-no-files-found: error
