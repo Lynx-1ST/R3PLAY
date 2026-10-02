@@ -16,7 +16,10 @@ export interface TypedElectronStore {
     x?: number
     y?: number
   }
-  // settings: State['settings']
+  settings?: {
+    language?: string
+    [key: string]: unknown
+  }
 }
 
 const store = new Store<TypedElectronStore>({
