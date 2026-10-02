@@ -162,12 +162,23 @@ function StreamQualityBadge() {
 
   if (!track || state === PlayerState.Loading) return null
 
+  const qualityLabels: Record<string, string> = {
+    standard: '128K',
+    higher: '192K',
+    exhigh: '320K',
+    lossless: 'LOSSLESS',
+    hires: 'HI-RES',
+  }
+  const level =
+    audioInfo.level && audioInfo.level !== 'null'
+      ? qualityLabels[audioInfo.level] || audioInfo.level.toUpperCase()
+      : undefined
   const format = audioInfo.format ? audioInfo.format.toUpperCase() : undefined
   const bitrate = audioInfo.bitrate
     ? `${Math.round(audioInfo.bitrate / 1000)} kbps`
     : undefined
 
-  const streamInfo = [format, bitrate].filter(Boolean).join(' · ')
+  const streamInfo = [level, format, bitrate].filter(Boolean).join(' · ')
   if (!streamInfo) return null
 
   return (
