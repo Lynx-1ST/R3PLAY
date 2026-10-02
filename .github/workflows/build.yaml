@@ -63,8 +63,6 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install global build tools
-        run: npm i prisma fastify-cli turbo tsx -g
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -81,7 +79,7 @@ jobs:
           ENABLE_FLAC: 'true'
           ENABLE_LOCAL_VIP: 'svip'
           IS_ELECTRON: 'yes'
-        run: turbo run build
+        run: pnpm exec turbo run build
 
       - name: Package Electron app
         env:
