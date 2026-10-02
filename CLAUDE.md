@@ -121,9 +121,8 @@ The application follows a **client-server architecture** with different communic
 
 1. **Desktop App:**
    - **Renderer Process (React UI)** ←→ **Main Process (Electron)** via IPC channels
-   - **Renderer Process** ←→ **Local Fastify Server** (localhost:42710) via HTTP
-   - **Main Process** runs a local Fastify server on port 42710
-   - **Main Process** runs NetEase API server on port 30001 (development)
+   - In development, Vite serves the renderer on port 42710 and proxies API requests to the Electron Fastify server on port 30001
+   - In production, the Electron Fastify server listens on port 42710 and serves both the built web assets and local API routes
 
 2. **Web App:**
    - **React UI** ←→ **Standalone Server** (port 35530) via HTTP
