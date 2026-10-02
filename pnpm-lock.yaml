@@ -80,6 +80,9 @@ importers:
       compare-versions:
         specifier: ^6.1.1
         version: 6.1.1
+      content-disposition:
+        specifier: 0.5.4
+        version: 0.5.4
       electron-log:
         specifier: ^5.4.4
         version: 5.4.4
@@ -92,6 +95,12 @@ importers:
       electron-window-state:
         specifier: ^5.0.3
         version: 5.0.3
+      entities:
+        specifier: 6.0.1
+        version: 6.0.1
+      express:
+        specifier: 4.22.2
+        version: 4.22.2
       fast-folder-size:
         specifier: ^1.7.1
         version: 1.7.1
@@ -104,6 +113,9 @@ importers:
       pretty-bytes:
         specifier: ^6.1.1
         version: 6.1.1
+      process-warning:
+        specifier: 1.0.0
+        version: 1.0.0
       ytdl-core:
         specifier: ^4.11.5
         version: 4.11.5
