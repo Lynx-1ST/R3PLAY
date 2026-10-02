@@ -27,9 +27,11 @@ export interface FetchTracksResponse {
 
 // 获取音源URL
 
+export type PlaybackQuality = 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires'
+
 export interface FetchAudioSourceParams {
   id: number
-  level?: 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires' // 128kbps 192kbps 320kbps Lossless Hi-Res
+  level?: PlaybackQuality // 128kbps 192kbps 320kbps Lossless Hi-Res
   qqCookie?: string
   miguCookie?: string
   jooxCookie?: string
