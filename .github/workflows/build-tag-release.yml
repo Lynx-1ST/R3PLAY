@@ -61,8 +61,6 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install global dependencies
-        run: npm i prisma fastify-cli turbo tsx -g
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -82,7 +80,7 @@ jobs:
           ENABLE_FLAC: 'true'
           ENABLE_LOCAL_VIP: 'svip'
           IS_ELECTRON: 'yes'
-        run: turbo run build
+        run: pnpm exec turbo run build
 
       # Step 2: package via electron-builder with --publish never.
       # We upload assets ourselves via action-gh-release so we get a
