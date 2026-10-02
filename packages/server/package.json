@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "prisma generate && node scripts/install-sqlite3.js",
     "start": "fastify start --port 35530 --address 0.0.0.0 -l info dist/packages/server/src/app.js",
-    "build": "tsc && cp -r src/migrations dist/packages/server/src/",
+    "build": "tsc && node -e \"require('node:fs').cpSync('src/migrations', 'dist/packages/server/src/migrations', { recursive: true })\"",
     "watch": "tsc -w",
     "dev": "npm run build && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch\" \"npm:dev:start\"",
     "dev:start": "fastify start --port 35530 --address 0.0.0.0 -l info dist/packages/server/src/app.js"

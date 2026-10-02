@@ -163,7 +163,22 @@
     "player-youtube-configured": "Configured",
     "player-youtube-submit": "Save",
     "player-youtube-proxy-empty": "Proxy cannot be empty",
-    "player-youtube-proxy-saved": "Proxy settings saved"
+    "player-youtube-proxy-saved": "Proxy settings saved",
+    "audio-output-title": "Audio output",
+    "audio-output-device": "Output device",
+    "audio-output-default": "System default",
+    "audio-output-number": "Device {{number}}",
+    "audio-output-error": "Could not switch audio output.",
+    "audio-output-unavailable": "Audio output devices are unavailable.",
+    "about-version": "Version {{version}}",
+    "about-maintainer": "Developed and maintained by",
+    "about-upstream": "Based on",
+    "about-check-updates": "Check for updates",
+    "about-checking": "Checking…",
+    "about-up-to-date": "You are running the latest version.",
+    "about-update-available": "Version {{version}} is available",
+    "about-open-releases": "View GitHub releases",
+    "about-update-error": "Could not check for updates. Please try again."
   },
   "context-menu": {
     "share": "Share",

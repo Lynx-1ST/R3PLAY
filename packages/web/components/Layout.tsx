@@ -35,9 +35,7 @@ const Layout = () => {
   // Background cover: resized (the raw picUrl is often 1-3 MB) and
   // preload-then-swap — swapping to an undecoded URL blanks the layer
   // on a transparent window until the new image fetches.
-  const bgSrc = showBackgroundImage
-    ? resizeImage(playerSnapshot.track?.al?.picUrl ?? '', 'lg')
-    : ''
+  const bgSrc = showBackgroundImage ? resizeImage(playerSnapshot.track?.al?.picUrl ?? '', 'lg') : ''
   const [paintedBg, setPaintedBg] = useState('')
   useEffect(() => {
     if (!bgSrc) {
@@ -64,7 +62,7 @@ const Layout = () => {
           id='layout'
           className={cx(
             'h-full',
-            'bg-img ',
+            'bg-img',
             window.env?.isElectron && !fullscreen && 'rounded-12',
             css`
               position: relative;
@@ -93,16 +91,16 @@ const Layout = () => {
               // Non-breathing path: stronger tint compensates for the
               // removed backdrop-blur layers (see note above). Breathing
               // path keeps the original values so its look is unchanged.
-              enableBreathingEffect
+              showBackgroundImage && enableBreathingEffect
                 ? theme === 'dark'
                   ? 'bg-black/70'
                   : 'bg-white/90'
                 : theme === 'dark'
-                ? 'bg-black/85'
-                : 'bg-white/95'
+                  ? 'bg-black/85'
+                  : 'bg-white/95'
             )}
             style={{
-              backgroundImage: paintedBg ? `url(${paintedBg})` : '',
+              backgroundImage: showBackgroundImage && paintedBg ? `url(${paintedBg})` : '',
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -119,8 +117,12 @@ const Layout = () => {
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background-color: rgba(0, 0, 0, 0.05); /* 设置半透明背景颜色 */
-                    // z-index: 1; /* 设置层级为较高的值，确保遮罩在内容上方 */
+                    background-color: rgba(
+                      0,
+                      0,
+                      0,
+                      0.05
+                    ); /* 设置半透明背景颜色 */ // z-index: 1; /* 设置层级为较高的值，确保遮罩在内容上方 */
                   `
               )}
             ></div>
@@ -129,7 +131,7 @@ const Layout = () => {
             id='layout-foreground'
             className={cx(
               'rounded-12',
-              'relative grid h-screen select-none overflow-hidden',
+              'relative grid h-screen overflow-hidden select-none',
               'text-black transition-colors duration-400 dark:text-white'
             )}
           >

@@ -12,6 +12,7 @@ interface Settings {
   miguCookie: string
   jooxCookie: string
   audioQuality: PlaybackQuality
+  audioOutputDeviceId: string
   enableFindTrackOnYouTube: boolean
   httpProxyForYouTube?: {
     proxy: string
@@ -30,7 +31,6 @@ interface Settings {
   showBackgroundImage: boolean
   unlock: boolean
   theme: string
-  showDesktopLyrics: boolean
   keyboardShortcuts: KeyboardShortcutSettings
   showTrackListName: boolean
   showDownloadActions: boolean
@@ -73,7 +73,7 @@ const initSettings: Settings = {
   },
   unlock: true,
   theme: 'dark',
-  showDesktopLyrics: false,
+  audioOutputDeviceId: '',
   keyboardShortcuts: getKeyboardShortcutDefaultSettings(),
   showTrackListName: false,
   showDownloadActions: false,
@@ -88,6 +88,7 @@ try {
   statesInStorage = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
   // Remove the short-lived audio-source experiment from older fork builds.
   delete (statesInStorage as Record<string, unknown>).audioSourceMode
+  delete (statesInStorage as Record<string, unknown>).showDesktopLyrics
 } catch {
   // ignore
 }

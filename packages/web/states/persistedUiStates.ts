@@ -3,8 +3,6 @@ import { proxy, subscribe } from 'valtio'
 
 interface PersistedUiStates {
   lyricsBlur: boolean
-  showDeskttopLyrics: boolean
-  showDevices: boolean
   loginPhoneCountryCode: string
   loginType: 'phone' | 'email' | 'qrCode'
   minimizePlayer: boolean
@@ -13,8 +11,6 @@ interface PersistedUiStates {
 
 const initPersistedUiStates: PersistedUiStates = {
   lyricsBlur: false,
-  showDeskttopLyrics: false,
-  showDevices: false,
   loginPhoneCountryCode: '+86',
   loginType: 'qrCode',
   minimizePlayer: false,
@@ -27,6 +23,8 @@ let sates = {}
 if (statesInStorage) {
   try {
     sates = JSON.parse(statesInStorage)
+    delete (sates as Record<string, unknown>).showDeskttopLyrics
+    delete (sates as Record<string, unknown>).showDevices
   } catch {
     // ignore
   }

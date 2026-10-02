@@ -4,7 +4,8 @@ import log from '../../../log'
 import cache from '../../../cache'
 import store from '../../../store'
 import { CacheAPIs } from '@/shared/CacheAPIs'
-const match = require('@unblockneteasemusic/server')
+import { loadRuntimePackage } from '../../../runtime'
+const match = loadRuntimePackage('@unblockneteasemusic/server')
 
 const unblock: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.get(
@@ -34,7 +35,15 @@ const unblock: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       process.env.ENABLE_LOCAL_VIP = 'true'
 
       try {
-        const data: any = await match(trackID, ['kugou', 'bodian', 'qq', 'kuwo', 'migu', 'joox', 'bilivideo'])
+        const data: any = await match(trackID, [
+          'kugou',
+          'bodian',
+          'qq',
+          'kuwo',
+          'migu',
+          'joox',
+          'bilivideo',
+        ])
         if (data === null || data === undefined || data?.url === '') {
           return reply.code(500).send('no track info, something bad happens')
         }

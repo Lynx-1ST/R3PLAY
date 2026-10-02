@@ -6,7 +6,7 @@ import { State as PlayerState } from '@/web/utils/player'
 import { isLyricsWindow } from '@/web/utils/isLyricsWindow'
 import { useEffect, useRef, useState } from 'react'
 import { useEffectOnce } from 'react-use'
-import { subscribe, useSnapshot } from 'valtio'
+import { useSnapshot } from 'valtio'
 import { appName } from './utils/const'
 
 // See utils/isLyricsWindow.ts — the lyrics window is a read-only consumer
@@ -41,7 +41,7 @@ const IpcRendererReact = () => {
       coverImg,
     })
     window.ipcRenderer?.send(IpcChannels.MetaData, {
-      track: JSON.stringify(track)
+      track: JSON.stringify(track),
     })
   }, [track])
 
@@ -51,57 +51,6 @@ const IpcRendererReact = () => {
       isLiked: userLikedSongs?.ids?.includes(track?.id ?? 0) ?? false,
     })
   }, [userLikedSongs, track])
-
-  // 同步歌词进度›
-  // Driven by a valtio subscription on the raw op stream instead of a
-  // snapshot-driven effect: progress mutates continuously while playing,
-  // which would re-render this component at the mutation rate. Note the
-  // 500ms playback tick (utils/player.ts) writes `_progress` directly —
-  // subscribeKey('progress') never sees it, and the lyrics window would
-  // freeze after the last seek. Inspecting ops instead:
-  //  - user seeks assign `progress` (which also writes `_progress`) —
-  //    forwarded immediately,
-  //  - the playback tick only writes `_progress` — forwarded throttled to
-  //    the tick rate, trailing.
-  useEffect(() => {
-    if (isLyricsWindow) return
-    window.ipcRenderer?.send(IpcChannels.SyncProgress, {
-      progress: player.progress,
-    })
-
-    const THROTTLE_MS = 500
-    let lastSentAt = Date.now()
-    let timer: ReturnType<typeof setTimeout> | null = null
-
-    const send = () => {
-      lastSentAt = Date.now()
-      if (timer) {
-        clearTimeout(timer)
-        timer = null
-      }
-      window.ipcRenderer?.send(IpcChannels.SyncProgress, {
-        progress: player.progress,
-      })
-    }
-
-    const scheduleSend = () => {
-      if (timer) return
-      const wait = THROTTLE_MS - (Date.now() - lastSentAt)
-      if (wait <= 0) send()
-      else timer = setTimeout(send, wait)
-    }
-
-    const unsubscribe = subscribe(player, ops => {
-      const isSeek = ops.some(op => op[1]?.[0] === 'progress')
-      if (!isSeek && !ops.some(op => op[1]?.[0] === '_progress')) return
-      isSeek ? send() : scheduleSend()
-    })
-
-    return () => {
-      unsubscribe()
-      if (timer) clearTimeout(timer)
-    }
-  }, [])
 
   // 同步歌曲
   useEffect(() => {

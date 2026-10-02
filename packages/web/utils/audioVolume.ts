@@ -2,6 +2,7 @@ import { subscribe as subscribeState } from 'valtio'
 import player from '@/web/states/player'
 import settings, { isLowPowerDevice } from '@/web/states/settings'
 import { State } from '@/web/utils/player'
+import { registerAudioOutputContext } from './audioOutput'
 
 /**
  * Single requestAnimationFrame loop that pushes the current audio
@@ -88,6 +89,7 @@ function tryConnect(audioEl: HTMLMediaElement) {
         return
       }
       sharedCtx = new Ctor()
+      registerAudioOutputContext(sharedCtx)
     }
     if (!sharedAnalyser && sharedCtx) {
       sharedAnalyser = sharedCtx.createAnalyser()

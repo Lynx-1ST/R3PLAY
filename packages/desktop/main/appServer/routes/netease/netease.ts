@@ -1,6 +1,9 @@
 import { pathCase, snakeCase } from 'change-case'
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import NeteaseCloudMusicApi from '@neteasecloudmusicapienhanced/api'
+import { loadRuntimePackage } from '../../../runtime'
+const NeteaseCloudMusicApi: typeof import('@neteasecloudmusicapienhanced/api') = loadRuntimePackage(
+  '@neteasecloudmusicapienhanced/api'
+)
 import { CacheAPIs } from '@/shared/CacheAPIs'
 import cache from '../../../cache'
 
@@ -26,11 +29,7 @@ const cookieFingerprint = (cookies: unknown): string => {
 const searchCacheKey = (name: string, query: { [key: string]: string }, cookies: unknown) =>
   `${name}?${JSON.stringify(query)}#${cookieFingerprint(cookies)}`
 
-const getSearchCache = (
-  name: string,
-  query: { [key: string]: string },
-  cookies: unknown
-) => {
+const getSearchCache = (name: string, query: { [key: string]: string }, cookies: unknown) => {
   const key = searchCacheKey(name, query, cookies)
   const entry = searchCache.get(key)
   if (!entry) return

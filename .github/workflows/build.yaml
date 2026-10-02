@@ -34,44 +34,6 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Remove broken v2.8.1 release and tag
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $version = node -p "require('./package.json').version"
-          $tag = "v$version"
-
-          gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" --silent 2>$null
-          $releaseExists = $LASTEXITCODE -eq 0
-          $global:LASTEXITCODE = 0
-
-          if ($releaseExists) {
-            Write-Host "Deleting broken release and tag $tag"
-            gh release delete $tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
-            if ($LASTEXITCODE -ne 0) {
-              throw "Failed to delete existing release $tag"
-            }
-          }
-          else {
-            gh api "repos/$env:GITHUB_REPOSITORY/git/ref/tags/$tag" --silent 2>$null
-            $tagExists = $LASTEXITCODE -eq 0
-            $global:LASTEXITCODE = 0
-
-            if ($tagExists) {
-              Write-Host "Deleting existing tag $tag"
-              gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$tag"
-              if ($LASTEXITCODE -ne 0) {
-                throw "Failed to delete existing tag $tag"
-              }
-            }
-            else {
-              Write-Host "Release/tag $tag does not exist; continuing."
-            }
-          }
-
-          exit 0
-
       - name: Copy environment
         shell: pwsh
         run: Copy-Item .env.example .env
@@ -111,60 +73,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --win --x64 --publish never
 
-      - name: Smoke test packaged runtime dependencies
+      - name: Smoke test with packaged Electron
         shell: pwsh
         run: |
-          $modules = Resolve-Path "packages/desktop/release/win-unpacked/resources/app.asar.unpacked/node_modules"
-          $entitiesDecode = Join-Path $modules "entities/dist/commonjs/decode.js"
-
-          if (-not (Test-Path $entitiesDecode)) {
-            throw "Packaged app is missing entities/decode runtime dependency."
-          }
-
-          $neteaseApi = Join-Path $modules "@neteasecloudmusicapienhanced/api"
-          $unblockUtils = Join-Path $neteaseApi "node_modules/@neteasecloudmusicapienhanced/unblockmusic-utils"
-          $neteaseExpress = Join-Path $neteaseApi "node_modules/express"
-          $unblockExpress = Join-Path $unblockUtils "node_modules/express"
-
-          Write-Host "Requiring vendored Express 5 for NetEase API..."
-          node -e "require(process.argv[1]); console.log('netease express load ok')" $neteaseExpress
-          if ($LASTEXITCODE -ne 0) {
-            throw "NetEase API Express dependency failed to load."
-          }
-
-          Write-Host "Requiring vendored Express 4 for unblockmusic-utils..."
-          node -e "require(process.argv[1]); console.log('unblock express load ok')" $unblockExpress
-          if ($LASTEXITCODE -ne 0) {
-            throw "Unblockmusic Express dependency failed to load."
-          }
-
-          Write-Host "Requiring packaged NetEase API..."
-          node -e "require(process.argv[1]); console.log('netease api load ok')" $neteaseApi
-          if ($LASTEXITCODE -ne 0) {
-            throw "Packaged NetEase API failed to load."
-          }
-
-          Write-Host "Requiring NetEase API's packaged unblockmusic-utils..."
-          node -e "require(process.argv[1]); console.log('unblock utils load ok')" $unblockUtils
-          if ($LASTEXITCODE -ne 0) {
-            throw "Packaged unblockmusic-utils failed to load."
-          }
-
-          $nestedUnblockApi = Join-Path $unblockUtils "node_modules/@unblockneteasemusic/server"
-          Write-Host "Requiring NetEase API's nested UnblockNeteaseMusic server..."
-          node -e "require(process.argv[1]); console.log('nested unblock server load ok')" $nestedUnblockApi
-          if ($LASTEXITCODE -ne 0) {
-            throw "Nested UnblockNeteaseMusic server failed to load."
-          }
-
-          $unblockApi = Join-Path $modules "@unblockneteasemusic/server"
-          Write-Host "Requiring app's direct UnblockNeteaseMusic server..."
-          node -e "require(process.argv[1]); console.log('direct unblock server load ok')" $unblockApi
-          if ($LASTEXITCODE -ne 0) {
-            throw "Direct UnblockNeteaseMusic server failed to load."
-          }
-
-          Write-Host "Packaged runtime dependency smoke test passed."
+          $env:ELECTRON_RUN_AS_NODE = '1'
+          $app = Resolve-Path 'packages/desktop/release/win-unpacked/R3PLAYX.exe'
+          $resources = Resolve-Path 'packages/desktop/release/win-unpacked/resources'
+          $script = (Resolve-Path 'packages/desktop/scripts/testRuntime.cjs').Path
+          $probe = Start-Process $app -ArgumentList @('"' + $script + '"', '"' + $resources + '"') -WindowStyle Hidden -Wait -PassThru
+          if ($probe.ExitCode -ne 0) { throw 'Packaged Electron runtime test failed.' }
+          Remove-Item Env:ELECTRON_RUN_AS_NODE
+          node packages/desktop/scripts/testStartup.cjs $app
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged application startup failed.' }
 
       - name: Resolve release tag
         id: version

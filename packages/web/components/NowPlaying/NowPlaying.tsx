@@ -41,7 +41,7 @@ const NowPlaying = () => {
       </AnimatePresence>
 
       {/* Controls */}
-      <Controls />
+      {minimizePlayer && <Controls />}
     </>
   )
 }

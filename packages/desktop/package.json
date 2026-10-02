@@ -2,10 +2,10 @@
   "name": "desktop",
   "productName": "R3PLAYX",
   "private": true,
-  "version": "2.8.1",
+  "version": "2.8.2",
   "main": "./main/index.js",
-  "author": "qier222 <qier222@outlook.com> && feng <wdf.coder@gmail.com>",
-  "homepage": "https://github.com/sherlockouo/music",
+  "author": "Lynx-1ST",
+  "homepage": "https://github.com/Lynx-1ST/R3PLAY",
   "scripts": {
     "postinstall": "tsx scripts/build.sqlite3.ts",
     "dev": "tsx scripts/build.main.ts --watch ",

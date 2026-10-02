@@ -2,11 +2,11 @@
   "name": "r3playx",
   "productName": "R3PLAYX",
   "private": true,
-  "version": "2.8.1",
+  "version": "2.8.2",
   "description": "A nifty third-party NetEase Music player",
   "homepage": "https://github.com/Lynx-1ST/R3PLAY",
   "license": "AGPL-3.0",
-  "author": "wdf.coder@gmail.com ",
+  "author": "Lynx-1ST",
   "repository": "github:Lynx-1ST/R3PLAY",
   "engines": {
     "node": ">=22.12"

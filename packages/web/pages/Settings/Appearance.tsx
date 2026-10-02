@@ -45,41 +45,6 @@ const LayoutBackground = () => {
   )
 }
 
-const ShowDesktopLyrics = () => {
-  const { t, i18n } = useTranslation()
-  const { showDeskttopLyrics } = useSnapshot(persistedUiStates)
-  return (
-    <>
-      <Option>
-        <div className='flex flex-col'>
-          <OptionText>{t`common.showDeskttopLyrics`}</OptionText>
-        </div>
-        <Switch
-          enabled={showDeskttopLyrics}
-          onChange={value => (persistedUiStates.showDeskttopLyrics = value)}
-        ></Switch>
-      </Option>
-    </>
-  )
-}
-
-const ShowDevices = () => {
-  const { t, i18n } = useTranslation()
-  const { showDevices } = useSnapshot(persistedUiStates)
-  return (
-    <>
-      <Option>
-        <div className='flex flex-col'>
-          <OptionText>{t`common.showDevices`}</OptionText>
-        </div>
-        <Switch
-          enabled={showDevices}
-          onChange={value => (persistedUiStates.showDevices = value)}
-        ></Switch>
-      </Option>
-    </>
-  )
-}
 const LyricsBlur = () => {
   const { t, i18n } = useTranslation()
   const { lyricsBlur } = useSnapshot(persistedUiStates)
@@ -162,8 +127,7 @@ const Appearance = () => {
     >
       <Theme />
       <LayoutBackground />
-      <ShowDesktopLyrics />
-      <ShowDevices />
+
       <LyricsBlur />
       <BreathingEffect />
       <AutoLowPowerMode />

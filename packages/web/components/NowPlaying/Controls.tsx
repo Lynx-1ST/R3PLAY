@@ -10,10 +10,7 @@ import Slider from '@/web/components/Slider'
 import { ceil } from 'lodash'
 import { ease } from '@/web/utils/const'
 import { useTranslation } from 'react-i18next'
-import AudioOutputDevices from '@/web/components/Tools/Devices'
-import { useState } from 'react'
 import { IpcChannels } from '@/shared/IpcChannels'
-import settings from '@/web/states/settings'
 const LikeButton = () => {
   const { track } = useSnapshot(player)
   const { data: likedIDs } = useUserLikedTracksIDs()
@@ -34,17 +31,16 @@ const LikeButton = () => {
 }
 
 const Controls = () => {
-  
   const { state, track } = useSnapshot(player)
   const { minimizePlayer: mini } = useSnapshot(persistedUiStates)
-  const { showDeskttopLyrics, showDevices } = useSnapshot(persistedUiStates)
 
   return (
     <MotionConfig transition={{ ease, duration: 0.5 }}>
       <motion.div
+        data-player-controls
         className={cx(
-          'fixed bottom-0 right-0 flex',
-          mini ? 'flex-col items-center justify-between' : 'items-center justify-between',
+          'flex',
+          mini ? 'fixed flex-col items-center justify-between' : 'relative w-full flex-col',
           mini
             ? css`
                 right: 24px;
@@ -53,22 +49,14 @@ const Controls = () => {
                 height: 254px;
                 text-align: center;
               `
-            : css`
-                justify-content: space-around;
-                bottom: 56px;
-                right: 56px;
-                width: 254px;
-              `
+            : undefined
         )}
       >
-        <div className={cx(mini ? 'flex flex-wrap gap-3' : 'flex-col gap-2')}>
+        <div className={cx(mini ? 'flex flex-wrap gap-3' : 'flex w-full flex-col gap-3')}>
           <div
+            data-player-transport
             className={cx(
-              mini
-                ? 'flex-col text-center'
-                : showDevices || showDeskttopLyrics
-                ? 'my-3 flex  justify-between gap-5'
-                : 'my-5 flex  justify-between gap-5'
+              mini ? 'flex-col text-center' : 'flex items-center justify-between gap-2'
             )}
           >
             {/* Minimize */}
@@ -83,15 +71,16 @@ const Controls = () => {
                 persistedUiStates.minimizePlayer = !mini
               }}
             >
-              <Icon name='hide-list' className='h-7 w-7 ' />
+              <Icon name='hide-list' className='h-7 w-7' />
             </motion.button>
 
             {/* Media controls */}
-            <motion.div 
-            className={cx(
-              'flex flex-wrap gap-2 text-black/95 dark:text-white/80',
+            <motion.div
+              className={cx(
+                'flex gap-2 text-black/95 dark:text-white/80',
+                mini ? 'flex-wrap' : 'flex-nowrap'
               )}
-            transition={{duration:0.5,ease}}
+              transition={{ duration: 0.5, ease }}
             >
               <motion.button
                 layout='position'
@@ -118,7 +107,7 @@ const Controls = () => {
                   name={
                     [PlayerState.Playing, PlayerState.Loading].includes(state) ? 'pause' : 'play'
                   }
-                  className='h-6 w-6 '
+                  className='h-6 w-6'
                 />
               </motion.button>
               <motion.button
@@ -131,7 +120,7 @@ const Controls = () => {
                 disabled={!track}
                 className='rounded-full bg-black/10 p-2.5 transition-colors duration-400 dark:bg-white/10 hover:dark:bg-white/20'
               >
-                <Icon name='next' className='h-6 w-6 ' />
+                <Icon name='next' className='h-6 w-6' />
               </motion.button>
             </motion.div>
 
@@ -139,16 +128,6 @@ const Controls = () => {
             <LikeButton />
           </div>
 
-          {!mini && (
-            <div className='iterms-center flex flex-row justify-center gap-5 transition-colors duration-400'>
-              {window.env?.isElectron && (
-                <>
-                  {showDevices && <AudioOutputDevices />}
-                  {showDeskttopLyrics && <DesktopLyric />}
-                </>
-              )}
-            </div>
-          )}
           {!mini && <VolumeSlider />}
           {!mini && <StreamQualityBadge />}
         </div>
@@ -174,51 +153,14 @@ function StreamQualityBadge() {
       ? qualityLabels[audioInfo.level] || audioInfo.level.toUpperCase()
       : undefined
   const format = audioInfo.format ? audioInfo.format.toUpperCase() : undefined
-  const bitrate = audioInfo.bitrate
-    ? `${Math.round(audioInfo.bitrate / 1000)} kbps`
-    : undefined
+  const bitrate = audioInfo.bitrate ? `${Math.round(audioInfo.bitrate / 1000)} kbps` : undefined
 
   const streamInfo = [level, format, bitrate].filter(Boolean).join(' · ')
   if (!streamInfo) return null
 
   return (
-    <div
-      className='mx-auto mt-2 w-fit rounded-full bg-black/5 px-2.5 py-1 text-center
-      text-[10px] font-semibold tracking-wide text-black/35 dark:bg-white/5 dark:text-white/35'
-    >
+    <div className='mx-auto w-fit max-w-full rounded-full bg-black/5 px-2.5 py-1 text-center text-[10px] font-semibold tracking-wide text-black/35 dark:bg-white/5 dark:text-white/35'>
       {streamInfo}
-    </div>
-  )
-}
-
-function DesktopLyric() {
-  const { showDesktopLyrics } = useSnapshot(settings)
-  const toggleDesktopLyricShow = async () => {
-    settings.showDesktopLyrics = !showDesktopLyrics
-
-    const show = await window.ipcRenderer?.invoke(IpcChannels.SetDesktopLyric)
-
-    settings.showDesktopLyrics = show ? show : false
-  }
-  return (
-    <div
-      className={cx(
-        css`
-          display: flex;
-          flex-direction: row;
-          justify-content: space-around;
-          align-items: center;
-          text-align: center;
-        `
-      )}
-    >
-      <motion.button
-        layout='position'
-        className={cx(showDesktopLyrics && 'text-brand-600')}
-        onClick={toggleDesktopLyricShow}
-      >
-        <Icon name='lyrics' className={cx('h-5 w-5')} />
-      </motion.button>
     </div>
   )
 }
@@ -231,29 +173,19 @@ function VolumeSlider() {
   }
   return (
     <div
-      className={cx(
-        css`
-          display: flex;
-          flex-direction: row;
-          justify-content: space-around;
-          align-items: center;
-          text-align: center;
-        `
-      )}
+      className={cx(css`
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        text-align: center;
+      `)}
     >
       <motion.button layout='position' className={cx()}>
         <Icon name={player.volume == 0 ? 'volume-mute' : 'volume-half'} className={cx('h-5 w-5')} />
       </motion.button>
 
-      <motion.div
-        className={cx(
-          'pr-1 pl-1',
-          css(`
-        width: 180px;
-      `)
-        )}
-        transition={{ ease }}
-      >
+      <motion.div className={cx('pr-1 pl-1', css(`width: 180px;`))} transition={{ ease }}>
         <Slider
           value={volume}
           min={0}
@@ -266,9 +198,7 @@ function VolumeSlider() {
       <motion.button
         layout='position'
         className={
-          cx(
-            ' transition-colors duration-400 ',
-          )
+          cx('transition-colors duration-400')
           // just dont need this I guess
           // ' text-black dark:text-white'
         }

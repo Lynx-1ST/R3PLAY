@@ -2,16 +2,26 @@ import settings from '@/web/states/settings'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useSnapshot } from 'valtio'
-import { BlockDescription, BlockTitle, Button, Option, OptionText, Select, Switch } from './Controls'
+import {
+  BlockDescription,
+  BlockTitle,
+  Button,
+  Option,
+  OptionText,
+  Select,
+  Switch,
+} from './Controls'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import type { PlaybackQuality } from '@/shared/api/Track'
+import AudioOutputDevices from '@/web/components/Tools/Devices'
 
 function Player() {
   return (
     <div className='iterms-center flex w-full justify-between'>
       <div className='w-full'>
         <PlaybackQualitySelector />
+        {window.env?.isElectron && <AudioOutputDevices />}
         <FindTrackOnYouTube />
       </div>
     </div>
@@ -111,9 +121,7 @@ function FindTrackOnYouTube() {
                         onChange={e => {
                           setProxy(e.target.value)
                         }}
-                        className='w-full grow appearance-none rounded-md px-1 text-lg placeholder:pl-1
-                        placeholder:text-black/30 bg-black/10
-                        dark:placeholder:text-white/30 dark:bg-white/10'
+                        className='w-full grow appearance-none rounded-md bg-black/10 px-1 text-lg placeholder:pl-1 placeholder:text-black/30 dark:bg-white/10 dark:placeholder:text-white/30'
                         placeholder={'e.g. http://127.0.0.1:7890'}
                         type='text'
                         value={proxy}
@@ -147,9 +155,7 @@ function FindTrackOnYouTube() {
                   setQQCookie(e.target.value)
                   settings.qqCookie = e.target.value
                 }}
-                className='w-full grow appearance-none rounded-md px-1 text-lg placeholder:pl-1
-                placeholder:text-black/30 bg-black/10
-                dark:placeholder:text-white/30 dark:bg-white/10'
+                className='w-full grow appearance-none rounded-md bg-black/10 px-1 text-lg placeholder:pl-1 placeholder:text-black/30 dark:bg-white/10 dark:placeholder:text-white/30'
                 placeholder={'uin=..; qm_keyst=..;'}
                 value={nqqCookie}
               />
@@ -178,9 +184,7 @@ function FindTrackOnYouTube() {
                   setMIGUCookie(e.target.value)
                   settings.miguCookie = e.target.value
                 }}
-                className='w-full grow appearance-none rounded-md px-1 text-lg placeholder:pl-1
-                placeholder:text-black/30 bg-black/10
-                dark:placeholder:text-white/30 dark:bg-white/10'
+                className='w-full grow appearance-none rounded-md bg-black/10 px-1 text-lg placeholder:pl-1 placeholder:text-black/30 dark:bg-white/10 dark:placeholder:text-white/30'
                 placeholder={'uin=..; migu=..;'}
                 value={nmiguCookie}
               />
@@ -209,9 +213,7 @@ function FindTrackOnYouTube() {
                   setJOOXCookie(e.target.value)
                   settings.jooxCookie = e.target.value
                 }}
-                className='w-full grow appearance-none rounded-md px-1 text-lg placeholder:pl-1
-                placeholder:text-black/30 bg-black/10
-                dark:placeholder:text-white/30 dark:bg-white/10'
+                className='w-full grow appearance-none rounded-md bg-black/10 px-1 text-lg placeholder:pl-1 placeholder:text-black/30 dark:bg-white/10 dark:placeholder:text-white/30'
                 placeholder={'wmid=..; session_key=..'}
                 value={njooxCookie}
               />

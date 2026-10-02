@@ -10,7 +10,7 @@ module.exports = {
   appId: 'app.r3playx',
   productName: pkg.productName,
   executableName: pkg.productName,
-  copyright: 'Copyright © 2023 feng',
+  copyright: 'Copyright © Lynx-1ST and contributors',
   asar: true,
   asarUnpack: ['node_modules/**/*'],
   directories: {
@@ -21,7 +21,9 @@ module.exports = {
   buildDependenciesFromSource: false,
   electronVersion,
   forceCodeSigning: false,
+  beforePack: './scripts/prepareRuntime.js',
   afterPack: './scripts/copySQLite3.js',
+  extraResources: [{ from: './runtime/node_modules', to: 'runtime/node_modules' }],
   publish: [
     {
       provider: 'github',
@@ -44,7 +46,7 @@ module.exports = {
     ],
     icon: 'build/icons/icon.png',
     signtoolOptions: {
-      publisherName: 'feng',
+      publisherName: 'Lynx-1ST',
     },
   },
   nsis: {
@@ -80,10 +82,7 @@ module.exports = {
     target: [
       {
         target: 'deb',
-        arch: [
-          'x64',
-          'arm64',
-        ],
+        arch: ['x64', 'arm64'],
       },
       {
         target: 'AppImage',
@@ -111,6 +110,7 @@ module.exports = {
     icon: './build/icon.png',
   },
   files: [
+    '!runtime/**',
     '!**/*.ts',
     '!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}',
     '!.editorconfig',

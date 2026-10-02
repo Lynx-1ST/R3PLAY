@@ -21,7 +21,9 @@ import { subscribeAudioVolume } from '@/web/utils/audioVolume'
  */
 const BreathingBackground = memo(() => {
   const { track } = useSnapshot(player)
-  const { enableBreathingEffect, theme, autoLowPowerMode } = useSnapshot(settings)
+  const { showBackgroundImage, enableBreathingEffect, theme, autoLowPowerMode } =
+    useSnapshot(settings)
+  const active = showBackgroundImage && enableBreathingEffect
   const isDark = theme === 'dark'
 
   const coverUrl = track?.al?.picUrl || ''
@@ -36,7 +38,7 @@ const BreathingBackground = memo(() => {
   // Cover). On load failure the previous cover simply stays.
   const [paintedCover, setPaintedCover] = useState('')
   useEffect(() => {
-    const src = coverUrl ? resizeImage(coverUrl, 'xs') : ''
+    const src = active && coverUrl ? resizeImage(coverUrl, 'xs') : ''
     if (!src) {
       setPaintedCover('')
       return
@@ -50,10 +52,10 @@ const BreathingBackground = memo(() => {
     return () => {
       cancelled = true
     }
-  }, [coverUrl])
+  }, [coverUrl, active])
 
   useEffect(() => {
-    if (!enableBreathingEffect) return
+    if (!active) return
     const root = rootRef.current
     if (!root) return
     lastVolRef.current = null
@@ -66,9 +68,9 @@ const BreathingBackground = memo(() => {
       lastVolRef.current = value
       root.style.setProperty('--vol', value)
     })
-  }, [enableBreathingEffect])
+  }, [active])
 
-  if (!enableBreathingEffect) return null
+  if (!active) return null
 
   return (
     <div

@@ -4,7 +4,7 @@ import { app, BrowserWindow, BrowserWindowConstructorOptions, shell } from 'elec
 import { release, type } from 'os'
 import { join } from 'path'
 import log from './log'
-import { initIpcMain, lyricWin } from './ipcMain'
+import { initIpcMain } from './ipcMain'
 import { createTray, YPMTray } from './tray'
 import { IpcChannels } from '@/shared/IpcChannels'
 import { createTaskbar, Thumbar } from './windowsTaskbar'
@@ -278,7 +278,6 @@ class Main {
   handleAppEvents() {
     app.on('window-all-closed', () => {
       this.win = null
-      if (lyricWin) lyricWin.win = null
       if (!isMac) app.quit()
     })
 

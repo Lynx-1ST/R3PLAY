@@ -30,14 +30,6 @@ export function ipcRenderer() {
     player.playOrPause()
   })
 
-  on(IpcChannels.SetDesktopLyric, () => {
-    settings.showDesktopLyrics = false
-  })
-
-  on(IpcChannels.SyncProgress, (e, { progress }) => {
-    player.progress = progress
-  })
-
   on(IpcChannels.SyncAccentColor, (e, { color }) => {
     changeAccentColor(color)
   })

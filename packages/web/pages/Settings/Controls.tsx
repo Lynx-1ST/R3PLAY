@@ -10,7 +10,10 @@ export function Switch({
   onChange: (enabled: boolean) => void
 }) {
   return (
-    <motion.div
+    <motion.button
+      type='button'
+      role='switch'
+      aria-checked={enabled}
       className={cx(
         'flex w-11 items-center justify-start rounded-full p-1 transition-colors duration-500',
         enabled ? 'bg-brand-700' : 'bg-black/30 dark:bg-white/30'
@@ -19,43 +22,13 @@ export function Switch({
     >
       <motion.div
         animate={{ x: enabled ? 16 : 0 }}
-        className='h-5 w-5 rounded-full shadow-sm bg-white dark:bg-gray-800'
+        className='h-5 w-5 rounded-full bg-white shadow-sm dark:bg-gray-800'
       ></motion.div>
-    </motion.div>
+    </motion.button>
   )
 }
 
-export function Select<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: { name: string; value: T }[]
-  value: T
-  onChange: (value: T) => void
-}) {
-  return (
-    <div className='relative inline-block rounded-md bg-black/10 dark:bg-white/10 font-medium text-neutral-400'>
-      <select
-        onChange={e => onChange(e.target.value as T)}
-        value={value}
-        className='h-full w-full appearance-none bg-transparent py-1 pr-7 pl-3 focus:outline-hidden'
-      >
-        {options.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.name}
-          </option>
-        ))}
-      </select>
-
-      <Icon
-        name='dropdown-triangle'
-        className='pointer-events-none absolute right-2.5 h-2.5 w-2.5'
-        style={{ top: '11px' }}
-      />
-    </div>
-  )
-}
+export { default as Select } from '@/web/components/GlassSelect'
 
 export function Input({
   value,
@@ -71,7 +44,7 @@ export function Input({
       <div className='mb-1 text-14 font-medium text-white/30'>Host</div>
       <div className='inline-block rounded-md bg-neutral-800 font-medium text-neutral-400'>
         <input
-          className='appearance-none bg-transparent py-1 px-3'
+          className='appearance-none bg-transparent px-3 py-1'
           onChange={e => onChange(e.target.value)}
           {...{ type, value }}
         />
@@ -84,7 +57,7 @@ export function Button({ children, onClick }: { children: React.ReactNode; onCli
   return (
     <button
       onClick={onClick}
-      className='rounded-md bg-black/10 py-1 px-3 font-medium text-neutral-400 transition-colors duration-300 hover:bg-neutral-500 hover:text-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-300'
+      className='rounded-md bg-black/10 px-3 py-1 font-medium text-neutral-400 transition-colors duration-300 hover:bg-neutral-500 hover:text-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-300'
     >
       {children}
     </button>

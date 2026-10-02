@@ -6,6 +6,7 @@ import log from './log'
 import { IpcChannels } from '@/shared/IpcChannels'
 import { formatForAccelerator, readKeyboardShortcuts } from './keyboardShortcuts'
 import store from './store'
+import { repositoryUrl } from '@/shared/project'
 
 log.info('[electron] menu.ts')
 
@@ -196,7 +197,7 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
         {
           label: labels.reportIssue,
           click: async () => {
-            await shell.openExternal('https://github.com/Sherlockouo/music/issues/new')
+            await shell.openExternal(`${repositoryUrl}/issues/new`)
           },
         },
         { type: 'separator' },
@@ -209,13 +210,13 @@ export const createMenu = (webContexts: WebContents, isBindingShortcuts: boolean
         {
           label: labels.forum,
           click: async () => {
-            await shell.openExternal('https://github.com/Sherlockouo/music/discussions')
+            await shell.openExternal(`${repositoryUrl}/discussions`)
           },
         },
         {
           label: labels.community,
           click: async () => {
-            await shell.openExternal('https://github.com/Sherlockouo/music/discussions')
+            await shell.openExternal(`${repositoryUrl}/discussions`)
           },
         },
       ],

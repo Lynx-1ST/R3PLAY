@@ -6,26 +6,21 @@ const { contextBridge, ipcRenderer } = require('electron')
 const allowedChannels = new Set<IpcChannels>([
   IpcChannels.ClearAPICache,
   IpcChannels.Minimize,
-  IpcChannels.LyricsWindowMinimize,
   IpcChannels.MaximizeOrUnmaximize,
   IpcChannels.MinimizeOrUnminimize,
   IpcChannels.MetaData,
   IpcChannels.Close,
   IpcChannels.Hide,
-  IpcChannels.LyricsWindowClose,
   IpcChannels.IsMaximized,
   IpcChannels.FullscreenStateChange,
   IpcChannels.GetApiCache,
   IpcChannels.DevDbExportJson,
   IpcChannels.CacheCoverColor,
   IpcChannels.SetTrayTooltip,
-  IpcChannels.SetDesktopLyric,
   IpcChannels.CheckUpdate,
-  IpcChannels.PinDesktopLyric,
   IpcChannels.Play,
   IpcChannels.Pause,
   IpcChannels.PlayOrPause,
-  IpcChannels.SyncProgress,
   IpcChannels.Next,
   IpcChannels.Previous,
   IpcChannels.Like,
@@ -52,11 +47,11 @@ const assertAllowedChannel = (channel: IpcChannels) => {
 }
 
 if (isProd) {
-  const log = require('electron-log/preload')
-  if (log.transports.file) log.transports.file.level = 'info'
+  require('electron-log/preload')
+  const log = require('electron-log/renderer')
   if (log.transports.ipc) log.transports.ipc.level = false
   log.variables.process = 'renderer'
-  contextBridge.exposeInMainWorld('log', log)
+  contextBridge.exposeInMainWorld('log', { ...log.functions, functions: log.functions })
 }
 
 contextBridge.exposeInMainWorld('ipcRenderer', {

@@ -18,6 +18,7 @@ import { fetchArtistWithReactQuery } from '../api/hooks/useArtist'
 import { appName } from './const'
 import { isLyricsWindow } from './isLyricsWindow'
 import settings from '@/web/states/settings'
+import { setAudioOutput } from './audioOutput'
 
 type TrackID = number
 export enum TrackListSourceType {
@@ -279,17 +280,10 @@ export class Player {
   }
 
   // set play device
-  setDevice(deviceId: MediaDeviceInfo['deviceId']) {
-    // Get the currently playing audio element
-    const audioElement = (_howler as any)._sounds[0]._node
-    audioElement
-      .setSinkId(deviceId)
-      .then(() => {
-        console.log('Audio output device set successfully')
-      })
-      .catch((error: any) => {
-        console.error('Error setting audio output device:', error)
-      })
+  async setDevice(deviceId: MediaDeviceInfo['deviceId']) {
+    const node = (_howler as any)._sounds?.[0]?._node
+    await setAudioOutput(deviceId, node instanceof HTMLMediaElement ? node : undefined)
+    settings.audioOutputDeviceId = deviceId
   }
 
   async getAudioSource(track_id: TrackID) {
@@ -378,6 +372,12 @@ export class Player {
       },
     })
     _howler = howler
+    try {
+      await this.setDevice(settings.audioOutputDeviceId)
+    } catch (error) {
+      console.error('Audio output device unavailable, using system default:', error)
+      await this.setDevice('')
+    }
 
     // 设置 crossOrigin 以支持 Web Audio API 分析（呼吸灯效果）
     // 必须在 src 触发实际网络请求前设置，否则音频会被标记为跨域污染，
@@ -395,7 +395,9 @@ export class Player {
           /* ignore */
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     ;(window as any).howler = howler
     if (autoplay) {
@@ -409,7 +411,6 @@ export class Player {
     if (!this._progressInterval) {
       this._setupProgressInterval()
     }
-
   }
 
   private _howlerOnEndCallback() {
@@ -588,7 +589,7 @@ export class Player {
 
   /**
    * deleteFromPlaylist() - function to remove a track from current play queue
-   * 
+   *
    * @param trackID
    */
 
@@ -598,7 +599,7 @@ export class Player {
       return
     }
     // Check whether we are deleting the content that we are playing
-    if (this.track?.id != undefined && this.track?.id != trackID){
+    if (this.track?.id != undefined && this.track?.id != trackID) {
       this.trackList = this.trackList.filter(item => item != trackID)
       return
     }

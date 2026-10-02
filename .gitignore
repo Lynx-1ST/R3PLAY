@@ -67,3 +67,4 @@ packages/desktop/esbuild-kit
 # npm temporary file
 pnpm-lock.yaml
 package-lock.json
+!packages/desktop/runtime/package-lock.json

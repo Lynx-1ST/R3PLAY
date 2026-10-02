@@ -1,95 +1,96 @@
 import player from '@/web/states/player'
-import React, { useEffect, useState } from 'react'
-import Icon from '../Icon'
-import { cx } from '@emotion/css'
-import { motion } from 'framer-motion'
-import { IpcChannels } from '@/shared/IpcChannels'
-import Loading from '../Animation/Loading'
-import useGAEvent from '@/web/api/hooks/useGA'
-const AudioOutputDevices = () => {
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
-  const [selectedDevice, setSelectedDevice] = useState('')
-  const [isOpen, setIsOpen] = useState(false)
+import settings from '@/web/states/settings'
+import { useEffect, useState } from 'react'
+import { useSnapshot } from 'valtio'
+import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
+import { BlockTitle, Option, Select } from '@/web/pages/Settings/Controls'
 
-  const togglePopover = () => {
-    setIsOpen(!isOpen)
-    useGAEvent('user-action', 'devices', 'click', 1)
-  }
+const AudioOutputDevices = () => {
+  const { t } = useTranslation()
+  const { audioOutputDeviceId } = useSnapshot(settings)
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
+  const [changing, setChanging] = useState(false)
+  const [error, setError] = useState(false)
+  const supported =
+    typeof navigator.mediaDevices?.enumerateDevices === 'function' &&
+    typeof HTMLMediaElement.prototype.setSinkId === 'function'
 
   useEffect(() => {
-    const getAudioOutputDevices = async () => {
+    if (!supported) return
+    let disposed = false
+    const refresh = async () => {
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices()
-
-        const audioOutputDevices = devices.filter(device => {
-          if (device.label.includes('默认') || device.label.includes('default')) {
-            setSelectedDevice(device.deviceId)
-          }
-          return device.kind === 'audiooutput'
-        })
-        setDevices(audioOutputDevices)
-      } catch (error) {
-        console.error('Error getting audio output devices:', error)
+        const outputs = (await navigator.mediaDevices.enumerateDevices()).filter(
+          device =>
+            device.kind === 'audiooutput' && device.deviceId && device.deviceId !== 'default'
+        )
+        if (disposed) return
+        setDevices(outputs)
+        setError(false)
+        if (
+          settings.audioOutputDeviceId &&
+          !outputs.some(device => device.deviceId === settings.audioOutputDeviceId)
+        ) {
+          await player.setDevice('')
+        }
+      } catch {
+        if (!disposed) setError(true)
       }
     }
-    getAudioOutputDevices()
-    // update devices every 5s
-    const intervalId = setInterval(() => {
-      getAudioOutputDevices()
-    }, 1000 * 5)
-    return () => clearInterval(intervalId)
-  }, [])
+    void refresh()
+    navigator.mediaDevices.addEventListener('devicechange', refresh)
+    return () => {
+      disposed = true
+      navigator.mediaDevices.removeEventListener('devicechange', refresh)
+    }
+  }, [supported])
 
-  const handleDeviceChange = (deviceId: MediaDeviceInfo['deviceId']) => {
-    setSelectedDevice(deviceId)
-    player.setDevice(deviceId)
+  const changeDevice = async (deviceId: string) => {
+    const previous = settings.audioOutputDeviceId
+    setChanging(true)
+    try {
+      await player.setDevice(deviceId)
+    } catch {
+      await player
+        .setDevice(previous)
+        .catch(() => player.setDevice(''))
+        .catch(() => {})
+      toast.error(t('settings.audio-output-error'))
+    } finally {
+      setChanging(false)
+    }
   }
 
   return (
-    <>
-      {window.env?.isElectron && (
-        <motion.div
-          className={cx(
-            'relative',
-            'text-black/90 transition-colors duration-400 dark:text-white/40 hover:dark:text-white/90'
-          )}
-          onClick={() => {
-            togglePopover()
-          }}
-        >
-          <Icon name='indent' className='h-5 w-5' />
-          {isOpen && (
-            <div
-              className={cx(
-                'absolute bottom-full left-1/2 z-30 mb-2 -translate-x-1/2 transform rounded-12 p-4 ',
-                'dark:boder-white/5 border border-black/5 bg-white/30 backdrop-blur-3xl dark:bg-black/60'
-              )}
-            >
-              {devices.length == 0 ? (
-                <Loading />
-              ) : (
-                <ul className='w-48'>
-                  {devices.map(device => (
-                    <li
-                      key={device.deviceId}
-                      onClick={() => handleDeviceChange(device.deviceId)}
-                      className={cx(
-                        'w-full rounded-sm px-2 text-xs hover:bg-black/15 hover:dark:bg-white/15',
-                        selectedDevice === device.deviceId
-                          ? 'bold bg-black/10 dark:bg-white/10'
-                          : 'normal'
-                      )}
-                    >
-                      {device.label}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </motion.div>
+    <div className='mb-12'>
+      <BlockTitle>{t('settings.audio-output-title')}</BlockTitle>
+      <Option>
+        <label htmlFor='audio-output-device' className='text-16 font-medium'>
+          {t('settings.audio-output-device')}
+        </label>
+        <Select
+          id='audio-output-device'
+          label={t('settings.audio-output-device')}
+          className='ml-4 w-1/2'
+          value={audioOutputDeviceId}
+          disabled={!supported || changing || error}
+          onChange={deviceId => void changeDevice(deviceId)}
+          options={[
+            { name: t('settings.audio-output-default'), value: '' },
+            ...devices.map((device, index) => ({
+              name: device.label || t('settings.audio-output-number', { number: index + 1 }),
+              value: device.deviceId,
+            })),
+          ]}
+        />
+      </Option>
+      {(!supported || error) && (
+        <p className='text-sm text-black/60 dark:text-white/60'>
+          {t('settings.audio-output-unavailable')}
+        </p>
       )}
-    </>
+    </div>
   )
 }
 

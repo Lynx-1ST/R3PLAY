@@ -163,7 +163,22 @@
       "local-shortcut-invalid": "Phím tắt trong ứng dụng cần ít nhất một phím thường",
       "restore-factory-settings": "Khôi phục mặc định",
       "restore-factory-settings-success": "Đã khôi phục phím tắt mặc định"
-    }
+    },
+    "audio-output-title": "Đầu ra âm thanh",
+    "audio-output-device": "Thiết bị phát",
+    "audio-output-default": "Mặc định hệ thống",
+    "audio-output-number": "Thiết bị {{number}}",
+    "audio-output-error": "Không thể chuyển thiết bị âm thanh.",
+    "audio-output-unavailable": "Không thể lấy danh sách thiết bị âm thanh.",
+    "about-version": "Phiên bản {{version}}",
+    "about-maintainer": "Phát triển và duy trì bởi",
+    "about-upstream": "Dựa trên các dự án",
+    "about-check-updates": "Kiểm tra cập nhật",
+    "about-checking": "Đang kiểm tra…",
+    "about-up-to-date": "Bạn đang dùng phiên bản mới nhất.",
+    "about-update-available": "Có bản cập nhật v{{version}}",
+    "about-open-releases": "Xem release trên GitHub",
+    "about-update-error": "Không thể kiểm tra cập nhật. Vui lòng thử lại."
   },
   "context-menu": {
     "share": "Chia sẻ",

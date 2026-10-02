@@ -1,0 +1,9 @@
+{
+  "name": "r3playx-runtime",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@neteasecloudmusicapienhanced/api": "4.40.0",
+    "@unblockneteasemusic/server": "0.28.0"
+  }
+}

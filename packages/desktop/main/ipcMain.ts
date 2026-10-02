@@ -11,7 +11,6 @@ import fastFolderSize from 'fast-folder-size'
 import path from 'path'
 import prettyBytes from 'pretty-bytes'
 import { db, Tables } from './db'
-import { LyricsWindow } from './lyricsWindow'
 import { getPlatform } from './utils'
 import { bindingKeyboardShortcuts } from './keyboardShortcuts'
 import { checkForUpdates } from './updateWindow'
@@ -47,12 +46,6 @@ export function initIpcMain(
   initOtherIpcMain(win)
 }
 
-export let lyricWin: LyricsWindow | null
-let hidden: boolean = false
-export function handleLyricsWinClose() {
-  lyricWin = null
-  hidden = false
-}
 /**
  * 处理需要win对象的事件
  * @param {BrowserWindow} win
@@ -115,7 +108,6 @@ function initTrayIpcMain(tray: YPMTray | null) {
 
   on(IpcChannels.Play, (e, { trackID }) => {
     tray?.setPlayState(true)
-    lyricWin?.win?.webContents.send(IpcChannels.Play, { trackID })
   })
   on(IpcChannels.Pause, () => {
     tray?.setPlayState(false)
@@ -181,68 +173,8 @@ function initOtherIpcMain(win: BrowserWindow | null) {
   })
 
   handle(IpcChannels.CheckUpdate, e => {
-    checkForUpdates()
+    return checkForUpdates()
   })
-
-  handle(IpcChannels.SetDesktopLyric, (event, args) => {
-    if (lyricWin && lyricWin.win !== undefined) {
-      if (hidden) {
-        lyricWin.win?.show()
-        hidden = !hidden
-        return true
-      }
-      lyricWin.win?.hide()
-      hidden = !hidden
-      return false
-    }
-    // win cant be null
-    lyricWin = new LyricsWindow(win as BrowserWindow)
-    return true
-  })
-
-  on(IpcChannels.SyncAccentColor, (e, { color }) => {
-    lyricWin?.win?.webContents.send(IpcChannels.SyncAccentColor, { color: color })
-  })
-
-  on(IpcChannels.SyncTheme, (e, { theme }) => {
-    lyricWin?.win?.webContents.send(IpcChannels.SyncTheme, { theme: theme })
-  })
-
-  on(IpcChannels.Previous, (event, args) => {
-    lyricWin && lyricWin.win?.webContents.send(IpcChannels.Previous)
-  })
-
-  on(IpcChannels.Next, (event, args) => {
-    lyricWin && lyricWin.win?.webContents.send(IpcChannels.Next)
-  })
-
-  on(IpcChannels.SyncProgress, (event, args) => {
-    const { progress } = args
-    lyricWin &&
-      lyricWin.win?.webContents.send(IpcChannels.SyncProgress, {
-        progress: progress,
-      })
-  })
-  // handle(IpcChannels.Previous, (event, args) => {
-  //   lyricWin && lyricWin.win?.webContents.send(IpcChannels.LPrevious)
-
-  // })
-  // handle(IpcChannels.Next, (event, args) => {
-  //   lyricWin && lyricWin.win?.webContents.send(IpcChannels.LNext)
-  // })
-
-  // handle(IpcChannels.SyncProgress, (event, args) => {
-  //   const {progress} = args
-  //   lyricWin && lyricWin.win?.webContents.send(IpcChannels.LSyncProgress,{
-  //     progress: progress
-  //   })
-  // })
-
-  // handle(IpcChannels.Play, (event, {track}) => {
-  //   lyricWin && lyricWin.win?.webContents.send(IpcChannels.LPlay,{
-  //     track: track
-  //   })
-  // })
 
   /**
    * Get API cache

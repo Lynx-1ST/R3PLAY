@@ -163,7 +163,22 @@
     "player-youtube-submit": "保存",
     "player-youtube-proxy-empty": "代理地址不能为空",
     "player-youtube-proxy-saved": "代理设置已保存",
-    "host": "代理"
+    "host": "代理",
+    "audio-output-title": "音频输出",
+    "audio-output-device": "输出设备",
+    "audio-output-default": "系统默认",
+    "audio-output-number": "设备 {{number}}",
+    "audio-output-error": "无法切换音频输出设备。",
+    "audio-output-unavailable": "无法获取音频输出设备。",
+    "about-version": "版本 {{version}}",
+    "about-maintainer": "开发和维护",
+    "about-upstream": "基于以下项目",
+    "about-check-updates": "检查更新",
+    "about-checking": "正在检查…",
+    "about-up-to-date": "当前已是最新版本。",
+    "about-update-available": "新版本 {{version}} 已发布",
+    "about-open-releases": "查看 GitHub 发行版",
+    "about-update-error": "无法检查更新，请重试。"
   },
   "context-menu": {
     "share": "分享",

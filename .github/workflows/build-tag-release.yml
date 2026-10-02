@@ -54,7 +54,13 @@ jobs:
       - name: Package Windows app
         run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --win --x64 --publish never
 
-      - name: Collect Windows artifacts
+      - name: Smoke test packaged application startup
+        shell: pwsh
+        run: |
+          node packages/desktop/scripts/testStartup.cjs packages/desktop/release/win-unpacked/R3PLAYX.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged application startup failed.' }
+
+      - name: Collect verified Windows artifacts
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path release-assets | Out-Null

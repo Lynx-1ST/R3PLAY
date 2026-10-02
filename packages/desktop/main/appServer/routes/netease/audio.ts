@@ -1,5 +1,8 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import NeteaseCloudMusicApi from '@neteasecloudmusicapienhanced/api'
+import { loadRuntimePackage } from '../../../runtime'
+const NeteaseCloudMusicApi: typeof import('@neteasecloudmusicapienhanced/api') = loadRuntimePackage(
+  '@neteasecloudmusicapienhanced/api'
+)
 import { app } from 'electron'
 import log from '@/desktop/main/log'
 import { appName } from '@/desktop/main/env'
@@ -10,15 +13,11 @@ import { CacheAPIs } from '@/shared/CacheAPIs'
 import { FetchTracksResponse, PlaybackQuality } from '@/shared/api/Track'
 import store from '@/desktop/main/store'
 import { db, Tables } from '@/desktop/main/db'
-const match = require('@unblockneteasemusic/server')
+const match = loadRuntimePackage('@unblockneteasemusic/server')
 
 log.info('[electron] appServer/routes/r3play/audio.ts')
 
-const cacheMatchesRequestedQuality = (
-  format: string,
-  bitRate: number,
-  level?: PlaybackQuality
-) => {
+const cacheMatchesRequestedQuality = (format: string, bitRate: number, level?: PlaybackQuality) => {
   if (!level) return true
 
   if (level === 'standard') return format === 'mp3' && bitRate <= 160000

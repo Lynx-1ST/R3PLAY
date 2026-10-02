@@ -5,15 +5,18 @@ import { useSnapshot } from 'valtio'
 import ArtistInline from '../ArtistsInLine'
 import Progress from './Progress'
 import { ease } from '@/web/utils/const'
+import Controls from './Controls'
+import persistedUiStates from '@/web/states/persistedUiStates'
 const Info = () => {
   const { track } = useSnapshot(player)
+  const { minimizePlayer } = useSnapshot(persistedUiStates)
   return (
     <MotionConfig transition={{ ease, duration: 0.5 }}>
       <motion.div
         className={cx(
           // blur 45px→12px + ~10% higher tint: same legibility for a
           // fraction of the backdrop-filter cost.
-          'm-3 flex flex-col items-center rounded-20 bg-white/70 p-8 font-medium backdrop-blur-xl dark:bg-black/80'
+          'm-3 flex flex-col items-center rounded-20 bg-white/70 px-6 py-5 font-medium backdrop-blur-xl dark:bg-black/80'
         )}
       >
         {/* Track Info */}
@@ -30,8 +33,7 @@ const Info = () => {
         {/* Progress */}
         <Progress />
 
-        {/* Controls placeholder */}
-        <div className='h-11'></div>
+        {!minimizePlayer && <Controls />}
       </motion.div>
     </MotionConfig>
   )

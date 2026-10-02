@@ -20,7 +20,6 @@ const Album = lazy(() => import('@/web/pages/Album'))
 const Playlist = lazy(() => import('@/web/pages/Playlist'))
 const Artist = lazy(() => import('@/web/pages/Artist'))
 const Lyrics = lazy(() => import('@/web/pages/Lyrics/Lyrics'))
-const LyricsDesktop = lazy(() => import('@/web/pages/Lyrics/LyricsDesktop'))
 const Search = lazy(() => import('@/web/pages/Search'))
 const Settings = lazy(() => import('@/web/pages/Settings'))
 
@@ -56,7 +55,7 @@ const Router = () => {
           <Route path='/artist/:id' element={<Artist />} />
           <Route path='/settings' element={<Settings />} />
           <Route path='/lyrics' element={<Lyrics />} />
-          <Route path='/desktoplyrics' element={<LyricsDesktop />} />
+          <Route path='/desktoplyrics' element={<Navigate to='/' replace />} />
           <Route path='/search/:keywords' element={<Search />} />
           <Route path='/search/:keywords/:type' element={<SearchTypeRedirect />} />
         </Routes>
@@ -66,5 +65,5 @@ const Router = () => {
 }
 
 const RouterMemo = React.memo(Router)
-RouterMemo.displayName = "Router"
+RouterMemo.displayName = 'Router'
 export default Router
