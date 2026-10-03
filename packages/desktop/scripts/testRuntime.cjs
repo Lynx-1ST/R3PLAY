@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires -- Electron's standalone runtime probe uses CommonJS. */
 const assert = require('node:assert/strict')
 const path = require('node:path')
 const { createRequire } = require('node:module')
@@ -15,3 +16,9 @@ const utilsRequire = createRequire(
 assert.equal(typeof utilsRequire('express')(), 'function')
 assert.equal(typeof runtimeRequire('@unblockneteasemusic/server'), 'function')
 console.log('Electron runtime dependency test passed:', apiPath)
+require('./testNetworkDependencies.cjs')
+  .probeNetworkDependencies(runtimeRequire)
+  .catch(error => {
+    console.error(error)
+    process.exitCode = 1
+  })

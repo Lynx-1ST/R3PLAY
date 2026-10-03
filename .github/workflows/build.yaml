@@ -81,6 +81,9 @@ jobs:
       - name: Test web
         run: pnpm --filter web exec vitest run
 
+      - name: Test network dependencies
+        run: pnpm --filter desktop test:network
+
       - name: Test desktop
         run: pnpm --filter desktop exec vitest run
 

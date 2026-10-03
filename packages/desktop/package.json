@@ -17,7 +17,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:cache": "tsx scripts/testAudioCache.ts"
+    "test:cache": "tsx scripts/testAudioCache.ts",
+    "test:network": "node scripts/testNetworkDependencies.cjs"
   },
   "engines": {
     "node": ">=22.12"
@@ -41,7 +42,7 @@
     "electron-window-state": "^5.0.3",
     "entities": "6.0.1",
     "fast-folder-size": "^1.7.1",
-    "fastify": "^5.12.0",
+    "fastify": "^5.12.2",
     "http-proxy-agent": "^9.1.0",
     "pretty-bytes": "^6.1.1",
     "ytdl-core": "^4.11.5"
@@ -49,10 +50,10 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@vitest/ui": "^4.1.10",
-    "axios": "^1.19.0",
+    "axios": "^1.20.0",
     "cross-env": "^7.0.3",
     "dotenv": "^16.6.1",
-    "electron": "^43.4.0",
+    "electron": "43.5.0",
     "electron-builder": "^26.15.3",
     "electron-devtools-installer": "^4.0.0",
     "esbuild": "^0.28.2",

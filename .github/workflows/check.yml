@@ -54,3 +54,6 @@ jobs:
 
       - name: Test audio cache and ranges
         run: pnpm --filter desktop test:cache
+
+      - name: Test network dependencies
+        run: pnpm --filter desktop test:network

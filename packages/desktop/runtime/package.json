@@ -5,5 +5,10 @@
   "dependencies": {
     "@neteasecloudmusicapienhanced/api": "4.40.0",
     "@unblockneteasemusic/server": "0.28.0"
+  },
+  "overrides": {
+    "get-uri": {
+      "basic-ftp": "6.2.1"
+    }
   }
 }
