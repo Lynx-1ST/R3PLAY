@@ -1,3 +1,4 @@
+import { parsePositiveSafeInteger } from '../../../../shared/idValidation'
 /* eslint-disable @typescript-eslint */
 import { FastifyReply, FastifyPluginAsync, FastifyRequest } from 'fastify'
 import log from '../../utils/log'
@@ -12,10 +13,11 @@ const unblock: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       request: FastifyRequest<{ Querystring: { [key: string]: string } }>,
       reply: FastifyReply
     ) => {
-      const trackID = request.query.track_id as string
+      const trackID = parsePositiveSafeInteger(request.query.track_id)
+      if (trackID === undefined) return reply.code(400).send('param invalid: track_id')
       log.info('query', trackID)
 
-      const cacheData = await cache.get(CacheAPIs.Unblock, trackID)
+      const cacheData = await cache.get(CacheAPIs.Unblock, { id: trackID })
       if (cacheData) {
         log.info('hit cache trackID: ', trackID)
         return cacheData
@@ -29,12 +31,20 @@ const unblock: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       process.env.ENABLE_LOCAL_VIP = 'true'
 
       try {
-        const data: any = await match(trackID, ['kugou', 'bodian', 'qq', 'kuwo', 'migu', 'joox', 'bilivideo'])
+        const data: any = await match(trackID, [
+          'kugou',
+          'bodian',
+          'qq',
+          'kuwo',
+          'migu',
+          'joox',
+          'bilivideo',
+        ])
         if (data === null || data === undefined || data?.url === '') {
           return reply.code(500).send('no track info, something bad happens')
         }
 
-        cache.set(CacheAPIs.Unblock, { id: trackID, url: data?.url }, trackID)
+        await cache.set(CacheAPIs.Unblock, { ...data, id: trackID }, { id: trackID })
         log.info('[server] unblock track ', trackID, ' success')
         return reply.code(200).send(data)
       } catch (err) {

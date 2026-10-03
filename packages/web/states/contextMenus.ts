@@ -36,12 +36,12 @@ export const openContextMenu = ({
   dataSourceID: ContextMenu['dataSourceID']
   options?: ContextMenu['options']
 }) => {
-  if (event.target === contextMenus.target) {
+  if (event.currentTarget === contextMenus.target) {
     closeContextMenu()
     return
   }
 
-  const target = event.target as HTMLElement
+  const target = event.currentTarget
   contextMenus.target = ref(target)
 
   contextMenus.type = type

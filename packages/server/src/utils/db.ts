@@ -48,15 +48,7 @@ export interface TablesStructures {
     bitRate: number
     format: 'mp3' | 'flac' | 'ogg' | 'wav' | 'm4a' | 'aac' | 'unknown' | 'opus'
     source:
-      | 'unknown'
-      | 'netease'
-      | 'migu'
-      | 'kuwo'
-      | 'kugou'
-      | 'youtube'
-      | 'qq'
-      | 'bilibili'
-      | 'joox'
+      'unknown' | 'netease' | 'migu' | 'kuwo' | 'kugou' | 'youtube' | 'qq' | 'bilibili' | 'joox'
     queriedAt: number
   }
   [Tables.CoverColor]: {
@@ -172,15 +164,19 @@ class DB {
     table: T,
     key: TablesStructures[T]['id']
   ): TablesStructures[T] | undefined {
-    return this.sqlite.prepare(`SELECT * FROM ${table} WHERE id = ? LIMIT 1`).get(key) as TablesStructures[T] | undefined
+    return this.sqlite.prepare(`SELECT * FROM ${table} WHERE id = ? LIMIT 1`).get(key) as
+      TablesStructures[T] | undefined
   }
 
   findMany<T extends TableNames>(
     table: T,
     keys: TablesStructures[T]['id'][]
   ): TablesStructures[T][] {
-    const idsQuery = keys.map(key => `id = ${key}`).join(' OR ')
-    return this.sqlite.prepare(`SELECT * FROM ${table} WHERE ${idsQuery}`).all() as TablesStructures[T][]
+    if (keys.length === 0) return []
+    const idsQuery = keys.map(() => '?').join(', ')
+    return this.sqlite
+      .prepare(`SELECT * FROM ${table} WHERE id IN (${idsQuery})`)
+      .all(...keys) as TablesStructures[T][]
   }
 
   findAll<T extends TableNames>(table: T): TablesStructures[T][] {
@@ -220,9 +216,7 @@ class DB {
       .map(k => `${k} = :${k}`)
       .join(', ')
     const params: any = { ...data, id: key }
-    return this.sqlite
-      .prepare(`UPDATE ${table} SET ${updates} WHERE id = :id`)
-      .run(params)
+    return this.sqlite.prepare(`UPDATE ${table} SET ${updates} WHERE id = :id`).run(params)
   }
 
   upsert<T extends TableNames>(table: T, data: TablesStructures[T]) {
@@ -249,8 +243,9 @@ class DB {
   }
 
   deleteMany<T extends TableNames>(table: T, keys: TablesStructures[T]['id'][]) {
-    const idsQuery = keys.map(key => `id = ${key}`).join(' OR ')
-    return this.sqlite.prepare(`DELETE FROM ${table} WHERE ${idsQuery}`).run()
+    if (keys.length === 0) return
+    const idsQuery = keys.map(() => '?').join(', ')
+    return this.sqlite.prepare(`DELETE FROM ${table} WHERE id IN (${idsQuery})`).run(...keys)
   }
 
   truncate<T extends TableNames>(table: T) {

@@ -1,3 +1,4 @@
+import { parsePositiveSafeInteger } from '../../../../shared/idValidation'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import NeteaseCloudMusicApi, { SoundQualityType } from '@neteasecloudmusicapienhanced/api'
 import log from '../../utils/log'
@@ -144,8 +145,8 @@ async function audio(fastify: FastifyInstance) {
       }>,
       reply
     ) => {
-      const id = Number(req.query.id) || 0
-      if (!id || isNaN(id)) {
+      const id = parsePositiveSafeInteger(req.query.id)
+      if (id === undefined) {
         return reply.status(400).send({
           code: 400,
           msg: 'id is required or id is invalid',
@@ -179,9 +180,9 @@ async function audio(fastify: FastifyInstance) {
 
       const trackID = id
       // 先查缓存
-      const cacheData = await cache.get(CacheAPIs.Unblock, trackID)
+      const cacheData = await cache.get(CacheAPIs.Unblock, { id: trackID })
       if (cacheData) {
-        return cacheData
+        return reply.code(200).send({ code: 200, data: [cacheData] })
       }
       if (!trackID) {
         reply.code(400).send({
@@ -212,7 +213,7 @@ async function audio(fastify: FastifyInstance) {
           )
         }
 
-        cache.set(CacheAPIs.Unblock, { id: trackID, url: data?.url }, trackID)
+        await cache.set(CacheAPIs.Unblock, { ...data, id: trackID }, { id: trackID })
         return reply.code(200).send({
           code: 200,
           data: [data],

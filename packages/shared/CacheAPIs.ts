@@ -66,7 +66,7 @@ export interface CacheAPIsParams {
   [CacheAPIs.SimilarArtist]: { id: number }
   [CacheAPIs.ArtistSongs]: { id: number; order: string; offset: number; limit: number }
   [CacheAPIs.ListenedRecords]: { id: number; type: number }
-  [CacheAPIs.Unblock]: { track_id: number }
+  [CacheAPIs.Unblock]: { id: number }
 
   [CacheAPIs.CoverColor]: { id: number }
   [CacheAPIs.AppleMusicAlbum]: { id: number }

@@ -191,13 +191,7 @@ class Cache {
         const id = parsePositiveSafeInteger(params?.id)
         if (id === undefined) return
         const data = db.find(Tables.Unblock, id)
-        if (data?.json)
-          return {
-            resourceState: true,
-            songs: [],
-            code: 200,
-            album: JSON.parse(data.json),
-          }
+        if (data?.json) return JSON.parse(data.json)
         break
       }
       case CacheAPIs.Album: {
