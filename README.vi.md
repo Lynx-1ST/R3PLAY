@@ -8,7 +8,7 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 
 [![Checks](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml)
 [![Windows release](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml/badge.svg)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml)
-![Source version](https://img.shields.io/badge/source_version-2.9.1-2ea44f)
+![Source version](https://img.shields.io/badge/source_version-2.9.2-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
@@ -18,7 +18,7 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 
 ## Phiên bản và kênh phát hành
 
-Phiên bản package trong mã nguồn là **2.9.1**. Bản Windows ổn định dùng tag như `v2.9.1`; bản thử nghiệm dùng `v2.9.1-dev.N` và được đánh dấu prerelease. Badge phiên bản mô tả mã nguồn; xem [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) để kiểm tra bộ cài đã phát hành và ghi chú thay đổi.
+Phiên bản package trong mã nguồn là **2.9.2**. Bản Windows ổn định dùng tag như `v2.9.1`; bản thử nghiệm dùng `v2.9.2-dev.N` và được đánh dấu prerelease. Badge phiên bản mô tả mã nguồn; xem [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) để kiểm tra bộ cài đã phát hành và ghi chú thay đổi.
 
 ## Tính năng
 
