@@ -31,6 +31,16 @@ afterAll(() => {
   db.sqlite.close()
 })
 
+it('bulk writes name columns and keep defaults after schema growth', () => {
+  db.sqlite.exec("ALTER TABLE Track ADD COLUMN extra TEXT NOT NULL DEFAULT 'default'")
+  const row = { updatedAt: 123, json: 'bulk', id: 9001 }
+  db.createMany(Tables.Track, [row])
+  expect(db.find(Tables.Track, row.id)).toMatchObject({ ...row, extra: 'default' })
+  db.upsertMany(Tables.Track, [{ ...row, json: 'updated' }])
+  expect(db.find(Tables.Track, row.id)).toMatchObject({ json: 'updated', extra: 'default' })
+  db.delete(Tables.Track, row.id)
+})
+
 it('adds the hash column idempotently and keeps legacy variant writes working', () => {
   const table = 'AudioVariant' as import('../main/db').Tables.AudioVariant
   const row = {

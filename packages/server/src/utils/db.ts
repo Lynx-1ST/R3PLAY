@@ -198,7 +198,7 @@ class DB {
       .map(key => `:${key}`)
       .join(', ')
     const insert = this.sqlite.prepare(
-      `INSERT ${skipWhenExist ? 'OR IGNORE' : ''} INTO ${table} VALUES (${valuesQuery})`
+      `INSERT ${skipWhenExist ? 'OR IGNORE' : ''} INTO ${table} (${Object.keys(data[0]).join(', ')}) VALUES (${valuesQuery})`
     )
     const insertMany = this.sqlite.transaction((rows: any[]) => {
       rows.forEach((row: any) => insert.run(row))
@@ -223,7 +223,11 @@ class DB {
     const valuesQuery = Object.keys(data)
       .map(key => `:${key}`)
       .join(', ')
-    return this.sqlite.prepare(`INSERT OR REPLACE INTO ${table} VALUES (${valuesQuery})`).run(data)
+    return this.sqlite
+      .prepare(
+        `INSERT OR REPLACE INTO ${table} (${Object.keys(data).join(', ')}) VALUES (${valuesQuery})`
+      )
+      .run(data)
   }
 
   upsertMany<T extends TableNames>(table: T, data: TablesStructures[T][]) {
@@ -231,7 +235,9 @@ class DB {
     const valuesQuery = Object.keys(data[0])
       .map(key => `:${key}`)
       .join(', ')
-    const upsert = this.sqlite.prepare(`INSERT OR REPLACE INTO ${table} VALUES (${valuesQuery})`)
+    const upsert = this.sqlite.prepare(
+      `INSERT OR REPLACE INTO ${table} (${Object.keys(data[0]).join(', ')}) VALUES (${valuesQuery})`
+    )
     const upsertMany = this.sqlite.transaction((rows: any[]) => {
       rows.forEach((row: any) => upsert.run(row))
     })

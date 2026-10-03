@@ -19,6 +19,16 @@ beforeAll(async () => {
 })
 afterAll(() => db.sqlite.close())
 
+it('bulk writes name columns and keep defaults after schema growth', () => {
+  db.sqlite.exec("ALTER TABLE Track ADD COLUMN extra TEXT NOT NULL DEFAULT 'default'")
+  const row = { updatedAt: 123, json: 'bulk', id: 9001 }
+  db.createMany(table, [row])
+  expect(db.find(table, row.id)).toMatchObject({ ...row, extra: 'default' })
+  db.upsertMany(table, [{ ...row, json: 'updated' }])
+  expect(db.find(table, row.id)).toMatchObject({ json: 'updated', extra: 'default' })
+  db.delete(table, row.id)
+})
+
 it('leaves the database untouched for empty bulk writes', () => {
   const prepare = vi.spyOn(db.sqlite, 'prepare')
   try {
