@@ -199,6 +199,7 @@ class DB {
     data: TablesStructures[T][],
     skipWhenExist: boolean = true
   ) {
+    if (data.length === 0) return
     const valuesQuery = Object.keys(data[0])
       .map(key => `:${key}`)
       .join(', ')
@@ -233,6 +234,7 @@ class DB {
   }
 
   upsertMany<T extends TableNames>(table: T, data: TablesStructures[T][]) {
+    if (data.length === 0) return
     const valuesQuery = Object.keys(data[0])
       .map(key => `:${key}`)
       .join(', ')

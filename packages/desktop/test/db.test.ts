@@ -2,7 +2,10 @@ import { afterAll, beforeAll, expect, it, vi } from 'vitest'
 
 vi.doMock('electron', () => ({ app: { getPath: () => '.' } }))
 vi.doMock('../main/log', () => ({ default: { info: vi.fn(), error: vi.fn() } }))
-vi.doMock('../main/utils', () => ({ createFileIfNotExist: vi.fn(), dirname: process.cwd() }))
+vi.doMock('../main/utils', async () => ({
+  createFileIfNotExist: vi.fn(),
+  dirname: (await import('node:path')).resolve(__dirname, '..'),
+}))
 vi.doMock('../main/env', () => ({ isProd: false }))
 vi.doMock('better-sqlite3', async () => {
   const actual = await vi.importActual<{ default: typeof import('better-sqlite3') }>(
@@ -52,4 +55,33 @@ it('supports string primary keys without embedding them in SQL', () => {
   expect(db.findMany(Tables.AccountData, ["a'b"])).toHaveLength(1)
   db.deleteMany(Tables.AccountData, ["a'b"])
   expect(db.findMany(Tables.AccountData, ["a'b"])).toEqual([])
+})
+
+it('treats empty bulk writes as no-ops without preparing SQL', () => {
+  const prepare = vi.spyOn(db.sqlite, 'prepare')
+  try {
+    expect(() => db.createMany(Tables.Track, [])).not.toThrow()
+    expect(() => db.createMany(Tables.Track, [], false)).not.toThrow()
+    expect(() => db.upsertMany(Tables.Track, [])).not.toThrow()
+    expect(prepare).not.toHaveBeenCalled()
+  } finally {
+    prepare.mockRestore()
+  }
+})
+
+it('preserves createMany insert and rollback behavior', () => {
+  db.createMany(Tables.Track, [{ id: 8001, json: 'original', updatedAt: 0 }])
+  db.createMany(Tables.Track, [{ id: 8001, json: 'ignored', updatedAt: 0 }])
+  expect(db.find(Tables.Track, 8001)?.json).toBe('original')
+  expect(() =>
+    db.createMany(
+      Tables.Track,
+      [
+        { id: 8002, json: 'new', updatedAt: 0 },
+        { id: 8001, json: 'duplicate', updatedAt: 0 },
+      ],
+      false
+    )
+  ).toThrow()
+  expect(db.find(Tables.Track, 8002)).toBeUndefined()
 })
