@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useClickAway } from 'react-use'
 import useLockMainScroll from '@/web/hooks/useLockMainScroll'
 import useMeasure from 'react-use-measure'
@@ -30,7 +30,16 @@ const BasicContextMenu = ({
 
   const [position, setPosition] = useState<ContextMenuPosition | null>(null)
 
-  useClickAway(menuRef, onClose)
+  useClickAway(menuRef, onClose, ['mousedown', 'touchstart', 'contextmenu'])
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      onClose(new MouseEvent('click'))
+    }
+    document.addEventListener('keydown', handleKeyDown, true)
+    return () => document.removeEventListener('keydown', handleKeyDown, true)
+  }, [onClose])
   useLockMainScroll(!!position)
 
   useLayoutEffect(() => {
@@ -47,7 +56,7 @@ const BasicContextMenu = ({
     } else if (options?.fixedPosition) {
       const [vertical, horizontal] = options.fixedPosition.split('-') as [
         'top' | 'bottom',
-        'left' | 'right'
+        'left' | 'right',
       ]
       const button = target.getBoundingClientRect()
       const leftX = button.x

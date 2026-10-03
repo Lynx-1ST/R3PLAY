@@ -22,7 +22,7 @@ const initContextMenu: ContextMenu = {
   options: null,
 }
 
-const contextMenus = proxy<ContextMenu>(initContextMenu)
+const contextMenus = proxy<ContextMenu>({ ...initContextMenu })
 export default contextMenus
 
 export const openContextMenu = ({
