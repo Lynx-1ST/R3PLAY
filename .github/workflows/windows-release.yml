@@ -1,0 +1,199 @@
+name: Windows release pipeline
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        required: true
+        type: string
+      revision:
+        type: string
+        default: ''
+      tag:
+        type: string
+        default: ''
+      rebuild:
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-publish-${{ inputs.channel }}-${{ inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Resolve and validate release metadata
+        id: version
+        env:
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+          RELEASE_REVISION: ${{ inputs.revision }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: node packages/desktop/scripts/releaseMetadata.cjs
+
+      - name: Check existing release and tag
+        uses: actions/github-script@v7
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_COMMIT: ${{ steps.version.outputs.commit }}
+          REBUILD: ${{ inputs.rebuild }}
+        with:
+          script: |
+            const params = { ...context.repo, tag: process.env.RELEASE_TAG };
+            let existing;
+            try { existing = (await github.rest.repos.getReleaseByTag(params)).data; }
+            catch (error) { if (error.status !== 404) throw error; }
+            if (process.env.REBUILD === 'true') {
+              if (!existing || existing.draft || existing.prerelease) throw new Error('Rebuild requires an existing stable release.');
+            } else if (existing) {
+              throw new Error('Release already exists. Use a new dev revision or the explicit rebuild workflow.');
+            }
+            let ref;
+            try { ref = (await github.rest.git.getRef({ ...context.repo, ref: 'tags/' + process.env.RELEASE_TAG })).data; }
+            catch (error) { if (error.status !== 404) throw error; }
+            if (ref) {
+              const commit = (await github.rest.repos.getCommit({ ...context.repo, ref: process.env.RELEASE_TAG })).data;
+              if (commit.sha !== process.env.RELEASE_COMMIT) throw new Error('Tag points to a different commit.');
+            }
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.6.12
+
+      - name: Install Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Copy environment
+        shell: pwsh
+        run: Copy-Item .env.example .env
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck web
+        run: pnpm --filter web test:types
+
+      - name: Typecheck desktop
+        run: pnpm --filter desktop test:types
+
+      - name: Test release metadata
+        run: node --test packages/desktop/scripts/testReleaseMetadata.cjs
+
+      - name: Test Discord Rich Presence
+        run: pnpm --filter desktop test:discord
+
+      - name: Test audio cache, ranges and media CORS
+        run: pnpm --filter desktop test:cache
+
+      - name: Test web
+        run: pnpm --filter web exec vitest run
+
+      - name: Test network dependencies
+        run: pnpm --filter desktop test:network
+
+      - name: Test desktop
+        run: pnpm --filter desktop exec vitest run
+
+      - name: Build server
+        run: pnpm --filter server build
+
+      - name: Build workspaces
+        env:
+          ELECTRON_WEB_SERVER_PORT: 42710
+          ELECTRON_DEV_NETEASE_API_PORT: 30001
+          UNBLOCK_SERVER_PORT: 30003
+          VITE_APP_NETEASE_API_URL: /netease
+          ENABLE_FLAC: 'true'
+          ENABLE_LOCAL_VIP: 'svip'
+          IS_ELECTRON: 'yes'
+        run: pnpm exec turbo run build
+
+      - name: Package Windows app
+        env:
+          R3PLAY_RELEASE_CHANNEL: ${{ inputs.channel }}
+          ELECTRON_WEB_SERVER_PORT: 42710
+          ELECTRON_DEV_NETEASE_API_PORT: 30001
+          UNBLOCK_SERVER_PORT: 30003
+          VITE_APP_NETEASE_API_URL: /netease
+          ENABLE_FLAC: 'true'
+          ENABLE_LOCAL_VIP: 'svip'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --win --x64 --publish never
+
+      - name: Smoke test with packaged Electron
+        shell: pwsh
+        run: |
+          $env:ELECTRON_RUN_AS_NODE = '1'
+          $app = Resolve-Path 'packages/desktop/release/win-unpacked/R3PLAYX.exe'
+          $resources = Resolve-Path 'packages/desktop/release/win-unpacked/resources'
+          $script = (Resolve-Path 'packages/desktop/scripts/testRuntime.cjs').Path
+          $probe = Start-Process $app -ArgumentList @('"' + $script + '"', '"' + $resources + '"') -WindowStyle Hidden -Wait -PassThru
+          if ($probe.ExitCode -ne 0) { throw 'Packaged Electron runtime test failed.' }
+          Remove-Item Env:ELECTRON_RUN_AS_NODE
+          node packages/desktop/scripts/testStartup.cjs $app
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged application startup failed.' }
+
+      - name: Collect Windows artifacts
+        env:
+          UPDATE_METADATA: ${{ steps.version.outputs.metadataFile }}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          Get-ChildItem packages/desktop/release/*-Setup.exe -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets
+          Get-ChildItem "packages/desktop/release/$env:UPDATE_METADATA" -ErrorAction Stop | Copy-Item -Destination release-assets
+          Get-ChildItem packages/desktop/release/*.blockmap -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets
+
+          $installer = Get-ChildItem release-assets/*-Setup.exe -ErrorAction SilentlyContinue
+          if (-not $installer) {
+            throw "Windows installer was not produced."
+          }
+          if (-not (Test-Path -LiteralPath "release-assets/$env:UPDATE_METADATA" -PathType Leaf)) {
+            throw "Windows updater metadata was not produced."
+          }
+
+          Write-Host "--- Windows release assets ---"
+          Get-ChildItem release-assets
+
+      - name: Upload Windows Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: R3PLAYX-Windows-${{ steps.version.outputs.tag }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish Windows release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.name }}
+          target_commitish: ${{ steps.version.outputs.commit }}
+          draft: false
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
+          make_latest: ${{ inputs.rebuild && 'legacy' || (inputs.channel == 'stable' && 'true' || 'false') }}
+          body_path: ${{ steps.version.outputs.notes }}
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/*-Setup.exe
+            release-assets/*.yml
+            release-assets/*.blockmap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

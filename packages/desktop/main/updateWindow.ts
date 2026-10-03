@@ -54,7 +54,8 @@ export function checkForUpdates() {
       })
       .then(result => {
         if (result.response === 0) {
-          void shell.openExternal(`${releasesUrl}/latest`)
+          const releaseTag = `v${info.version}`
+          void shell.openExternal(`${releasesUrl}/tag/${encodeURIComponent(releaseTag)}`)
         }
       })
   }

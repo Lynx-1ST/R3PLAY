@@ -1,54 +1,21 @@
-name: Build-PreRelease-Windows
+name: Publish dev Windows release
 
 on:
   workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Dev revision: 1 creates dev-2.9.0r1 for package version 2.9.0'
+        required: true
+        default: '1'
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
   windows:
-    name: Build Windows prerelease
-    runs-on: windows-latest
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8.6.12
-
-      - name: Install Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Copy environment
-        shell: pwsh
-        run: Copy-Item .env.example .env
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build and package Windows
-        env:
-          ELECTRON_WEB_SERVER_PORT: 42710
-          ELECTRON_DEV_NETEASE_API_PORT: 30001
-          UNBLOCK_SERVER_PORT: 30003
-          VITE_APP_NETEASE_API_URL: /netease
-          ENABLE_FLAC: 'true'
-          ENABLE_LOCAL_VIP: 'svip'
-          IS_ELECTRON: 'yes'
-        run: pnpm package -- --win --x64
-
-      - name: Upload Windows installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: R3PLAYX-Windows
-          path: |
-            packages/desktop/release/*-Setup.exe
-            packages/desktop/release/latest.yml
-          if-no-files-found: error
-          retention-days: 14
+    uses: ./.github/workflows/windows-release.yml
+    with:
+      channel: dev
+      revision: ${{ inputs.revision }}
+    secrets: inherit

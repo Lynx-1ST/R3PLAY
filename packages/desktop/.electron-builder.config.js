@@ -31,6 +31,7 @@ module.exports = {
       repo: 'R3PLAY',
       vPrefixedTagName: true,
       releaseType: 'draft',
+      channel: process.env.R3PLAY_RELEASE_CHANNEL === 'dev' ? 'dev' : 'latest',
     },
   ],
   win: {

@@ -1,82 +1,21 @@
-name: Rebuild-Windows-Tag
+name: Rebuild existing stable Windows release
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to rebuild, e.g. v2.8.1'
+        description: 'Existing stable tag, e.g. v2.9.0'
         required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   windows:
-    name: Rebuild Windows
-    runs-on: windows-latest
-
-    steps:
-      - name: Check out release tag
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          ref: ${{ github.event.inputs.tag }}
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8.6.12
-
-      - name: Install Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Copy environment
-        shell: pwsh
-        run: Copy-Item .env.example .env
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build workspaces
-        env:
-          ELECTRON_WEB_SERVER_PORT: 42710
-          ELECTRON_DEV_NETEASE_API_PORT: 30001
-          UNBLOCK_SERVER_PORT: 30003
-          VITE_APP_NETEASE_API_URL: /netease
-          ENABLE_FLAC: 'true'
-          ENABLE_LOCAL_VIP: 'svip'
-          IS_ELECTRON: 'yes'
-        run: pnpm exec turbo run build
-
-      - name: Package Windows app
-        run: pnpm --filter desktop exec electron-builder build -c .electron-builder.config.js --win --x64 --publish never
-
-      - name: Smoke test packaged application startup
-        shell: pwsh
-        run: |
-          node packages/desktop/scripts/testStartup.cjs packages/desktop/release/win-unpacked/R3PLAYX.exe
-          if ($LASTEXITCODE -ne 0) { throw 'Packaged application startup failed.' }
-
-      - name: Collect verified Windows artifacts
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
-          Get-ChildItem packages/desktop/release/*-Setup.exe -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets
-          Get-ChildItem packages/desktop/release/latest.yml -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets
-          if (-not (Get-ChildItem release-assets/*-Setup.exe -ErrorAction SilentlyContinue)) {
-            throw "Windows installer was not produced."
-          }
-
-      - name: Attach files to existing release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.inputs.tag }}
-          fail_on_unmatched_files: true
-          files: |
-            release-assets/*-Setup.exe
-            release-assets/latest.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/windows-release.yml
+    with:
+      channel: stable
+      tag: ${{ inputs.tag }}
+      rebuild: true
+    secrets: inherit
