@@ -178,10 +178,11 @@ class DB {
     table: T,
     keys: TablesStructures[T]['id'][]
   ): TablesStructures[T][] {
-    const idsQuery = keys.map(key => `id = ${key}`).join(' OR ')
+    if (keys.length === 0) return []
+    const idsQuery = keys.map(() => '?').join(', ')
     return this.sqlite
-      .prepare(`SELECT * FROM ${table} WHERE ${idsQuery}`)
-      .all() as unknown as TablesStructures[T][]
+      .prepare(`SELECT * FROM ${table} WHERE id IN (${idsQuery})`)
+      .all(...keys) as unknown as TablesStructures[T][]
   }
 
   findAll<T extends TableNames>(table: T): TablesStructures[T][] {
@@ -247,8 +248,9 @@ class DB {
   }
 
   deleteMany<T extends TableNames>(table: T, keys: TablesStructures[T]['id'][]) {
-    const idsQuery = keys.map(key => `id = ${key}`).join(' OR ')
-    return this.sqlite.prepare(`DELETE FROM ${table} WHERE ${idsQuery}`).run()
+    if (keys.length === 0) return
+    const idsQuery = keys.map(() => '?').join(', ')
+    return this.sqlite.prepare(`DELETE FROM ${table} WHERE id IN (${idsQuery})`).run(...keys)
   }
 
   truncate<T extends TableNames>(table: T) {

@@ -40,7 +40,8 @@ class Cache {
       }
       case CacheAPIs.Track: {
         const res = data as FetchTracksResponse
-        if (!res.songs) return
+        if (!Array.isArray(res.songs) || res.songs.length === 0) return
+        if (res.songs.some(t => !Number.isSafeInteger(t?.id) || t.id <= 0)) return
         const tracks = res.songs.map(t => ({
           id: t.id,
           json: JSON.stringify(t),
@@ -163,18 +164,16 @@ class Cache {
         break
       }
       case CacheAPIs.Track: {
-        const ids: number[] = params?.ids.split(',').map((id: string) => Number(id))
-        if (ids.length === 0) return
-
-        if (ids.includes(NaN)) return
+        if (typeof params?.ids !== 'string' || !params.ids.trim()) return
+        const ids: number[] = params.ids.split(',').map((id: string) => Number(id))
+        if (ids.some(id => !Number.isSafeInteger(id) || id <= 0)) return
 
         const tracksRaw = db.findMany(Tables.Track, ids)
 
-        if (tracksRaw.length !== ids.length) {
-          return
-        }
+        const tracksById = new Map(tracksRaw.map(track => [track.id, track]))
+        if (ids.some(id => !tracksById.has(id))) return
         const tracks = ids.map(id => {
-          const track = tracksRaw.find(t => t.id === Number(id)) as any
+          const track = tracksById.get(id)!
           return JSON.parse(track.json)
         })
         return {
@@ -244,18 +243,6 @@ class Cache {
       case CacheAPIs.CoverColor: {
         if (isNaN(Number(params?.id))) return
         return db.find(Tables.CoverColor, params.id)?.color
-      }
-      case CacheAPIs.Artist: {
-        if (!params.ids?.length) return
-        const artists = db.findMany(Tables.Artist, params.ids)
-        if (artists.length !== params.ids.length) return
-        const result = artists.map(a => JSON.parse(a.json))
-        result.sort((a, b) => {
-          const indexA: number = params.ids.indexOf(a.artist.id)
-          const indexB: number = params.ids.indexOf(b.artist.id)
-          return indexA - indexB
-        })
-        return result
       }
       case CacheAPIs.AppleMusicAlbum: {
         if (isNaN(Number(params?.id))) return
