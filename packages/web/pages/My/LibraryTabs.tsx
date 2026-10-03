@@ -64,10 +64,10 @@ export default function LibraryTabs({
           onClick={() => onSelect(tab.id)}
           onKeyDown={event => moveFocus(event, index)}
           className={cx(
-            'flex min-h-11 flex-1 items-center justify-center rounded-full px-4 text-14 font-medium whitespace-nowrap transition focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-5',
+            'flex min-h-11 items-center justify-center rounded-full px-5 text-14 font-medium whitespace-nowrap transition focus-visible:outline-2 focus-visible:outline-offset-2',
             selected === tab.id
               ? 'bg-neutral-800 text-white dark:bg-neutral-100 dark:text-neutral-800'
-              : 'bg-black/5 text-neutral-600 hover:bg-black/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:bg-white/10'
+              : 'text-neutral-600 hover:bg-black/5 dark:text-neutral-300 dark:hover:bg-white/10'
           )}
         >
           {t(`common.${tab.label}`)}
