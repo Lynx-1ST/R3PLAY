@@ -27,7 +27,7 @@ const Track = memo(({
     return (
       <div
         className={cx(
-          'group p-1 mb-3 grid duration-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-12',
+          'group mb-3 grid items-center rounded-2xl p-2 pr-4 transition-colors duration-300 hover:bg-black/5 dark:hover:bg-white/5',
           css`
             grid-template-columns: 3fr 2fr 1fr;
           `
@@ -94,11 +94,11 @@ const Track = memo(({
         </div>
   
         {/* Duration */}
-        <div className='line-clamp-1 flex items-center justify-end text-14 font-bold'>
+        <div className='flex shrink-0 items-center justify-end gap-2 whitespace-nowrap text-14 font-medium tabular-nums'>
           {/* Download — opt-in via settings.showDownloadActions */}
           {showDownloadActions && track && (
             <button
-              className='mr-2 flex h-8 w-8 items-center justify-center rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 hover:bg-black/30 dark:hover:bg-white/30'
+              className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-black/10 dark:hover:bg-white/10'
               onClick={e => {
                 e.stopPropagation()
                 downloadTrack(track.id)

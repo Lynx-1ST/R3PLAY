@@ -88,7 +88,7 @@ const PlayLikedSongsCard = () => {
           </div>
         </div>
         {!!tracks.length && (
-          <div className='grid w-full max-w-96 shrink-0 grid-cols-3 gap-3 @xl:w-[40%]'>
+          <div className='grid w-full max-w-md shrink-0 grid-cols-3 gap-3 @xl:w-[44%]'>
             {tracks.map(track => (
               <button
                 type='button'
