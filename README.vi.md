@@ -6,14 +6,19 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 
 [English](README.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-CN.md)
 
-[![Build](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml)
-![Version](https://img.shields.io/badge/version-2.9.0-2ea44f)
+[![Checks](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml)
+[![Windows release](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml/badge.svg)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml)
+![Source version](https://img.shields.io/badge/source_version-2.9.0-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
 
 > [!NOTE]
 > R3PLAYX đang được phát triển tích cực. Repository này là fork của [Sherlockouo/music](https://github.com/Sherlockouo/music), dự án được phát triển dựa trên hệ sinh thái YesPlayMusic.
+
+## Phiên bản và kênh phát hành
+
+Phiên bản package trong mã nguồn là **2.9.0**. Bản Windows ổn định dùng tag như `v2.9.0`; bản thử nghiệm dùng `dev-2.9.0rN` và được đánh dấu prerelease. Badge phiên bản mô tả mã nguồn; xem [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) để kiểm tra bộ cài đã phát hành và ghi chú thay đổi.
 
 ## Tính năng
 
@@ -50,6 +55,8 @@ Tải bộ cài Windows tại [GitHub Releases](https://github.com/Lynx-1ST/R3PL
 Chức năng lời bài hát trên desktop đã được bỏ. Lời bài hát đồng bộ trong ứng dụng vẫn được giữ lại.
 
 ## Ảnh chụp màn hình
+
+Các ảnh này minh họa giao diện upstream và có thể khác bản hiện tại.
 
 ### Trang chính
 
@@ -218,7 +225,7 @@ Khi bật tùy chọn hiển thị nút tải xuống trong Settings, nhấn nú
 
 Khả năng sử dụng phụ thuộc quyền tài khoản, phiên bản âm thanh của từng bài và thiết bị đầu ra. Không phải bài nào cũng có đủ các mức chất lượng. Spatial Audio, Audio Vivid, Surround Audio và Lossless giữ nguyên tên trong giao diện tiếng Việt.
 
-Bản **v2.8.9** cũng sửa lỗi đăng ký trùng API tải xuống khiến bản EXE thử nghiệm không mở được. Xem [changelog tiếng Anh](https://github.com/Lynx-1ST/R3PLAY/releases/tag/v2.8.9) để biết đầy đủ thay đổi. Có thể cài đè bản hiện tại mà không cần gỡ app hoặc xóa dữ liệu; nếu bản cũ còn chạy nền, kết thúc R3PLAYX trong Task Manager trước khi cài.
+Bản trước đây **v2.8.9** đã sửa lỗi đăng ký trùng API tải xuống khiến bản EXE thử nghiệm không mở được. Xem [changelog tiếng Anh](https://github.com/Lynx-1ST/R3PLAY/releases/tag/v2.8.9) để biết đầy đủ thay đổi. Có thể cài đè bản hiện tại mà không cần gỡ app hoặc xóa dữ liệu; nếu bản cũ còn chạy nền, kết thúc R3PLAYX trong Task Manager trước khi cài.
 
 ## Một số lệnh hữu ích
 

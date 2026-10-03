@@ -6,14 +6,19 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 
 [English](README.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-CN.md)
 
-[![Build](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml)
-![Version](https://img.shields.io/badge/version-2.9.0-2ea44f)
+[![Checks](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml)
+[![Windows release](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml/badge.svg)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml)
+![Source version](https://img.shields.io/badge/source_version-2.9.0-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
 
 > [!NOTE]
 > R3PLAYX is under active development. This repository is a fork of [Sherlockouo/music](https://github.com/Sherlockouo/music), which itself is based on the YesPlayMusic ecosystem.
+
+## Version and release channels
+
+The source package version is **2.9.0**. Stable Windows releases use tags such as `v2.9.0`; development previews use `dev-2.9.0rN` and are prereleases. The version badge describes the source tree; use [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) to check published installers and their release notes.
 
 ## Features
 
@@ -50,6 +55,8 @@ Download the Windows installer from [GitHub Releases](https://github.com/Lynx-1S
 Desktop lyrics have been removed. Synchronized lyrics remain available inside the app.
 
 ## Screenshots
+
+These screenshots show the upstream interface and may differ from the current build.
 
 ### Home
 
@@ -218,7 +225,7 @@ Availability is checked for the current track and NetEase account. Unsupported o
 
 Availability depends on account permissions, the audio versions offered for each track, and the output device. Not every track offers every quality level. Spatial Audio, Audio Vivid, Surround Audio, and Lossless retain their names in the Vietnamese interface.
 
-**v2.8.9** also fixes duplicate download API registration that prevented the previous test installer from starting. See the [English changelog](https://github.com/Lynx-1ST/R3PLAY/releases/tag/v2.8.9) for all changes. Install over your existing version without uninstalling or deleting application data. If the old build is still running in the background, end R3PLAYX in Task Manager before installing.
+The earlier **v2.8.9** release fixed duplicate download API registration that prevented the previous test installer from starting. See the [English changelog](https://github.com/Lynx-1ST/R3PLAY/releases/tag/v2.8.9) for all changes. Install over your existing version without uninstalling or deleting application data. If the old build is still running in the background, end R3PLAYX in Task Manager before installing.
 
 ## Useful commands
 
