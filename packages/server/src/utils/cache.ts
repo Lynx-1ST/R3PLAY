@@ -1,3 +1,4 @@
+import { isPositiveSafeInteger, parsePositiveSafeInteger } from '../../../shared/idValidation'
 import { db, Tables, TablesStructures } from './db'
 import type { FetchTracksResponse } from '../../../shared/api/Track'
 import log from './log'
@@ -37,8 +38,10 @@ class Cache {
         break
       }
       case CacheAPIs.Track: {
+        if (!data) return
         const res = data as FetchTracksResponse
-        if (!res.songs) return
+        if (!Array.isArray(res.songs) || res.songs.length === 0) return
+        if (res.songs.some(t => !isPositiveSafeInteger(t?.id))) return
         const tracks = res.songs.map(t => ({
           id: t.id,
           json: JSON.stringify(t),
@@ -48,7 +51,7 @@ class Cache {
         break
       }
       case CacheAPIs.Unblock: {
-        if (!data.id || !data.url) return
+        if (!isPositiveSafeInteger(data?.id) || !data.url) return
         db.upsert(Tables.Unblock, {
           id: data.id,
           json: JSON.stringify(data),
@@ -57,7 +60,7 @@ class Cache {
         break
       }
       case CacheAPIs.Album: {
-        if (!data.album) return
+        if (!isPositiveSafeInteger(data?.album?.id)) return
         data.album.songs = data.songs
         db.upsert(Tables.Album, {
           id: data.album.id,
@@ -67,7 +70,7 @@ class Cache {
         break
       }
       case CacheAPIs.Playlist: {
-        if (!data.playlist) return
+        if (!isPositiveSafeInteger(data?.playlist?.id)) return
         db.upsert(Tables.Playlist, {
           id: data.playlist.id,
           json: JSON.stringify(data),
@@ -76,7 +79,7 @@ class Cache {
         break
       }
       case CacheAPIs.Artist: {
-        if (!data.artist) return
+        if (!isPositiveSafeInteger(data?.artist?.id)) return
         db.upsert(Tables.Artist, {
           id: data.artist.id,
           json: JSON.stringify(data),
@@ -85,7 +88,12 @@ class Cache {
         break
       }
       case CacheAPIs.ArtistAlbum: {
-        if (!data.hotAlbums) return
+        if (
+          !isPositiveSafeInteger(data?.artist?.id) ||
+          !Array.isArray(data.hotAlbums) ||
+          data.hotAlbums.some((album: { id: unknown }) => !isPositiveSafeInteger(album?.id))
+        )
+          return
         db.createMany(
           Tables.Album,
           // data.hotAlbums.map((a: Album) => ({
@@ -108,16 +116,17 @@ class Cache {
         break
       }
       case CacheAPIs.Lyric: {
-        if (!data.lrc) return
+        const id = parsePositiveSafeInteger(query?.id)
+        if (id === undefined || !data?.lrc) return
         db.upsert(Tables.Lyrics, {
-          id: query.id,
+          id,
           json: JSON.stringify(data),
           updatedAt: Date.now(),
         })
         break
       }
       case CacheAPIs.CoverColor: {
-        if (!data.id || !data.color) return
+        if (!isPositiveSafeInteger(data?.id) || !data.color) return
         if (/^#([a-fA-F0-9]){3}$|[a-fA-F0-9]{6}$/.test(data.color) === false) {
           return
         }
@@ -129,7 +138,7 @@ class Cache {
         break
       }
       case CacheAPIs.AppleMusicAlbum: {
-        if (!data.id) return
+        if (!isPositiveSafeInteger(data?.id)) return
         db.upsert(Tables.AppleMusicAlbum, {
           id: data.id,
           json: data.album ? JSON.stringify(data.album) : 'no',
@@ -138,7 +147,7 @@ class Cache {
         break
       }
       case CacheAPIs.AppleMusicArtist: {
-        if (!data) return
+        if (!isPositiveSafeInteger(data?.id)) return
         db.upsert(Tables.AppleMusicArtist, {
           id: data.id,
           json: data.artist ? JSON.stringify(data.artist) : 'no',
@@ -163,20 +172,15 @@ class Cache {
         break
       }
       case CacheAPIs.Track: {
-        const ids: number[] = params?.ids.split(',').map((id: string) => Number(id))
-        if (ids.length === 0) return
-
-        if (ids.includes(NaN)) return
+        if (typeof params?.ids !== 'string' || !params.ids.trim()) return
+        const ids: number[] = params.ids.split(',').map((id: string) => Number(id))
+        if (ids.some(id => !isPositiveSafeInteger(id))) return
 
         const tracksRaw = db.findMany(Tables.Track, ids)
 
-        if (tracksRaw.length !== ids.length) {
-          return
-        }
-        const tracks = ids.map(id => {
-          const track = tracksRaw.find(t => t.id === Number(id)) as any
-          return JSON.parse(track.json)
-        })
+        const tracksById = new Map(tracksRaw.map(track => [track.id, track]))
+        if (ids.some((id: number) => !tracksById.has(id))) return
+        const tracks = ids.map((id: number) => JSON.parse(tracksById.get(id)!.json))
         return {
           code: 200,
           songs: tracks,
@@ -184,8 +188,9 @@ class Cache {
         }
       }
       case CacheAPIs.Unblock: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.Unblock, params.id)
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
+        const data = db.find(Tables.Unblock, id)
         if (data?.json)
           return {
             resourceState: true,
@@ -196,8 +201,9 @@ class Cache {
         break
       }
       case CacheAPIs.Album: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.Album, params.id)
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
+        const data = db.find(Tables.Album, id)
         if (data?.json)
           return {
             resourceState: true,
@@ -208,15 +214,17 @@ class Cache {
         break
       }
       case CacheAPIs.Playlist: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.Playlist, params.id)
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
+        const data = db.find(Tables.Playlist, id)
         if (data?.json) return JSON.parse(data.json)
         break
       }
       case CacheAPIs.Artist: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.Artist, params.id)
-        const fromAppleData = db.find(Tables.AppleMusicArtist, params.id)
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
+        const data = db.find(Tables.Artist, id)
+        const fromAppleData = db.find(Tables.AppleMusicArtist, id)
         const fromApple = fromAppleData?.json && JSON.parse(fromAppleData.json)
         const fromNetease = data?.json && JSON.parse(data.json)
         if (fromNetease && fromApple && fromApple !== 'no') {
@@ -226,9 +234,10 @@ class Cache {
         return fromNetease ? fromNetease : undefined
       }
       case CacheAPIs.ArtistAlbum: {
-        if (isNaN(Number(params?.id))) return
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
 
-        const artistAlbumsRaw = db.find(Tables.ArtistAlbum, params.id)
+        const artistAlbumsRaw = db.find(Tables.ArtistAlbum, id)
         if (!artistAlbumsRaw?.json) return
         const artistAlbums = JSON.parse(artistAlbumsRaw.json)
 
@@ -242,24 +251,28 @@ class Cache {
         return artistAlbums
       }
       case CacheAPIs.Lyric: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.Lyrics, params.id)
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
+        const data = db.find(Tables.Lyrics, id)
         if (data?.json) return JSON.parse(data.json)
         break
       }
       case CacheAPIs.CoverColor: {
-        if (isNaN(Number(params?.id))) return
-        return db.find(Tables.CoverColor, params.id)?.color
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
+        return db.find(Tables.CoverColor, id)?.color
       }
       case CacheAPIs.AppleMusicAlbum: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.AppleMusicAlbum, params.id)
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
+        const data = db.find(Tables.AppleMusicAlbum, id)
         if (data?.json && data.json !== 'no') return JSON.parse(data.json)
         break
       }
       case CacheAPIs.AppleMusicArtist: {
-        if (isNaN(Number(params?.id))) return
-        const data = db.find(Tables.AppleMusicArtist, params.id)
+        const id = parsePositiveSafeInteger(params?.id)
+        if (id === undefined) return
+        const data = db.find(Tables.AppleMusicArtist, id)
         if (data?.json && data.json !== 'no') return JSON.parse(data.json)
         break
       }
@@ -313,7 +326,7 @@ class Cache {
     } catch (e) {
       log.error('[cache] parse audio metadata failed', e)
     }
-    const bitRate = meta?.format?.codec === 'OPUS' ? 165000 : meta?.format?.bitrate ?? 0
+    const bitRate = meta?.format?.codec === 'OPUS' ? 165000 : (meta?.format?.bitrate ?? 0)
     const type =
       {
         'MPEG 1 Layer 3': 'mp3',
