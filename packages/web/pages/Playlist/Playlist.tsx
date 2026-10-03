@@ -11,7 +11,9 @@ import { trackMatchesSearch } from '@/web/utils/listeningSession'
 
 const SearchContext = createContext({
   query: '',
-  setQuery: (_query: string) => {},
+  setQuery: (_query: string) => {
+    void _query
+  },
   count: 0,
   total: 0,
 })
@@ -34,7 +36,7 @@ function PlaylistHeader() {
           onKeyDown={e => {
             if (e.key === 'Escape') setQuery('')
           }}
-          className='min-w-0 flex-1 rounded-xl border border-black/10 bg-black/5 px-4 py-2 outline-none focus:border-current dark:border-white/10 dark:bg-white/5'
+          className='min-h-11 min-w-0 flex-1 rounded-xl border border-black/10 bg-black/5 px-4 py-2 text-neutral-800 outline-none placeholder:text-neutral-600 focus:border-current focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-white/15 dark:bg-white/5 dark:text-neutral-100 dark:placeholder:text-neutral-300'
         />
         <span role='status' className='text-sm opacity-60'>
           {t('player.playlist-results', { count, total })}

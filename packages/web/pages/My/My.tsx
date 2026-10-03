@@ -51,12 +51,6 @@ const My = () => {
     <PageTransition>
       <LayoutGroup>
         <div data-my-music className='grid min-w-0 grid-cols-1 gap-6 sm:gap-8'>
-          <header className='mx-2.5 min-w-0 lg:mx-0'>
-            <h1 className='text-24 font-semibold tracking-tight sm:text-32'>{t('my.title')}</h1>
-            <p className='mt-2 max-w-2xl text-14 leading-relaxed break-words text-neutral-600 dark:text-neutral-300'>
-              {t('my.welcome', { nickname: user.profile.nickname })}
-            </p>
-          </header>
           <PlayLikedSongsCard />
           <RecentlyListened />
           <Collections />

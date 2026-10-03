@@ -46,14 +46,14 @@ const PlayLikedSongsCard = () => {
       data-my-liked-card
       className='@container mx-2.5 overflow-hidden rounded-24 border border-black/5 bg-black/5 lg:mx-0 dark:border-white/10 dark:bg-white/5'
     >
-      <div className='flex flex-col gap-6 p-6 @xl:flex-row @xl:items-center @xl:justify-between @xl:p-8'>
+      <div className='flex flex-col gap-8 p-6 sm:p-8 @xl:min-h-64 @xl:flex-row @xl:items-center @xl:justify-between @xl:px-10 @xl:py-9'>
         <div className='min-w-0 flex-1'>
           <div className='flex min-w-0 items-center gap-4'>
-            <div className='text-accent-color-400 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-black/5 dark:bg-white/5'>
-              <Icon name='heart' className='h-7 w-7' />
+            <div className='text-accent-color-400 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-black/5 sm:h-20 sm:w-20 dark:bg-white/5'>
+              <Icon name='heart' className='h-8 w-8 sm:h-10 sm:w-10' />
             </div>
             <div className='min-w-0'>
-              <h2 className='text-20 leading-snug font-semibold tracking-tight sm:text-24'>
+              <h2 className='text-24 leading-snug font-semibold tracking-tight sm:text-32'>
                 {title}
               </h2>
               <p className='mt-2 text-14 text-neutral-600 dark:text-neutral-300' aria-live='polite'>
@@ -88,7 +88,7 @@ const PlayLikedSongsCard = () => {
           </div>
         </div>
         {!!tracks.length && (
-          <div className='grid max-w-80 shrink-0 grid-cols-3 gap-3 @xl:w-[36%]'>
+          <div className='grid w-full max-w-96 shrink-0 grid-cols-3 gap-3 @xl:w-[40%]'>
             {tracks.map(track => (
               <button
                 type='button'

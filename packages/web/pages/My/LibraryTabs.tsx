@@ -1,6 +1,5 @@
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import Icon from '@/web/components/Icon'
 import { cx } from '@emotion/css'
 
 export const libraryTabs = [
@@ -51,11 +50,7 @@ export default function LibraryTabs({
   }
 
   return (
-    <div
-      role='tablist'
-      aria-labelledby={`${idPrefix}-heading`}
-      className='flex flex-wrap gap-1 rounded-2xl border border-black/5 bg-black/5 p-1 dark:border-white/10 dark:bg-white/5'
-    >
+    <div role='tablist' aria-labelledby={`${idPrefix}-heading`} className='flex flex-wrap gap-2'>
       {tabs.map((tab, index) => (
         <button
           key={tab.id}
@@ -69,13 +64,12 @@ export default function LibraryTabs({
           onClick={() => onSelect(tab.id)}
           onKeyDown={event => moveFocus(event, index)}
           className={cx(
-            'flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-14 font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-4',
+            'flex min-h-11 flex-1 items-center justify-center rounded-full px-4 text-14 font-medium whitespace-nowrap transition focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-5',
             selected === tab.id
               ? 'bg-neutral-800 text-white dark:bg-neutral-100 dark:text-neutral-800'
-              : 'text-neutral-600 hover:bg-black/5 dark:text-neutral-300 dark:hover:bg-white/10'
+              : 'bg-black/5 text-neutral-600 hover:bg-black/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:bg-white/10'
           )}
         >
-          <Icon name={tab.icon} className='hidden h-4 w-4 shrink-0 sm:block' />
           {t(`common.${tab.label}`)}
         </button>
       ))}
