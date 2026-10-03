@@ -47,7 +47,12 @@ export class AudioCacheJobs {
   // A second Electron instance must not clean the first instance's active files.
   // Initialize only after acquiring the single-instance lock.
   initialize(): Promise<void> {
-    if (!this.ready) this.ready = this.recover()
+    if (!this.ready) {
+      this.ready = this.recover().catch(error => {
+        this.ready = undefined
+        throw error
+      })
+    }
     // Recovery errors fail jobs safely rather than becoming unhandled rejections.
     void this.ready.catch(() => {})
     return this.ready
@@ -130,7 +135,14 @@ export class AudioCacheJobs {
         ) &&
           !this.dependencies.repository.referenced(name))
       ) {
-        await unlink(path.join(this.directory, name))
+        await unlink(path.join(this.directory, name)).catch(error => {
+          if (error?.code !== 'ENOENT')
+            this.dependencies.report?.(
+              'failed',
+              0,
+              `Recovery cleanup failed: ${name} (${error?.code ?? 'unknown'})`
+            )
+        })
       }
     }
   }
