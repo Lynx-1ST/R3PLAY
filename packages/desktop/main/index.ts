@@ -18,6 +18,7 @@ import { createDockMenu } from './dockMenu'
 import { checkForUpdates } from './updateWindow'
 import { createTouchBar } from './touchBar'
 import windowStateKeeper from 'electron-window-state'
+import { isAppUrl, isAllowedExternalUrl } from './utils/rendererSecurity'
 
 log.info('[electron] index.ts')
 
@@ -158,20 +159,27 @@ class Main {
       this.win?.webContents.insertCSS('html, body { overscroll-behavior: none !important; }')
     })
 
-    // Web server, load the web server to the electron
-    this.win.loadURL(this.appOrigin)
-
-    // Make all links open with the browser, not with the application
-    this.win.webContents.setWindowOpenHandler(({ url }) => {
-      const allowUrlList = ['github.com']
-      const urlIsAllowed = allowUrlList.some(allowUrl => url.includes(allowUrl))
-
-      if (urlIsAllowed) {
-        shell.openExternal(url)
+    const openExternal = (url: string) => {
+      if (isAllowedExternalUrl(url)) {
+        void shell.openExternal(url).catch(error => log.warn('[navigation] Open failed', error))
       }
+    }
+    this.win.webContents.on('will-navigate', (event, url) => {
+      if (isAppUrl(url, this.appOrigin)) return
+      event.preventDefault()
+      openExternal(url)
+    })
+    this.win.webContents.on('will-redirect', (event, url) => {
+      if (!isAppUrl(url, this.appOrigin)) event.preventDefault()
+    })
 
+    this.win.webContents.setWindowOpenHandler(({ url }) => {
+      openExternal(url)
       return { action: 'deny' }
     })
+
+    // Register navigation guards before the first load.
+    this.win.loadURL(this.appOrigin)
 
     // 减少显示空白窗口的时间
     this.win.once('ready-to-show', () => {

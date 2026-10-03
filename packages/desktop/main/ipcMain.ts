@@ -17,23 +17,23 @@ import { checkForUpdates } from './updateWindow'
 import { createMenu } from './menu'
 import { createDockMenu } from './dockMenu'
 import { DiscordPresence } from './discordRpc'
+import { trustedListener } from './utils/trustedIpc'
 
 const discordPresence = new DiscordPresence()
 
 log.info('[electron] ipcMain.ts')
 
-const on = <T extends keyof IpcChannelsParams>(
-  channel: T,
-  listener: (event: Electron.IpcMainEvent, params: IpcChannelsParams[T]) => void
-) => {
-  ipcMain.on(channel, listener)
-}
-
-const handle = <T extends keyof IpcChannelsParams>(
-  channel: T,
-  listener: (event: Electron.IpcMainInvokeEvent, params: IpcChannelsParams[T]) => void
-) => {
-  return ipcMain.handle(channel, listener)
+function trustedIpc(win: BrowserWindow | null) {
+  return {
+    on: <T extends keyof IpcChannelsParams>(
+      channel: T,
+      listener: (event: Electron.IpcMainEvent, params: IpcChannelsParams[T]) => void
+    ) => ipcMain.on(channel, trustedListener(win, listener)),
+    handle: <T extends keyof IpcChannelsParams>(
+      channel: T,
+      listener: (event: Electron.IpcMainInvokeEvent, params: IpcChannelsParams[T]) => unknown
+    ) => ipcMain.handle(channel, trustedListener(win, listener)),
+  }
 }
 
 export function initIpcMain(
@@ -42,8 +42,8 @@ export function initIpcMain(
   thumbar: Thumbar | null,
   store: Store<TypedElectronStore>
 ) {
+  const { on } = trustedIpc(win)
   on(IpcChannels.RendererLog, (event, message) => {
-    if (event.sender !== win?.webContents || event.senderFrame !== win.webContents.mainFrame) return
     if (
       !message ||
       !['error', 'warn', 'info', 'debug', 'verbose', 'silly', 'log'].includes(message.level) ||
@@ -53,7 +53,6 @@ export function initIpcMain(
     log[message.level]('[renderer]', ...message.args.slice(0, 20))
   })
   on(IpcChannels.DiscordPlayback, (event, playback) => {
-    if (event.sender !== win?.webContents || event.senderFrame !== win.webContents.mainFrame) return
     discordPresence.update(playback)
   })
   win?.webContents.on('did-start-loading', () => discordPresence.update(null))
@@ -62,8 +61,8 @@ export function initIpcMain(
   app.once('before-quit', () => discordPresence.stop())
   app.once('will-quit', () => discordPresence.stop())
   initWindowIpcMain(win)
-  initTrayIpcMain(tray)
-  initTaskbarIpcMain(thumbar)
+  initTrayIpcMain(win, tray)
+  initTaskbarIpcMain(win, thumbar)
   initStoreIpcMain(win, store, tray)
   initOtherIpcMain(win)
 }
@@ -73,6 +72,7 @@ export function initIpcMain(
  * @param {BrowserWindow} win
  */
 function initWindowIpcMain(win: BrowserWindow | null) {
+  const { on, handle } = trustedIpc(win)
   on(IpcChannels.Minimize, () => {
     win?.minimize()
   })
@@ -119,7 +119,8 @@ function initWindowIpcMain(win: BrowserWindow | null) {
  * 处理需要tray对象的事件
  * @param {YPMTray} tray
  */
-function initTrayIpcMain(tray: YPMTray | null) {
+function initTrayIpcMain(win: BrowserWindow | null, tray: YPMTray | null) {
+  const { on } = trustedIpc(win)
   on(IpcChannels.SetTrayTooltip, (e, { text, coverImg }) => {
     tray?.setTooltip(text)
     // console.log('cover ', coverImg)
@@ -142,7 +143,8 @@ function initTrayIpcMain(tray: YPMTray | null) {
  * 处理需要thumbar对象的事件
  * @param {Thumbar} thumbar
  */
-function initTaskbarIpcMain(thumbar: Thumbar | null) {
+function initTaskbarIpcMain(win: BrowserWindow | null, thumbar: Thumbar | null) {
+  const { on } = trustedIpc(win)
   on(IpcChannels.Play, () => {
     thumbar?.setPlayState(true)
   })
@@ -158,11 +160,11 @@ function initStoreIpcMain(
   store: Store<TypedElectronStore>,
   tray: YPMTray | null
 ) {
+  const { on } = trustedIpc(win)
   /**
    * 同步设置到Main
    */
   on(IpcChannels.SyncSettings, (event, settings) => {
-    if (event.sender !== win?.webContents || event.senderFrame !== win.webContents.mainFrame) return
     discordPresence.setEnabled(settings?.enableDiscordRpc === true)
     const previousLanguage = store.get('settings')?.language
     store.set('settings', settings)
@@ -182,6 +184,7 @@ function initStoreIpcMain(
  * 处理其他事件
  */
 function initOtherIpcMain(win: BrowserWindow | null) {
+  const { on, handle } = trustedIpc(win)
   /**
    * 清除API缓存
    */

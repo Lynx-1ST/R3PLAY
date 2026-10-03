@@ -1,4 +1,5 @@
 import { BrowserWindow, IpcMainEvent } from 'electron'
+import { trustedListener } from './utils/trustedIpc'
 
 const { TouchBar, nativeImage, ipcMain } = require('electron')
 const { TouchBarButton, TouchBarSpacer } = TouchBar
@@ -58,12 +59,18 @@ export function createTouchBar(window: BrowserWindow) {
 
   ipcMain.on(
     'player',
-    (_event: IpcMainEvent, { playing, likedCurrentTrack }: { playing: boolean; likedCurrentTrack: boolean }) => {
-      playButton.icon = playing ? createNativeImage('pause.png') : createNativeImage('play.png')
-      likeButton.icon = likedCurrentTrack
-        ? createNativeImage('like_fill.png')
-        : createNativeImage('like.png')
-    }
+    trustedListener(
+      window,
+      (
+        _event: IpcMainEvent,
+        { playing, likedCurrentTrack }: { playing: boolean; likedCurrentTrack: boolean }
+      ) => {
+        playButton.icon = playing ? createNativeImage('pause.png') : createNativeImage('play.png')
+        likeButton.icon = likedCurrentTrack
+          ? createNativeImage('like_fill.png')
+          : createNativeImage('like.png')
+      }
+    )
   )
 
   return new TouchBar({
