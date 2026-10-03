@@ -59,7 +59,12 @@ export const openContextMenu = ({
 }
 
 export const closeContextMenu = (event?: MouseEvent) => {
-  if (event?.target === contextMenus.target) {
+  const eventTarget = event?.target
+  if (
+    eventTarget instanceof Node &&
+    contextMenus.target &&
+    contextMenus.target.contains(eventTarget)
+  ) {
     return
   }
   assign(contextMenus, initContextMenu)
