@@ -121,7 +121,15 @@
   "my": {
     "xxxs-liked-tracks": "{{nickname}}'s Liked Tracks",
     "playNow": "Play Now",
-    "recently-listened": "RECENTLY LISTENED"
+    "recently-listened": "Artists you listened to this week",
+    "loading": "Loading library",
+    "load-error": "Unable to load your library. Please retry.",
+    "empty": "Nothing here yet.",
+    "empty-liked": "You have not liked any songs yet.",
+    "login-required": "Log in to open your library",
+    "explore": "Explore",
+    "created-by-me": "My playlists",
+    "saved-playlists": "Saved playlists"
   },
   "settings": {
     "discord-rpc-enable": "Show listening activity on Discord",

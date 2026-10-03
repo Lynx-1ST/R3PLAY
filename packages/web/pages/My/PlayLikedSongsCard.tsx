@@ -1,139 +1,108 @@
-import useLyric from '@/web/api/hooks/useLyric'
 import usePlaylist from '@/web/api/hooks/usePlaylist'
 import useUserPlaylists from '@/web/api/hooks/useUserPlaylists'
+import useUser from '@/web/api/hooks/useUser'
 import player from '@/web/states/player'
-import { sample, chunk, sampleSize } from 'lodash-es'
-import { css, cx } from '@emotion/css'
-import { useState, useEffect, useMemo, useCallback, memo } from 'react'
-import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import Icon from '@/web/components/Icon'
-import { lyricParser } from '@/web/utils/lyric'
 import Image from '@/web/components/Image'
 import { resizeImage } from '@/web/utils/common'
-import { breakpoint as bp } from '@/web/utils/const'
-import useUser from '@/web/api/hooks/useUser'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-
-const Lyrics = ({ tracksIDs }: { tracksIDs: number[] }) => {
-  const { t } = useTranslation()
-  const [id, setId] = useState(0)
-  const { data: user } = useUser()
-
-  useEffect(() => {
-    if (id === 0) {
-      setId(sample(tracksIDs) || 0)
-    }
-  }, [id, tracksIDs])
-
-  const { data: lyric } = useLyric({ id })
-
-  const lyricLines = useMemo(() => {
-    if (!lyric?.lrc?.lyric) return []
-
-    const parsedLyrics = lyricParser(lyric)
-
-    const lines = parsedLyrics.lyric.map(line => line.content)
-
-    return sample(chunk(lines, 4)) ?? []
-  }, [lyric])
-
-  return (
-    <div className={cx('line-clamp-4')}>
-      <div className='mb-3.5 text-18 font-medium'>
-        {t('my.xxxs-liked-tracks', { nickname: user?.profile?.nickname })}
-      </div>
-      {lyricLines.map((line, index) => (
-        <div
-          key={`${index}-${line}`}
-          className='overflow-hidden text-ellipsis whitespace-nowrap text-18 font-medium'
-        >
-          {line}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-const Covers = memo(({ tracks }: { tracks: Track[] }) => {
-  const navigate = useNavigate()
-  return (
-    <div className='mt-6 grid w-full shrink-0 grid-cols-3 gap-2.5 lg:mt-0 lg:ml-8 lg:w-auto'>
-      {tracks.map(track => (
-        <Image
-          src={resizeImage(track.al?.picUrl || '', 'md')}
-          className={cx('aspect-square rounded-24 lg:h-32 lg:w-32')}
-          key={track.id}
-          onClick={() => navigate(`/album/${track.al?.id}`)}
-        />
-      ))}
-    </div>
-  )
-})
-Covers.displayName = 'Covers'
+import LibraryState from './LibraryState'
 
 const PlayLikedSongsCard = () => {
   const { t } = useTranslation()
-
   const navigate = useNavigate()
-
-  const { data: playlists } = useUserPlaylists()
-
-  const { data: likedSongsPlaylist } = usePlaylist({
-    id: playlists?.playlist?.[0].id ?? 0,
-  })
-
-  const handlePlay = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation()
-      player.playPlaylist(likedSongsPlaylist?.playlist.id)
-    },
-    [likedSongsPlaylist?.playlist.id]
+  const { data: user } = useUser()
+  const playlistsQuery = useUserPlaylists()
+  const likedPlaylist = playlistsQuery.data?.playlist?.find(
+    p => p.specialType === 5 && p.userId === user?.profile?.userId
   )
-
-  const [sampledTracks, setSampledTracks] = useState<Track[]>([])
-  useEffect(() => {
-    const tracks = likedSongsPlaylist?.playlist?.tracks
-    if (!sampledTracks.length && tracks?.length) {
-      setSampledTracks(sampleSize(tracks, 3))
-    }
-  }, [likedSongsPlaylist?.playlist?.tracks, sampledTracks])
+  const id = likedPlaylist?.id ?? 0
+  const playlistQuery = usePlaylist({ id })
+  const { data, isLoading } = playlistQuery
+  const playlist = data?.playlist
+  const tracks = playlist?.tracks?.slice(0, 3) ?? []
+  const count = playlist?.trackCount ?? likedPlaylist?.trackCount
+  const title = t('my.xxxs-liked-tracks', { nickname: user?.profile?.nickname ?? '' })
+  if (!playlist)
+    return (
+      <section className='mx-2.5 rounded-24 bg-black/5 p-6 lg:mx-0 dark:bg-white/5'>
+        <h2 className='text-20 font-semibold'>{title}</h2>
+        <LibraryState
+          loading={playlistsQuery.isPending || (!!id && playlistQuery.isPending)}
+          error={playlistsQuery.isError || playlistQuery.isError}
+          empty
+          retry={() =>
+            playlistsQuery.isError || !id ? playlistsQuery.refetch() : playlistQuery.refetch()
+          }
+        />
+      </section>
+    )
 
   return (
-    <motion.div
+    <motion.section
       layout
-      className={cx(
-        'mx-2.5 flex flex-col justify-between rounded-24 bg-black/10 p-8 dark:bg-white/10 lg:mx-0'
-      )}
+      data-my-liked-card
+      className='@container mx-2.5 overflow-hidden rounded-24 border border-black/5 bg-black/5 lg:mx-0 dark:border-white/10 dark:bg-white/5'
     >
-      {/* Lyrics and Covers */}
-      <div className='flex flex-col justify-between lg:flex-row'>
-        <Lyrics tracksIDs={sampledTracks.map(t => t.id)} />
-        <Covers tracks={sampledTracks} />
-      </div>
-
-      {/* Buttons */}
-      <div className='mt-5 flex justify-between'>
-        <button
-          onClick={handlePlay}
-          className='bg-accent-color-400 rounded-full py-5 px-6 text-16 font-medium text-black dark:text-white'
-        >
-          {t`my.playNow`}
-        </button>
-        <button
-          onClick={() => navigate(`/playlist/${likedSongsPlaylist?.playlist.id}`)}
-          className={cx(
-            'flex items-center justify-center rounded-full bg-white/10 text-neutral-700 transition duration-400 hover:bg-white/20 hover:text-neutral-300 dark:text-neutral-300',
-            css`
-              padding: 15.5px;
-            `
+      <div className='flex flex-col gap-6 p-6 @xl:flex-row @xl:items-center @xl:justify-between @xl:p-8'>
+        <div className='min-w-0 flex-1'>
+          <p className='text-accent-color-400 mb-3 text-14 font-medium'>
+            {t('common.playlist_other')}
+          </p>
+          <h2 className='text-2xl leading-snug font-semibold tracking-tight'>{title}</h2>
+          <p className='mt-2 text-14 text-neutral-500 dark:text-neutral-400' aria-live='polite'>
+            {count !== undefined ? `${count.toLocaleString()} ${t('common.track_other')}` : ' '}
+          </p>
+          {count === 0 && (
+            <p className='mt-2 text-14 text-neutral-500 dark:text-neutral-400'>
+              {t('my.empty-liked')}
+            </p>
           )}
-        >
-          <Icon name='forward' className='h-7 w-7 ' />
-        </button>
+          <div className='mt-5 flex flex-wrap items-center gap-3'>
+            <button
+              type='button'
+              disabled={!playlist?.id || !tracks.length || isLoading}
+              onClick={() => player.playPlaylist(playlist?.id)}
+              className='bg-accent-color-400 min-h-11 rounded-full px-6 text-16 font-semibold text-black transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-40'
+            >
+              {t('my.playNow')}
+            </button>
+            <button
+              type='button'
+              disabled={!id}
+              onClick={() => navigate(`/playlist/${id}`)}
+              aria-label={title}
+              title={title}
+              className='flex h-11 w-11 items-center justify-center rounded-full border border-black/10 transition hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-40 dark:border-white/15 dark:hover:bg-white/10'
+            >
+              <Icon name='forward' className='h-5 w-5' />
+            </button>
+          </div>
+        </div>
+        {!!tracks.length && (
+          <div className='grid max-w-80 shrink-0 grid-cols-3 gap-3 @xl:w-[36%]'>
+            {tracks.map(track => (
+              <button
+                type='button'
+                key={track.id}
+                disabled={!track.al?.id}
+                onClick={() => navigate(`/album/${track.al?.id}`)}
+                aria-label={track.al?.name || track.name}
+                title={track.name}
+                className='min-w-0 rounded-2xl transition hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4'
+              >
+                <Image
+                  src={resizeImage(track.al?.picUrl || '', 'md')}
+                  className='aspect-square rounded-2xl'
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-    </motion.div>
+    </motion.section>
   )
 }
 

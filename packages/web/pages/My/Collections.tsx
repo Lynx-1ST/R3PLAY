@@ -1,15 +1,12 @@
-import { css, cx } from '@emotion/css'
+import { cx } from '@emotion/css'
 import useUserArtists from '@/web/api/hooks/useUserArtists'
-import Tabs from '@/web/components/Tabs'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import CoverRow from '@/web/components/CoverRow'
 import useUserPlaylists from '@/web/api/hooks/useUserPlaylists'
 import useUserAlbums from '@/web/api/hooks/useUserAlbums'
 import { useSnapshot } from 'valtio'
-import uiStates from '@/web/states/uiStates'
 import ArtistRow from '@/web/components/ArtistRow'
-import { topbarHeight } from '@/web/utils/const'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import VideoRow from '@/web/components/VideoRow'
 import useUserVideos from '@/web/api/hooks/useUserVideos'
@@ -18,48 +15,65 @@ import settings from '@/web/states/settings'
 import useUser from '@/web/api/hooks/useUser'
 import Daily from './Daily'
 import Cloud from './Cloud'
-import Icon from '@/web/components/Icon'
-import FileUploader from '@/web/components/Tools/Upload'
-import CoverWall from '@/web/components/CoverWall'
 import { IconNames } from '@/web/components/Icon/iconNamesType'
 import Recent from './Recent'
+import LibraryState from './LibraryState'
 
-const collections = ['daily', 'playlists', 'albums', 'artists', 'videos', 'cloud','recent'] as const
-type Collection = typeof collections[number]
+const collections = [
+  'daily',
+  'playlists',
+  'albums',
+  'artists',
+  'videos',
+  'cloud',
+  'recent',
+] as const
+type Collection = (typeof collections)[number]
 
 const Albums = () => {
-  const { data: albums } = useUserAlbums()
+  const { data: albums, isPending, isError, refetch } = useUserAlbums()
+  if (!albums?.data?.length)
+    return <LibraryState loading={isPending} error={isError} empty retry={refetch} />
   return <CoverRow albums={albums?.data} itemTitle='name' itemSubtitle='artist' />
 }
 
 const Playlists = () => {
+  const { t } = useTranslation()
   const user = useUser()
-  const { data: playlists } = useUserPlaylists()
+  const { data: playlists, isPending, isError, refetch } = useUserPlaylists()
   const myPlaylists = useMemo(
-    () => playlists?.playlist?.slice(1).filter(p => p.userId === user?.data?.account?.id),
+    () =>
+      playlists?.playlist?.filter(
+        p => p.specialType !== 5 && p.userId === user?.data?.profile?.userId
+      ),
     [playlists, user]
   )
   const otherPlaylists = useMemo(
-    () => playlists?.playlist?.slice(1).filter(p => p.userId !== user?.data?.account?.id),
+    () =>
+      playlists?.playlist?.filter(
+        p => p.specialType !== 5 && p.userId !== user?.data?.profile?.userId
+      ),
     [playlists, user]
   )
 
+  if (!myPlaylists?.length && !otherPlaylists?.length)
+    return <LibraryState loading={isPending} error={isError} empty retry={refetch} />
   return (
     <div>
       {/* My playlists */}
-      {myPlaylists && (
+      {!!myPlaylists?.length && (
         <>
-          <div className='mb-4 mt-2 text-14 font-medium uppercase text-neutral-400'>
-            Created BY ME
+          <div className='mt-2 mb-4 text-14 font-medium text-neutral-400 uppercase'>
+            {t('my.created-by-me')}
           </div>
           <CoverRow playlists={myPlaylists || []} />
         </>
       )}
       {/* Other playlists */}
-      {otherPlaylists && (
+      {!!otherPlaylists?.length && (
         <>
-          <div className='mb-4 mt-8 text-14 font-medium uppercase text-neutral-400'>
-            Created BY OTHERS
+          <div className='mt-8 mb-4 text-14 font-medium text-neutral-400 uppercase'>
+            {t('my.saved-playlists')}
           </div>
           <CoverRow playlists={otherPlaylists || []} />
         </>
@@ -69,16 +83,20 @@ const Playlists = () => {
 }
 
 const Artists = () => {
-  const { data: artists } = useUserArtists()
+  const { data: artists, isPending, isError, refetch } = useUserArtists()
+  if (!artists?.data?.length)
+    return <LibraryState loading={isPending} error={isError} empty retry={refetch} />
   return <ArtistRow artists={artists?.data || []} />
 }
 
 const Videos = () => {
-  const { data: videos } = useUserVideos()
+  const { data: videos, isPending, isError, refetch } = useUserVideos()
+  if (!videos?.data?.length)
+    return <LibraryState loading={isPending} error={isError} empty retry={refetch} />
   return <VideoRow videos={videos?.data || []} />
 }
 
-const CollectionTabs = ({ className }: { className:string }) => {
+const CollectionTabs = ({ className }: { className: string }) => {
   const { t } = useTranslation()
   const { displayPlaylistsFromNeteaseMusic } = useSnapshot(settings)
 
@@ -118,7 +136,6 @@ const CollectionTabs = ({ className }: { className:string }) => {
       name: t`common.recent`,
       // iconName: 'cloud',
     },
-
   ]
 
   const { librarySelectedTab: selectedTab } = useSnapshot(persistedUiStates)
@@ -128,46 +145,49 @@ const CollectionTabs = ({ className }: { className:string }) => {
 
   return (
     <div className={className}>
-      <div className='flex flex-row justify-between z-10'>
-        <Tabs
-          tabs={tabs.filter(tab => {
-            if (!displayPlaylistsFromNeteaseMusic && tab.id === 'playlists') {
-              return false
-            }
-            return true
-          })}
-          value={selectedTab}
-          onChange={(id: Collection) => {
-            setSelectedTab(id)
-          }}
-          className={cx(
-            'sticky',
-            'z-10',
-            'px-2.5 lg:px-0'
-          )}
-          // style={{
-          //   top: `${topbarHeight}px`,
-          // }}
-        />
-        <div className='items-center '>{/* {selectedTab == 'cloud' && <FileUploader/> } */}</div>
+      <div className='flex flex-wrap gap-x-2 gap-y-1 border-b border-black/10 dark:border-white/10'>
+        {tabs
+          .filter(tab => displayPlaylistsFromNeteaseMusic || tab.id !== 'playlists')
+          .map(tab => (
+            <button
+              type='button'
+              key={tab.id}
+              aria-pressed={selectedTab === tab.id}
+              onClick={() => setSelectedTab(tab.id)}
+              className={cx(
+                'relative min-h-11 rounded-t-lg px-4 pt-2 pb-3 text-16 font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2',
+                selectedTab === tab.id
+                  ? 'text-accent-color-400 after:bg-accent-color-400 after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:rounded-full'
+                  : 'text-neutral-500 hover:bg-black/5 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white'
+              )}
+            >
+              {tab.name}
+            </button>
+          ))}
       </div>
     </div>
   )
 }
 
 const Collections = () => {
-  const { librarySelectedTab: selectedTab } = useSnapshot(persistedUiStates)
+  const { librarySelectedTab: storedTab } = useSnapshot(persistedUiStates)
+  const { displayPlaylistsFromNeteaseMusic } = useSnapshot(settings)
+  const selectedTab =
+    storedTab === 'playlists' && !displayPlaylistsFromNeteaseMusic ? 'albums' : storedTab
+  useEffect(() => {
+    if (storedTab !== selectedTab) persistedUiStates.librarySelectedTab = selectedTab
+  }, [storedTab, selectedTab])
   return (
     <motion.div>
-      <CollectionTabs className='sticky top-[100px] p-1 rounded-bl-lg rounded-br-lg z-10 w-full backdrop-blur-lg pb-5 pt-7'/>
-      <div className={cx('px-2.5 pt-10 lg:px-0')}>
+      <CollectionTabs className='mx-2.5 lg:mx-0' />
+      <div className={cx('px-2.5 pt-5 lg:px-0')}>
         {selectedTab === 'daily' && <Daily />}
         {selectedTab === 'albums' && <Albums />}
         {selectedTab === 'playlists' && <Playlists />}
         {selectedTab === 'artists' && <Artists />}
         {selectedTab === 'videos' && <Videos />}
-        {selectedTab === 'cloud' && <Cloud key={"cloud"}/>}
-        {selectedTab === 'recent' && <Recent key={"recent"}/>}
+        {selectedTab === 'cloud' && <Cloud key={'cloud'} />}
+        {selectedTab === 'recent' && <Recent key={'recent'} />}
       </div>
     </motion.div>
   )

@@ -121,7 +121,15 @@
   "my": {
     "xxxs-liked-tracks": "{{nickname}}喜欢的音乐",
     "playNow": "立即播放",
-    "recently-listened": "最近播放"
+    "recently-listened": "本周听过的艺人",
+    "loading": "正在加载音乐库",
+    "load-error": "无法加载音乐库，请重试。",
+    "empty": "暂无内容。",
+    "empty-liked": "你还没有喜欢的歌曲。",
+    "login-required": "登录以查看你的音乐库",
+    "explore": "发现",
+    "created-by-me": "我创建的歌单",
+    "saved-playlists": "收藏的歌单"
   },
   "settings": {
     "discord-rpc-enable": "在 Discord 上显示正在收听的歌曲",

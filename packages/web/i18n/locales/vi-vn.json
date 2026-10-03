@@ -121,7 +121,15 @@
   "my": {
     "xxxs-liked-tracks": "Bài hát yêu thích của {{nickname}}",
     "playNow": "Phát ngay",
-    "recently-listened": "NGHE GẦN ĐÂY"
+    "recently-listened": "Nghệ sĩ bạn nghe tuần này",
+    "loading": "Đang tải thư viện",
+    "load-error": "Không thể tải thư viện. Vui lòng thử lại.",
+    "empty": "Chưa có nội dung trong mục này.",
+    "empty-liked": "Bạn chưa thêm bài hát yêu thích.",
+    "login-required": "Đăng nhập để mở thư viện của bạn",
+    "explore": "Khám phá",
+    "created-by-me": "Playlist của tôi",
+    "saved-playlists": "Playlist đã lưu"
   },
   "settings": {
     "discord-rpc-enable": "Hiển thị bài đang nghe trên Discord",
