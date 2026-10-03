@@ -40,11 +40,21 @@ Recovery starts after acquiring Electron's single-instance lock. Clearing cache 
 and drains background jobs before clearing rows. App shutdown cancels jobs; restart
 recovery covers files left by forced termination.
 
+Recovery cleanup is best-effort per file: a Windows lock does not reject the startup
+barrier. Directory initialization/read failures reset that barrier so later jobs can
+retry. Cleanup errors are logged without remote URLs.
+
 AudioVariant adds an idempotent `hash` column; migrated legacy rows default to an empty
 hash. Inserts name columns so old upload writers and repeated startup remain compatible.
 Lossless/Hi-Res/effects retain distinct keys. Requested quality that cannot be established
 is rejected, not silently downgraded; Hi-Res also requires >48 kHz or >16-bit metadata.
 Playback reuses `resolveCacheAudioPath` and `streamCachedAudio`, including Range and HEAD.
+
+Playback first selects an exact NetEase-quality variant, then tries NetEase remotely.
+Only when NetEase fails does it reuse an existing non-NetEase `unknown` variant, before
+calling Unblock. It never labels that fallback as the requested NetEase quality.
+Desktop and standalone Unblock URL caches share a 120-second TTL and HTTP(S) validation;
+expired, future/invalid timestamps and malformed JSON produce a cache miss.
 
 ## Verification and rollout
 
@@ -55,6 +65,28 @@ cleanup, variant separation and cached Range/HEAD responses. Network-policy test
 private/mixed DNS rejection, pinned lookup, Bilibili headers and header/idle timeouts.
 Player tests prove playback/seek continue with a pending or rejected cache promise.
 The Windows release pipeline also runs a bundled streaming probe under packaged Electron.
+
+Live CDN verification is opt-in, separate from deterministic CI. Supply a local JSON
+manifest with six categories (`320k`, `lossless`, `hires`, `aac`, `effect`, `fallback`),
+each containing a fresh authorized `request: { id, url, level?, bitrate? }`, or an
+`unavailable` reason. Keep signed URLs/cookies outside version control. Run:
+
+```powershell
+node --import tsx packages/desktop/scripts/testLiveAudioCache.ts tmp/live-audio-cases.json
+```
+
+The probe uses the production downloader (no injected network fixture), disk metadata,
+SQLite and cached Range reads. Reports omit URLs and cookies. Missing categories,
+unavailable URLs or failed assertions make it exit nonzero; no downgraded variant is
+counted as a requested quality pass. This is backend integration, not renderer playback.
+
+On 2026-10-03, Kuwo `kw-bj.kuwo.cn` passed that transfer/cache/Range path with a 16,009-byte
+MP3 (44.1 kHz, measured 48 kbps, quality `unknown`). This small provider response does
+not establish full-song playback or a production hit rate. NetEase 320K, Lossless,
+Hi-Res, AAC and effect requests did not supply authorized full URLs at the requested
+quality, so those five real-CDN cases remain unverified. Before stable, rerun them with
+an authorized account and tracks known to support each format/mode, and verify playback
+and seeking in packaged Electron. Local fixtures and DNS mocks cannot replace this gate.
 
 Reproduce memory comparison with:
 
