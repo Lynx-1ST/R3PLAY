@@ -99,7 +99,7 @@ The separate [v2.9 proposal](audio-cache-v2.9.md) records the observed memory du
 stream-to-temp/hash/metadata/atomic-rename design, preservation of every quality field,
 range playback and nonblocking failure semantics.
 
-Dependency audits are **not clean**. The final pnpm audit reports zero critical,
+Dependency audits at the end of the first pass were **not clean**. That pnpm audit reported zero critical,
 56 high, 39 moderate and six low advisories across the workspace dependency graph.
 The separate runtime `npm audit` reports five high and zero critical entries
 (`@neteasecloudmusicapienhanced/api`, `basic-ftp`, `get-uri`, `node-forge`,
@@ -108,6 +108,10 @@ should not be added together. Triage runtime reachability and upstream patches
 before declaring the release security-clean. Broad dependency upgrades/overrides
 were left out because they could change proxy, media, metadata and packaged API
 compatibility. The old Vitest critical advisory was resolved in this pass.
+
+The subsequent [dependency security follow-up](dependency-security-followup.md)
+records patched networking dependencies, the newer Electron runtime, regression
+tests and updated audit results. Use that follow-up for the current dependency status.
 
 CI configuration and release guards were verified locally, but GitHub Actions,
 GitHub publishing, branch protection and authenticated updater delivery were not
