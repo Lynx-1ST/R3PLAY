@@ -2,15 +2,15 @@ name: Build-Release-Windows
 
 on:
   push:
-    branches:
-      - release
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
 
 concurrency:
-  group: windows-release
-  cancel-in-progress: true
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   windows:
@@ -22,6 +22,31 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: 'recursive'
+
+      - name: Resolve and validate release metadata
+        id: version
+        shell: pwsh
+        run: |
+          $package = Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json
+          $version = $package.version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Expected a stable package version, got '$version'."
+          }
+          $tag = "v$version"
+          if ($env:GITHUB_REF_NAME -ne $tag) {
+            throw "Release tag '$env:GITHUB_REF_NAME' does not match package version '$tag'."
+          }
+          $desktop = Get-Content -LiteralPath packages/desktop/package.json -Raw | ConvertFrom-Json
+          if ($desktop.version -ne $version) {
+            throw "Desktop version '$($desktop.version)' does not match root version '$version'."
+          }
+          $notes = "release-notes/$tag.md"
+          if (-not (Test-Path -LiteralPath $notes -PathType Leaf)) {
+            throw "Missing release notes: $notes"
+          }
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "name=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "notes=$notes" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -53,8 +78,11 @@ jobs:
       - name: Test audio cache, ranges and media CORS
         run: pnpm --filter desktop test:cache
 
-      - name: Test listening sessions and queue behavior
-        run: pnpm --filter web exec vitest run test/utils/listeningSession.test.ts test/utils/playerSession.test.ts test/utils/audioOutput.test.ts test/api
+      - name: Test web
+        run: pnpm --filter web exec vitest run
+
+      - name: Test desktop
+        run: pnpm --filter desktop exec vitest run
 
       - name: Build server
         run: pnpm --filter server build
@@ -95,15 +123,6 @@ jobs:
           node packages/desktop/scripts/testStartup.cjs $app
           if ($LASTEXITCODE -ne 0) { throw 'Packaged application startup failed.' }
 
-      - name: Resolve release tag
-        id: version
-        shell: pwsh
-        run: |
-          $version = node -p "require('./package.json').version"
-          "tag=v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          $releaseName = if ($version -eq '2.8.5') { "v$version — Hotfix: consistent playback volume" } else { "v$version" }
-          "name=$releaseName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-
       - name: Collect Windows artifacts
         shell: pwsh
         run: |
@@ -115,25 +134,12 @@ jobs:
           if (-not $installer) {
             throw "Windows installer was not produced."
           }
+          if (-not (Test-Path -LiteralPath release-assets/latest.yml -PathType Leaf)) {
+            throw "Windows updater metadata was not produced."
+          }
 
           Write-Host "--- Windows release assets ---"
           Get-ChildItem release-assets
-
-      - name: Publish Windows release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.name }}
-          target_commitish: release
-          draft: false
-          prerelease: false
-          body_path: release-notes/v2.8.9.md
-          fail_on_unmatched_files: true
-          files: |
-            release-assets/*-Setup.exe
-            release-assets/latest.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows Actions artifact
         uses: actions/upload-artifact@v4
@@ -142,3 +148,19 @@ jobs:
           path: release-assets/*
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish Windows release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.name }}
+          target_commitish: ${{ github.sha }}
+          draft: false
+          prerelease: false
+          body_path: ${{ steps.version.outputs.notes }}
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/*-Setup.exe
+            release-assets/latest.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
