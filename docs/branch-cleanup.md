@@ -2,7 +2,7 @@
 
 Fetched origin with pruning and inspected commit ancestry, full tree identity and
 the divergent branch's aggregate changes. Remote deletion and pushes require the
-user's confirmation; none have been performed by this review.
+user's confirmation. The approved deletion was subsequently completed as recorded below.
 
 | Branch | Behind origin/dev | Ahead | Decision |
 | --- | ---: | ---: | --- |
@@ -47,3 +47,15 @@ Ongoing workflow: use dev for development, short-lived branches for individual
 changes, release only when preparing a release, and matching version tags for the
 Windows publishing workflow. Remove feature branches after their content has been
 integrated, using ancestry or tree/patch comparisons rather than names alone.
+
+## Approved cleanup completed
+
+The user confirmed deletion on 2026-10-03. An atomic push deleted exactly the
+three reviewed branches, with explicit force-with-lease checks against their full
+reviewed commit IDs. GitHub accepted all three deletions. A subsequent fetch and
+`git ls-remote --heads origin` confirmed only dev and release remain remotely,
+unchanged at 52bc0ee and 2db3303 respectively.
+
+No local stability commits were pushed, and no tag or Release was created.
+The working-tree UI edits and untracked files remain untouched. Verified recovery
+backup: C:/Users/Lynx/Documents/ChatGPT/R3PLAY-branch-backups/R3PLAY-before-branch-cleanup-20261003-102318.bundle.
