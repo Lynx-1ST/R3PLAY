@@ -17,14 +17,16 @@ const match = loadRuntimePackage('@unblockneteasemusic/server')
 
 log.info('[electron] appServer/routes/r3play/audio.ts')
 
-const getAudioFromCache = async (id: number, level?: PlaybackQuality) => {
+const getAudioFromCache = async (id: number, level?: PlaybackQuality, fallback = false) => {
   // get from cache
   const variants = db.sqlite
     .prepare('SELECT * FROM AudioVariant WHERE trackId = ? ORDER BY queriedAt DESC')
     .all(id) as import('../../../utils/audioVariants').AudioVariant[]
   const cache = variants.find(
     row =>
-      (!level || row.level === level) &&
+      (fallback
+        ? row.source !== 'netease' && row.level === 'unknown'
+        : row.source === 'netease' && (!level || row.level === level)) &&
       fs.existsSync(`${app.getPath('userData')}/audio_cache/${row.fileName}`)
   )
   if (!cache) return
@@ -251,6 +253,10 @@ async function audio(fastify: FastifyInstance) {
       // console.log(fromNetease);
 
       const trackID = id
+      // Unknown fallback quality is never used to satisfy a NetEase quality request.
+      // Reuse it only after the live NetEase attempt fails, before querying providers.
+      const cachedFallback = await getAudioFromCache(id, undefined, true)
+      if (cachedFallback) return cachedFallback
       // 先查缓存
       const cacheData = await cache.get(CacheAPIs.Unblock, { id: trackID })
       if (cacheData) {
