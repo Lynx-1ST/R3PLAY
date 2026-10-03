@@ -238,6 +238,27 @@ describe('background streaming cache integration', () => {
     expect(rows()[0].level).toBe('lossless')
   })
 
+  it('preserves AAC ADTS format instead of labeling it as an MP4 container', async () => {
+    await jobs.cancelAll()
+    const { parseFile } = await import('music-metadata')
+    jobs = new AudioCacheJobs({
+      userData: directory,
+      repository,
+      download,
+      metadata: async file => {
+        const metadata = await parseFile(file)
+        return {
+          ...metadata,
+          format: { ...metadata.format, codec: 'AAC', container: 'ADTS/MPEG-4' },
+        }
+      },
+    })
+    jobs.submit({ id: 42, url: `${remote}/ok`, level: 'standard' })
+    await jobs.whenIdle()
+    expect(rows()[0].format).toBe('aac')
+    expect(rows()[0].fileName.endsWith('.aac')).toBe(true)
+  })
+
   it.each(['deadline', 'cancel', 'metadata', 'rename', 'database'])(
     'preserves the previous variant and removes new files after %s failure',
     async failure => {

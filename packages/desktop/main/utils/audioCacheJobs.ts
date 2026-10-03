@@ -163,19 +163,22 @@ export class AudioCacheJobs {
         this.dependencies.metadata ?? (file => parseFile(file, { skipCovers: true }))
       )(temporary)
       signal.throwIfAborted()
-      const format = (
-        {
-          'MPEG 1 Layer 3': 'mp3',
-          'MPEG 2 Layer 3': 'mp3',
-          'MPEG 2.5 Layer 3': 'mp3',
-          'Ogg Vorbis': 'ogg',
-          AAC: 'm4a',
-          FLAC: 'flac',
-          OPUS: 'opus',
-          Opus: 'opus',
-          PCM: 'wav',
-        } as Record<string, string>
-      )[metadata.format.codec ?? '']
+      const format =
+        metadata.format.codec === 'AAC' && metadata.format.container?.includes('ADTS')
+          ? 'aac'
+          : (
+              {
+                'MPEG 1 Layer 3': 'mp3',
+                'MPEG 2 Layer 3': 'mp3',
+                'MPEG 2.5 Layer 3': 'mp3',
+                'Ogg Vorbis': 'ogg',
+                AAC: 'm4a',
+                FLAC: 'flac',
+                OPUS: 'opus',
+                Opus: 'opus',
+                PCM: 'wav',
+              } as Record<string, string>
+            )[metadata.format.codec ?? '']
       const bitRate = Math.round(metadata.format.bitrate ?? job.request.bitrate ?? 0)
       if (
         !format ||
