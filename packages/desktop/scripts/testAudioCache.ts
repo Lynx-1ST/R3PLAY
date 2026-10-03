@@ -8,7 +8,7 @@ import Fastify from 'fastify'
 import { streamCachedAudio, parseAudioRange } from '../main/utils/audioRange'
 import { audioVariantsSchema, getCacheLevel } from '../main/utils/audioVariants'
 import { allowMediaCors } from '../main/utils/mediaCors'
-import { readUnblockCache } from '../main/utils/unblockCache'
+import { readUnblockCache } from '../../shared/unblockCache'
 import { resolveCacheAudioPath } from '../main/utils/cacheAudioPath'
 import { parseBuffer } from 'music-metadata'
 

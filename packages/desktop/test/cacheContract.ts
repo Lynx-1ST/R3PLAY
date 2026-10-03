@@ -19,6 +19,32 @@ export function testCacheContract(load: () => Promise<{ cache: Cache; db: DB }>)
     vi.resetAllMocks()
   })
 
+  it('expires Unblock URLs after 120 seconds and rejects malformed cached values', () => {
+    const now = Date.now()
+    const data = { id: 7, url: 'https://example.com/audio.mp3' }
+    for (const age of [0, 120000]) {
+      vi.mocked(db.find).mockReturnValue({
+        id: 7,
+        json: JSON.stringify(data),
+        updatedAt: now - age,
+      })
+      vi.spyOn(Date, 'now').mockReturnValue(now)
+      expect(cache.get(CacheAPIs.Unblock, { id: 7 })).toEqual(data)
+    }
+    for (const row of [
+      { json: JSON.stringify(data), updatedAt: now - 120001 },
+      { json: JSON.stringify(data), updatedAt: now + 1 },
+      { json: JSON.stringify(data), updatedAt: NaN },
+      { json: '{', updatedAt: now },
+      { json: '{"url":"file:///secret"}', updatedAt: now },
+      { json: '{"url":null}', updatedAt: now },
+    ]) {
+      vi.mocked(db.find).mockReturnValue({ id: 7, ...row })
+      expect(cache.get(CacheAPIs.Unblock, { id: 7 })).toBeUndefined()
+    }
+    vi.restoreAllMocks()
+  })
+
   describe('track cache IDs', () => {
     it.each(['abc', 'NaN', '-1', '0', '9007199254740992', '1.5', 'Infinity', '', '1,,2'])(
       'rejects invalid IDs: %s before querying the database',

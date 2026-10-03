@@ -8,6 +8,7 @@ import { CacheAPIs, CacheAPIsParams } from '../../../shared/CacheAPIs'
 import { FastifyReply } from 'fastify'
 import { dirname } from './utils'
 import path from 'path'
+import { readUnblockCache } from '../../../shared/unblockCache'
 
 log.info('[electron] cache.ts')
 
@@ -191,8 +192,7 @@ class Cache {
         const id = parsePositiveSafeInteger(params?.id)
         if (id === undefined) return
         const data = db.find(Tables.Unblock, id)
-        if (data?.json) return JSON.parse(data.json)
-        break
+        return readUnblockCache(data)
       }
       case CacheAPIs.Album: {
         const id = parsePositiveSafeInteger(params?.id)

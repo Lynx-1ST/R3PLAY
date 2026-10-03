@@ -12,7 +12,7 @@ import { streamCachedAudio } from './utils/audioRange'
 import { getCacheLevel } from './utils/audioVariants'
 import { createHash, randomUUID } from 'node:crypto'
 import { resolveCacheAudioPath } from './utils/cacheAudioPath'
-import { readUnblockCache } from './utils/unblockCache'
+import { readUnblockCache } from '../../shared/unblockCache'
 
 log.info('[electron] cache.ts')
 
