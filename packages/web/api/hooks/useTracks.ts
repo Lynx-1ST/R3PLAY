@@ -14,18 +14,10 @@ import { CacheAPIs } from '@/shared/CacheAPIs'
 import { useQuery } from '@tanstack/react-query'
 import settings from '@/web/states/settings'
 
-export async function fetchLongTracks(params:FetchTracksParams) {
-  const len = Math.ceil(params.ids.length / 500)
-  const promiseArr = []
-  let offset = 0
-  const totalIds = params.ids
-  for (let i = 0; i < len; i++) {
-    const req = new Promise<FetchTracksResponse>((resolve, reject) => {
-      params.ids = totalIds.slice(offset, offset + 500)
-      resolve(fetchTracks(params))
-    })
-    promiseArr.push(req)
-    offset += 500
+export async function fetchLongTracks(params: FetchTracksParams) {
+  const promiseArr: Promise<FetchTracksResponse>[] = []
+  for (let offset = 0; offset < params.ids.length; offset += 500) {
+    promiseArr.push(fetchTracks({ ...params, ids: params.ids.slice(offset, offset + 500) }))
   }
 
   const results = await Promise.all(promiseArr)
