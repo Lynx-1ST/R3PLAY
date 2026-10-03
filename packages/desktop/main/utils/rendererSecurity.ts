@@ -16,7 +16,7 @@ export function isAllowedExternalUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
     return (
-      ['https:', 'http:'].includes(parsed.protocol) &&
+      parsed.protocol === 'https:' &&
       ['github.com', 'www.github.com'].includes(parsed.hostname) &&
       !parsed.username &&
       !parsed.password

@@ -28,6 +28,8 @@ describe('navigation', () => {
     }
   )
   it.each([
+    'http://github.com/Lynx-1ST/R3PLAY',
+    'http://www.github.com/',
     'https://github.com.evil.example',
     'https://evil-github.com',
     'https://evil.example/github.com',
