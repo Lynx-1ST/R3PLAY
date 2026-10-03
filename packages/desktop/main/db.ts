@@ -119,6 +119,11 @@ class DB {
     const init = readSqlFile('init.sql')
     this.sqlite.exec(init)
     this.sqlite.exec(audioVariantsSchema)
+    const variantColumns = this.sqlite.prepare('PRAGMA table_info(AudioVariant)').all() as {
+      name: string
+    }[]
+    if (!variantColumns.some(column => column.name === 'hash'))
+      this.sqlite.exec("ALTER TABLE AudioVariant ADD COLUMN hash TEXT NOT NULL DEFAULT ''")
     this.sqlite.pragma('journal_mode=WAL')
     log.info('[db] Database tables initialized.')
   }
@@ -230,7 +235,10 @@ class DB {
     const valuesQuery = Object.keys(data)
       .map(key => `:${key}`)
       .join(', ')
-    return this.sqlite.prepare(`INSERT OR REPLACE INTO ${table} VALUES (${valuesQuery})`).run(data)
+    const columns = Object.keys(data).join(', ')
+    return this.sqlite
+      .prepare(`INSERT OR REPLACE INTO ${table} (${columns}) VALUES (${valuesQuery})`)
+      .run(data)
   }
 
   upsertMany<T extends TableNames>(table: T, data: TablesStructures[T][]) {

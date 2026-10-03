@@ -14,12 +14,21 @@ const mocks = vi.hoisted(() => ({
   folderSize: vi.fn(),
   update: vi.fn(),
   setEnabled: vi.fn(),
+  submitAudio: vi.fn(() => ({ status: 'queued' })),
 }))
 vi.mock('electron', () => ({
   ipcMain: { on: mocks.on, handle: mocks.handle },
   app: { once: vi.fn(), exit: mocks.exit, getPath: () => '.' },
 }))
 vi.mock('../main/cache', () => ({ default: { get: mocks.get, set: mocks.set } }))
+vi.mock('../main/audioCache', () => ({
+  audioCacheJobs: {
+    submit: mocks.submitAudio,
+    initialize: vi.fn(async () => {}),
+    cancelAll: vi.fn(async () => {}),
+    resume: vi.fn(),
+  },
+}))
 vi.mock('../main/log', () => ({ default: { info: vi.fn() } }))
 vi.mock('../main/db', () => ({
   db: { truncate: mocks.truncate, vacuum: mocks.vacuum },
@@ -104,6 +113,7 @@ it.each(['other window', 'subframe', 'missing frame'])(
       mocks.folderSize,
       mocks.update,
       mocks.setEnabled,
+      mocks.submitAudio,
       win.minimize,
       win.maximize,
       win.show,
@@ -128,6 +138,9 @@ it('keeps trusted window controls, cache writes, tray/taskbar, settings and invo
     return Promise.all(matches.map(([, listener]) => listener(event, params)))
   }
   await send(IpcChannels.ResetWindowSize)
+  const request = { id: 42, url: 'https://music.126.net/large.flac', level: 'hires' }
+  expect(await send(IpcChannels.CacheAudio, request)).toEqual([{ status: 'queued' }])
+  expect(mocks.submitAudio).toHaveBeenCalledWith(request)
   expect(win.setSize).toHaveBeenCalledWith(1440, 1024, true)
   await send(IpcChannels.CacheCoverColor, { id: 1, color: '#fff' })
   expect(mocks.set).toHaveBeenCalled()

@@ -2,8 +2,10 @@ import { AppleMusicAlbum, AppleMusicArtist } from './AppleMusic'
 import { CacheAPIs } from './CacheAPIs'
 import { RepeatMode } from './playerDataTypes'
 import type { DiscordPlayback } from './discordPresence'
+import type { AudioCacheRequest, AudioCacheReceipt } from './audioCache'
 
 export const enum IpcChannels {
+  CacheAudio = 'CacheAudio',
   RendererLog = 'RendererLog',
   DiscordPlayback = 'DiscordPlayback',
   ClearAPICache = 'ClearAPICache',
@@ -50,6 +52,7 @@ export const enum IpcChannels {
 
 // ipcMain.on params
 export interface IpcChannelsParams {
+  [IpcChannels.CacheAudio]: AudioCacheRequest
   [IpcChannels.RendererLog]: {
     level: 'error' | 'warn' | 'info' | 'debug' | 'verbose' | 'silly' | 'log'
     args: unknown[]
@@ -127,6 +130,7 @@ export interface IpcChannelsParams {
 
 // ipcRenderer.on params
 export interface IpcChannelsReturns {
+  [IpcChannels.CacheAudio]: AudioCacheReceipt
   [IpcChannels.ClearAPICache]: void
   [IpcChannels.Minimize]: void
   [IpcChannels.LyricsWindowMinimize]: void

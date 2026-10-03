@@ -31,6 +31,27 @@ afterAll(() => {
   db.sqlite.close()
 })
 
+it('adds the hash column idempotently and keeps legacy variant writes working', () => {
+  const table = 'AudioVariant' as import('../main/db').Tables.AudioVariant
+  const row = {
+    id: 'legacy-test',
+    trackId: 42,
+    level: 'unknown' as const,
+    fileName: '42-320000.mp3',
+    bitRate: 320000,
+    format: 'mp3',
+    source: 'netease',
+    sampleRate: null,
+    bitDepth: null,
+    queriedAt: 0,
+  }
+  db.upsert(table, row)
+  expect(db.find(table, row.id)?.hash).toBe('')
+  db.upsert(table, { ...row, hash: 'a'.repeat(64) })
+  db.initTables()
+  expect(db.find(table, row.id)?.hash).toBe('a'.repeat(64))
+})
+
 it('binds IDs as values, handles empty lists, and supports large playlists', () => {
   const tracks = Array.from({ length: 1201 }, (_, i) => ({ id: i + 1, json: '{}', updatedAt: 0 }))
   db.upsertMany(Tables.Track, tracks)

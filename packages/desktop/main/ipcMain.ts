@@ -18,6 +18,7 @@ import { createMenu } from './menu'
 import { createDockMenu } from './dockMenu'
 import { DiscordPresence } from './discordRpc'
 import { trustedListener } from './utils/trustedIpc'
+import { audioCacheJobs } from './audioCache'
 
 const discordPresence = new DiscordPresence()
 
@@ -185,19 +186,26 @@ function initStoreIpcMain(
  */
 function initOtherIpcMain(win: BrowserWindow | null) {
   const { on, handle } = trustedIpc(win)
+  void audioCacheJobs.initialize().catch(error => log.warn('[audio cache] Recovery failed', error))
+  handle(IpcChannels.CacheAudio, (_event, request) => audioCacheJobs.submit(request))
   /**
    * 清除API缓存
    */
-  on(IpcChannels.ClearAPICache, () => {
-    db.truncate(Tables.Track)
-    db.truncate(Tables.Album)
-    db.truncate(Tables.Artist)
-    db.truncate(Tables.Playlist)
-    db.truncate(Tables.ArtistAlbum)
-    db.truncate(Tables.AccountData)
-    db.truncate(Tables.Audio)
-    db.truncate(Tables.AudioVariant)
-    db.vacuum()
+  on(IpcChannels.ClearAPICache, async () => {
+    await audioCacheJobs.cancelAll()
+    try {
+      db.truncate(Tables.Track)
+      db.truncate(Tables.Album)
+      db.truncate(Tables.Artist)
+      db.truncate(Tables.Playlist)
+      db.truncate(Tables.ArtistAlbum)
+      db.truncate(Tables.AccountData)
+      db.truncate(Tables.Audio)
+      db.truncate(Tables.AudioVariant)
+      db.vacuum()
+    } finally {
+      audioCacheJobs.resume()
+    }
   })
 
   handle(IpcChannels.CheckUpdate, e => {

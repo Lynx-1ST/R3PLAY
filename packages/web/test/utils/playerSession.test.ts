@@ -97,6 +97,7 @@ vi.mock('@/web/utils/isLyricsWindow', () => ({ isLyricsWindow: false }))
 vi.mock('@/web/i18n/i18n', () => ({ default: { t: (key: string) => key } }))
 vi.mock('react-hot-toast', () => ({ default: Object.assign(vi.fn(), { error: vi.fn() }) }))
 import { Player, State } from '../../utils/player'
+import { cacheAudio } from '../../api/r3play'
 const track = { id: 2, name: 'Saved song', dt: 200000, ar: [], al: { picUrl: '' } }
 const session = {
   _track: track,
@@ -124,10 +125,34 @@ beforeEach(() => {
   mocks.settings.restoreListeningSession = true
 })
 afterEach(() => {
+  delete (window as Partial<Window>).ipcRenderer
+  vi.mocked(cacheAudio).mockReset()
   vi.clearAllTimers()
   vi.useRealTimers()
 })
 describe('player session restoration', () => {
+  it.each(['pending', 'failed'])(
+    'playback and seeking remain usable while background cache is %s',
+    async failure => {
+      window.ipcRenderer = {} as Window['ipcRenderer']
+      vi.mocked(cacheAudio).mockImplementation(() =>
+        failure === 'pending' ? new Promise(() => {}) : Promise.reject(new Error('Cache failed'))
+      )
+      const player = new Player()
+      player.init(session)
+      await settle()
+      const howl = mocks.instances.at(-1)
+      player.play()
+      howl.load()
+      await settle()
+      expect(cacheAudio).toHaveBeenCalledWith(2, 'https://example.test/song.mp3?dash-id=2', 128000, undefined)
+      expect(howl.active).toBe(true)
+      expect(howl.position).toBe(85)
+      player.progress = 100
+      expect(howl.position).toBe(100)
+      expect(player.state).toBe(State.Playing)
+    }
+  )
   it.each([false, true])(
     'turns effects off on the current song and preserves playback=%s',
     async playing => {

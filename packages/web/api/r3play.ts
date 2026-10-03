@@ -1,28 +1,11 @@
-import axios, { AxiosInstance } from 'axios'
-import { appName } from '../utils/const'
-
-const request: AxiosInstance = axios.create({
-  baseURL: `/${appName.toLowerCase()}`,
-  withCredentials: true,
-  timeout: 15000,
-})
+import { IpcChannels } from '@/shared/IpcChannels'
+import type { AudioCacheRequest } from '@/shared/audioCache'
 
 export async function cacheAudio(id: number, audioUrl: string, bitrate?: number, level?: string) {
-  const file = await axios.get(audioUrl, { responseType: 'arraybuffer' })
-  if (file.status !== 200 && file.status !== 206) return
-
-  const formData = new FormData()
-  const blob = new Blob([file.data], { type: 'multipart/form-data' })
-  formData.append('file', blob)
-
-  return request.post(`/audio/${id}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    params: {
-      url: audioUrl,
-      bitrate,
-      level,
-    },
+  return window.ipcRenderer?.invoke(IpcChannels.CacheAudio, {
+    id,
+    url: audioUrl,
+    bitrate,
+    level: level as AudioCacheRequest['level'],
   })
 }

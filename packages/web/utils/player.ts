@@ -514,7 +514,7 @@ export class Player {
       this.state = State.Playing
     }
     howler.once('load', () => {
-      if (_howler === howler) this._cacheAudio((howler as any)._src, cachedInfo)
+      if (_howler === howler) void this._cacheAudio((howler as any)._src, { ...cachedInfo, id })
     })
 
     if (!this._progressInterval) {
@@ -531,9 +531,12 @@ export class Player {
     }
   }
 
-  private async _cacheAudio(audio: string, info: { bitrate?: number; level?: string | null }) {
+  private async _cacheAudio(
+    audio: string,
+    info: { id: TrackID; bitrate?: number; level?: string | null }
+  ) {
     if (audio.includes(appName.toLowerCase()) || !window.ipcRenderer) return
-    const id = Number(new URL(audio).searchParams.get('dash-id'))
+    const id = Number(info.id)
     if (isNaN(id) || !id) return
     try {
       await cacheAudio(id, audio, info.bitrate, info.level ?? undefined)
