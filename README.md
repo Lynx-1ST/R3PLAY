@@ -18,7 +18,7 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 
 ## Version and release channels
 
-The source package version is **2.9.2**. Stable Windows releases use tags such as `v2.9.1`; development previews use `v2.9.2-dev.N` and are prereleases. The version badge describes the source tree; use [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) to check published installers and their release notes.
+The source package version is **2.9.2**. Stable Windows releases use tags such as `v2.9.2`; development previews use `v2.9.2-dev.N` and are prereleases. The version badge describes the source tree; use [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) to check published installers and their release notes.
 
 ## Features
 
