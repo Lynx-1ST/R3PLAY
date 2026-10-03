@@ -71,7 +71,7 @@ const RecentlyListened = () => {
                 }
               />
             ) : (
-              <div className='flex flex-wrap gap-3'>
+              <div className='flex flex-wrap gap-x-4 gap-y-6 sm:gap-x-6'>
                 {artists
                   ? artists.map(artist => (
                       <button
@@ -79,20 +79,26 @@ const RecentlyListened = () => {
                         key={artist.id}
                         title={artist.name}
                         onClick={() => navigate(`/artist/${artist.id}`)}
-                        className='flex w-full min-w-0 items-center gap-3 rounded-2xl bg-black/5 p-3 text-left transition hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 sm:w-48 dark:bg-white/5 dark:hover:bg-white/10'
+                        className='group flex w-24 min-w-0 flex-col items-center gap-3 rounded-2xl text-center focus-visible:outline-2 focus-visible:outline-offset-4 sm:w-28'
                       >
                         <Image
                           src={resizeImage(artist.img1v1Url || artist.picUrl || '', 'sm')}
-                          className='h-14 w-14 shrink-0 rounded-full'
+                          className='h-24 w-24 shrink-0 rounded-full transition-opacity group-hover:opacity-80 sm:h-28 sm:w-28'
                         />
-                        <span className='min-w-0 truncate text-14 font-medium'>{artist.name}</span>
+                        <span className='line-clamp-2 w-full text-14 leading-snug font-medium break-words'>
+                          {artist.name}
+                        </span>
                       </button>
                     ))
                   : [0, 1, 2].map(id => (
                       <div
                         key={id}
-                        className='h-20 w-48 animate-pulse rounded-2xl bg-black/5 dark:bg-white/5'
-                      />
+                        aria-hidden='true'
+                        className='flex w-24 animate-pulse flex-col items-center gap-3 motion-reduce:animate-none sm:w-28'
+                      >
+                        <div className='h-24 w-24 rounded-full bg-black/5 sm:h-28 sm:w-28 dark:bg-white/5' />
+                        <div className='h-4 w-20 rounded bg-black/5 dark:bg-white/5' />
+                      </div>
                     ))}
               </div>
             )}

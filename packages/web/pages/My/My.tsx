@@ -52,8 +52,8 @@ const My = () => {
       <LayoutGroup>
         <div data-my-music className='grid min-w-0 grid-cols-1 gap-6 sm:gap-8'>
           <PlayLikedSongsCard />
-          <RecentlyListened />
           <Collections />
+          <RecentlyListened />
         </div>
       </LayoutGroup>
     </PageTransition>
