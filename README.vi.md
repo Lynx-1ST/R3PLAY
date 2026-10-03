@@ -7,7 +7,7 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 [English](README.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-CN.md)
 
 [![Build](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build-dev.yml)
-![Version](https://img.shields.io/badge/version-2.8.9-2ea44f)
+![Version](https://img.shields.io/badge/version-2.9.0-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
