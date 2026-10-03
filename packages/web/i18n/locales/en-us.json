@@ -33,6 +33,7 @@
     "goForward": "Go forward"
   },
   "auth": {
+    "close-login": "Close sign in",
     "login": "Login",
     "logout": "Logout",
     "use-phone-or-email": "Use NetEase Music Phone or Email To Login",
@@ -119,6 +120,14 @@
     "quick-all-results": "View all results · Enter"
   },
   "my": {
+    "title": "My Music",
+    "welcome": "Welcome, {{nickname}}. Your favorite music, all in one place.",
+    "favorites": "Liked songs",
+    "view-all": "View all",
+    "open-favorites": "Open liked songs playlist",
+    "collections": "Your collection",
+    "empty-help": "Discover new music and save your favorites to build your library.",
+    "login-description": "Save your favorite songs and access your playlists, albums and artists.",
     "xxxs-liked-tracks": "{{nickname}}'s Liked Tracks",
     "playNow": "Play Now",
     "recently-listened": "Artists you listened to this week",

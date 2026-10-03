@@ -33,6 +33,7 @@
     "goForward": "Đi tới"
   },
   "auth": {
+    "close-login": "Đóng đăng nhập",
     "login": "Đăng nhập",
     "logout": "Đăng xuất",
     "use-phone-or-email": "Đăng nhập NetEase Music bằng số điện thoại hoặc email",
@@ -119,6 +120,14 @@
     "quick-all-results": "Xem tất cả kết quả · Enter"
   },
   "my": {
+    "title": "Nhạc của tôi",
+    "welcome": "Chào {{nickname}}. Những giai điệu bạn yêu thích, ở một nơi.",
+    "favorites": "Bài hát yêu thích",
+    "view-all": "Xem tất cả",
+    "open-favorites": "Mở playlist bài hát yêu thích",
+    "collections": "Bộ sưu tập",
+    "empty-help": "Khám phá nhạc mới và lưu những gì bạn thích để xây dựng thư viện của mình.",
+    "login-description": "Lưu bài hát yêu thích và truy cập playlist, album cùng nghệ sĩ của bạn.",
     "xxxs-liked-tracks": "Bài hát yêu thích của {{nickname}}",
     "playNow": "Phát ngay",
     "recently-listened": "Nghệ sĩ bạn nghe tuần này",

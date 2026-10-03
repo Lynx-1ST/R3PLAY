@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSnapshot } from 'valtio'
 import uiStates from '@/web/states/uiStates'
 import { AnimatePresence, motion, useAnimation } from 'framer-motion'
@@ -8,7 +8,6 @@ import Icon from '@/web/components/Icon'
 import LoginWithPhoneOrEmail from './LoginWithPhoneOrEmail'
 import LoginWithQRCode from './LoginWithQRCode'
 import persistedUiStates from '@/web/states/persistedUiStates'
-import useUser, { useIsLoggedIn } from '@/web/api/hooks/useUser'
 import { useTranslation } from 'react-i18next'
 
 const OR = ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => {
@@ -37,20 +36,56 @@ const OR = ({ children, onClick }: { children: React.ReactNode; onClick: () => v
 const Login = () => {
   const { t } = useTranslation()
 
-  const { data: user, isLoading: isLoadingUser } = useUser()
-  const isLoggedIn = useIsLoggedIn()
   const { loginType } = useSnapshot(persistedUiStates)
   const { showLoginPanel } = useSnapshot(uiStates)
   const [cardType, setCardType] = useState<'qrCode' | 'phone/email'>(
     loginType === 'qrCode' ? 'qrCode' : 'phone/email'
   )
 
-  // Show login panel when user first loads the page and not logged in
+  const panelRef = useRef<HTMLDivElement>(null)
+  // The guest library remains usable until the user chooses to sign in.
   useEffect(() => {
-    if (!isLoggedIn) {
-      uiStates.showLoginPanel = true
+    if (!showLoginPanel) return
+    const previous = document.activeElement as HTMLElement | null
+    const focusable = () =>
+      Array.from(
+        panelRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), a[href], [tabindex="0"]'
+        ) ?? []
+      ).filter(element => element.getClientRects().length > 0)
+    const frame = requestAnimationFrame(() => focusable()[0]?.focus())
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.isComposing) return
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        uiStates.showLoginPanel = false
+      } else if (event.key === 'Tab') {
+        const controls = focusable(),
+          first = controls[0],
+          last = controls.at(-1)
+        if (!first || !last) return
+        if (
+          event.shiftKey &&
+          (document.activeElement === first || !panelRef.current?.contains(document.activeElement))
+        ) {
+          event.preventDefault()
+          last.focus()
+        } else if (
+          !event.shiftKey &&
+          (document.activeElement === last || !panelRef.current?.contains(document.activeElement))
+        ) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
     }
-  }, [isLoggedIn])
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      cancelAnimationFrame(frame)
+      document.removeEventListener('keydown', onKeyDown)
+      if (previous?.isConnected) previous.focus()
+    }
+  }, [showLoginPanel])
 
   const animateCard = useAnimation()
   const handleSwitchCard = async () => {
@@ -89,9 +124,15 @@ const Login = () => {
       {/* Content */}
       <AnimatePresence>
         {showLoginPanel && (
-          <div className='fixed inset-0 z-30 flex items-center justify-center pt-24 backdrop-blur-xl'>
+          <div
+            ref={panelRef}
+            role='dialog'
+            aria-modal='true'
+            aria-label={t('auth.login')}
+            className='fixed inset-0 z-30 flex items-center justify-center overflow-y-auto p-4 backdrop-blur-xl'
+          >
             <motion.div
-              className='flex flex-col items-center'
+              className='flex max-h-full flex-col items-center overflow-y-auto py-4'
               variants={{
                 show: {
                   opacity: 1,
@@ -122,7 +163,7 @@ const Login = () => {
                   className={cx(
                     'relative h-fit rounded-48 bg-white/10 p-9',
                     css`
-                      width: 392px;
+                      width: min(392px, calc(100vw - 32px));
                     `
                   )}
                 >
@@ -137,14 +178,16 @@ const Login = () => {
 
               {/* Close button */}
               <AnimatePresence>
-                <motion.div
+                <motion.button
                   layout='position'
+                  type='button'
+                  aria-label={t('auth.close-login')}
                   transition={{ ease }}
                   onClick={() => (uiStates.showLoginPanel = false)}
-                  className='mt-10 flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white/50 transition-colors duration-300 hover:bg-white/20 hover:text-white/70'
+                  className='mt-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors duration-300 hover:bg-white/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4'
                 >
                   <Icon name='x' className='h-6 w-6' />
-                </motion.div>
+                </motion.button>
               </AnimatePresence>
             </motion.div>
           </div>

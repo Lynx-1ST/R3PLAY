@@ -24,7 +24,7 @@ const PlayLikedSongsCard = () => {
   const playlist = data?.playlist
   const tracks = playlist?.tracks?.slice(0, 3) ?? []
   const count = playlist?.trackCount ?? likedPlaylist?.trackCount
-  const title = t('my.xxxs-liked-tracks', { nickname: user?.profile?.nickname ?? '' })
+  const title = t('my.favorites')
   if (!playlist)
     return (
       <section className='mx-2.5 rounded-24 bg-black/5 p-6 lg:mx-0 dark:bg-white/5'>
@@ -48,13 +48,19 @@ const PlayLikedSongsCard = () => {
     >
       <div className='flex flex-col gap-6 p-6 @xl:flex-row @xl:items-center @xl:justify-between @xl:p-8'>
         <div className='min-w-0 flex-1'>
-          <p className='text-accent-color-400 mb-3 text-14 font-medium'>
-            {t('common.playlist_other')}
-          </p>
-          <h2 className='text-2xl leading-snug font-semibold tracking-tight'>{title}</h2>
-          <p className='mt-2 text-14 text-neutral-500 dark:text-neutral-400' aria-live='polite'>
-            {count !== undefined ? `${count.toLocaleString()} ${t('common.track_other')}` : ' '}
-          </p>
+          <div className='flex min-w-0 items-center gap-4'>
+            <div className='text-accent-color-400 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-black/5 dark:bg-white/5'>
+              <Icon name='heart' className='h-7 w-7' />
+            </div>
+            <div className='min-w-0'>
+              <h2 className='text-20 leading-snug font-semibold tracking-tight sm:text-24'>
+                {title}
+              </h2>
+              <p className='mt-2 text-14 text-neutral-600 dark:text-neutral-300' aria-live='polite'>
+                {count !== undefined ? `${count.toLocaleString()} ${t('common.track_other')}` : ' '}
+              </p>
+            </div>
+          </div>
           {count === 0 && (
             <p className='mt-2 text-14 text-neutral-500 dark:text-neutral-400'>
               {t('my.empty-liked')}
@@ -73,10 +79,10 @@ const PlayLikedSongsCard = () => {
               type='button'
               disabled={!id}
               onClick={() => navigate(`/playlist/${id}`)}
-              aria-label={title}
-              title={title}
-              className='flex h-11 w-11 items-center justify-center rounded-full border border-black/10 transition hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-40 dark:border-white/15 dark:hover:bg-white/10'
+              aria-label={t('my.open-favorites')}
+              className='flex min-h-11 items-center justify-center gap-2 rounded-full border border-black/10 px-4 text-14 font-medium transition hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-40 dark:border-white/15 dark:hover:bg-white/10'
             >
+              {t('my.view-all')}
               <Icon name='forward' className='h-5 w-5' />
             </button>
           </div>
@@ -91,7 +97,7 @@ const PlayLikedSongsCard = () => {
                 onClick={() => navigate(`/album/${track.al?.id}`)}
                 aria-label={track.al?.name || track.name}
                 title={track.name}
-                className='min-w-0 rounded-2xl transition hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4'
+                className='min-h-11 min-w-11 rounded-2xl transition hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4'
               >
                 <Image
                   src={resizeImage(track.al?.picUrl || '', 'md')}

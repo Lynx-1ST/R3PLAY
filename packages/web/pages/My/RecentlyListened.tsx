@@ -77,8 +77,9 @@ const RecentlyListened = () => {
                       <button
                         type='button'
                         key={artist.id}
+                        title={artist.name}
                         onClick={() => navigate(`/artist/${artist.id}`)}
-                        className='flex w-48 min-w-0 items-center gap-3 rounded-2xl bg-black/5 p-3 text-left transition hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-white/5 dark:hover:bg-white/10'
+                        className='flex w-full min-w-0 items-center gap-3 rounded-2xl bg-black/5 p-3 text-left transition hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 sm:w-48 dark:bg-white/5 dark:hover:bg-white/10'
                       >
                         <Image
                           src={resizeImage(artist.img1v1Url || artist.picUrl || '', 'sm')}

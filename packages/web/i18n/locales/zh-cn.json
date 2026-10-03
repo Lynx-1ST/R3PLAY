@@ -33,6 +33,7 @@
     "goForward": "前进"
   },
   "auth": {
+    "close-login": "关闭登录",
     "login": "登录",
     "logout": "退出登录",
     "scan-qr-code": "请使用网易云音乐扫码登录",
@@ -119,6 +120,14 @@
     "quick-all-results": "查看全部结果 · Enter"
   },
   "my": {
+    "title": "我的音乐",
+    "welcome": "你好，{{nickname}}。在这里找到你喜爱的音乐。",
+    "favorites": "我喜欢的音乐",
+    "view-all": "查看全部",
+    "open-favorites": "打开我喜欢的音乐歌单",
+    "collections": "我的收藏",
+    "empty-help": "发现新音乐，收藏喜欢的内容，丰富你的音乐库。",
+    "login-description": "登录后收藏喜欢的歌曲，访问你的歌单、专辑和艺人。",
     "xxxs-liked-tracks": "{{nickname}}喜欢的音乐",
     "playNow": "立即播放",
     "recently-listened": "本周听过的艺人",
