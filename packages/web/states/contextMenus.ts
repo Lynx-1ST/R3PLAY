@@ -36,6 +36,11 @@ export const openContextMenu = ({
   dataSourceID: ContextMenu['dataSourceID']
   options?: ContextMenu['options']
 }) => {
+  // Do not let the opening right-click reach document click-away listeners.
+  if (event.type === 'contextmenu') {
+    event.preventDefault()
+    event.stopPropagation()
+  }
   if (event.currentTarget === contextMenus.target) {
     closeContextMenu()
     return
