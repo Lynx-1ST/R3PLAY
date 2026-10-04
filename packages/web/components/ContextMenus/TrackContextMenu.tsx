@@ -28,7 +28,7 @@ const Playlist = ({ playlist, datasourceID }: { playlist: Playlist; datasourceID
   return (
     <div
       className={cx(
-        'justify-space-between group flex w-full items-center rounded-24 ',
+        'justify-space-between group flex w-full items-center rounded-24',
         'text-black hover:bg-black/10 hover:text-black/90 dark:text-white hover:dark:bg-white/10 hover:dark:text-white/90'
       )}
       onClick={() => {
@@ -46,7 +46,7 @@ const Playlist = ({ playlist, datasourceID }: { playlist: Playlist; datasourceID
         className='aspect-square h-10 w-10 rounded-24'
       />
       {/* Name */}
-      <div className='bottom-0 p-3 text-sm font-medium  transition-all duration-400'>
+      <div className='bottom-0 p-3 text-sm font-medium transition-all duration-400'>
         {playlist.name}
       </div>
     </div>
@@ -63,6 +63,7 @@ const TrackContextMenu = () => {
   const { type, dataSourceID, target, cursorPosition, options } = useSnapshot(contextMenus)
   const { showDownloadActions } = useSnapshot(settings)
   const likeATrack = useMutationLikeATrack()
+  const { data: likedTracks } = useUserLikedTracksIDs()
   const loggedIn = useIsLoggedIn()
   const { data: playlists } = useUserPlaylists()
   const myPlaylists = useMemo(
@@ -99,7 +100,7 @@ const TrackContextMenu = () => {
               label: t`context-menu.delete-from-queue`,
               onClick: () => {
                 player.deleteFromPlaylist(Number(dataSourceID))
-              }
+              },
             },
             {
               type: 'divider',
@@ -131,16 +132,16 @@ const TrackContextMenu = () => {
             },
             {
               type: 'item',
-              label: t`context-menu.add-to-liked-tracks`,
+              label: likedTracks?.ids.includes(Number(dataSourceID))
+                ? t`context-menu.remove-from-liked-tracks`
+                : t`context-menu.add-to-liked-tracks`,
               onClick: () => {
                 if (!loggedIn) {
                   toast.error('Plz login first')
                   uiStates.showLoginPanel = true
                   return
                 }
-                likeATrack.mutateAsync(Number(dataSourceID)).then(() => {
-                  toast.success('Like Success')
-                })
+                likeATrack.mutate(Number(dataSourceID))
               },
             },
             {

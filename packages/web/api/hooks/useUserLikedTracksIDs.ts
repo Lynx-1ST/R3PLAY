@@ -8,10 +8,11 @@ import { FetchUserLikedTracksIDsResponse, UserApiNames } from '@/shared/api/User
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import reactQueryClient from '@/web/utils/reactQueryClient'
+import { PlaylistApiNames } from '@/shared/api/Playlists'
 
 export default function useUserLikedTracksIDs() {
   const { data: user } = useUser()
-  const uid = user?.account?.id ?? 0
+  const uid = user?.profile?.userId ?? user?.account?.id ?? 0
   const key = [UserApiNames.FetchUserLikedTracksIds, uid]
 
   return useQuery({
@@ -40,49 +41,42 @@ export default function useUserLikedTracksIDs() {
 
 export const useMutationLikeATrack = () => {
   const { data: user } = useUser()
-  const { data: userLikedSongs } = useUserLikedTracksIDs()
-  const uid = user?.account?.id ?? 0
+  const queryClient = useQueryClient()
+  const uid = user?.profile?.userId ?? user?.account?.id ?? 0
   const key = [UserApiNames.FetchUserLikedTracksIds, uid]
 
   return useMutation({
+    scope: { id: `liked-tracks-${uid}` },
     mutationFn: async (trackID: number) => {
-      if (!trackID || userLikedSongs?.ids === undefined) {
-        throw new Error('trackID is required or userLikedSongs is undefined')
-      }
+      if (!uid || !Number.isSafeInteger(trackID) || trackID <= 0)
+        throw new Error('Login and a valid track ID are required')
+      await queryClient.cancelQueries({ queryKey: key })
+      const userLikedSongs = await queryClient.ensureQueryData({
+        queryKey: key,
+        queryFn: () => fetchUserLikedTracksIDs({ uid }),
+      })
+      const like = !userLikedSongs.ids.includes(trackID)
       const response = await likeATrack({
         id: trackID,
-        like: !userLikedSongs.ids.includes(trackID),
+        like,
       })
-      if (response.code !== 200) throw new Error((response as any).msg)
+      if (response.code !== 200) throw new Error('Unable to update favorite track')
+      queryClient.setQueryData<FetchUserLikedTracksIDsResponse>(
+        key,
+        old =>
+          old && {
+            ...old,
+            ids: like ? [...new Set([...old.ids, trackID])] : old.ids.filter(id => id !== trackID),
+          }
+      )
       return response
     },
-    onMutate: async trackID => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await reactQueryClient.cancelQueries({ queryKey: key })
-
-      // Snapshot the previous value
-      const previousData = reactQueryClient.getQueryData(key)
-
-      // Optimistically update to the new value
-      reactQueryClient.setQueryData(key, old => {
-        const likedSongs = old as FetchUserLikedTracksIDsResponse
-        const ids = likedSongs.ids
-        const newIds = ids.includes(trackID)
-          ? ids.filter(id => id !== trackID)
-          : [...ids, trackID]
-        return {
-          ...likedSongs,
-          ids: newIds,
-        }
-      })
-
-      // Return a context object with the snapshotted value
-      return { previousData }
-    },
-    // If the mutation fails, use the context returned from onMutate to roll back
-    onError: (err, trackID, context) => {
-      reactQueryClient.setQueryData(key, (context as any).previousData)
-      toast((err as any).toString())
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: key }),
+        queryClient.invalidateQueries({ queryKey: [UserApiNames.FetchUserPlaylists, uid] }),
+        queryClient.invalidateQueries({ queryKey: [PlaylistApiNames.FetchPlaylist] }),
+      ]),
+    onError: error => toast.error(error.message),
   })
 }

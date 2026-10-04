@@ -49,10 +49,11 @@ const Header = () => {
 
   const likeAPlaylist = useMutationLikeAPlaylist()
   const onLike = async () => {
-    likeAPlaylist.mutateAsync(playlist?.id || Number(params.id))
+    likeAPlaylist.mutate(playlist?.id || Number(params.id))
   }
   return (
-    <TrackListHeader className='mb-5'
+    <TrackListHeader
+      className='mb-5'
       {...{
         title,
         creatorName,

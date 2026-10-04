@@ -70,6 +70,7 @@ const LikeButton = ({
   isLiked?: boolean
   isLoading?: boolean
 }) => {
+  const { t } = useTranslation()
   // hover animation
   const { buttonRef, buttonStyle, LightSpot } = useHoverLightSpot({
     opacity: 0.8,
@@ -80,11 +81,14 @@ const LikeButton = ({
   return (
     <motion.button
       ref={buttonRef}
+      aria-label={
+        isLiked ? t('context-menu.remove-from-library') : t('context-menu.add-to-library')
+      }
       onClick={() => onLike()}
       style={buttonStyle}
       className={cx(
         'relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white/10 transition-transform duration-300 ease-linear',
-        isLoading ? 'text-transparent' : 'text-white/40 '
+        isLoading ? 'text-transparent' : 'text-white/40'
       )}
     >
       <Icon name={isLiked ? 'heart' : 'heart-outline'} className='h-7 w-7' />

@@ -47,7 +47,7 @@ export function fetchUserPlaylists(
   return request({
     url: '/user/playlist',
     method: 'get',
-    params,
+    params: { ...params, timestamp: Date.now() },
   })
 }
 
