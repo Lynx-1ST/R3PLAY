@@ -141,6 +141,27 @@
     "saved-playlists": "Saved playlists"
   },
   "settings": {
+    "updates": {
+      "installing": "Restarting to update…",
+      "loading": "Loading update status…",
+      "downloaded": "Download complete. Save your work before restarting to update.",
+      "progress": "Update download progress",
+      "up-to-date": "No newer version is available on this channel.",
+      "check": "Check for updates",
+      "checking": "Checking for updates…",
+      "unsupported": "In-app updates support installed Windows builds. Web and development builds are not supported.",
+      "title": "Updates",
+      "error": "Unable to update. Check your network connection and try again.",
+      "available": "Version {{version}} is available. Download it in the app.",
+      "channel-help": "Dev includes the newest changes and may have bugs. Switching to Stable waits for a newer stable version; the app never downgrades automatically.",
+      "channel": "Update channel",
+      "install": "Restart to update",
+      "dev": "Dev — Preview",
+      "idle": "Ready to check for updates.",
+      "downloading": "Downloading update…",
+      "download": "Download update",
+      "stable": "Stable"
+    },
     "discord-rpc-enable": "Show listening activity on Discord",
     "discord-rpc-description": "Requires Discord desktop. Shares the song, artist, album artwork and progress; hides when paused.",
     "settings": "Settings",

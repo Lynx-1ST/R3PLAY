@@ -46,9 +46,8 @@ module.exports = {
       // },
     ],
     icon: 'build/icons/icon.png',
-    signtoolOptions: {
-      publisherName: 'Lynx-1ST',
-    },
+    // Derive publisherName from a signing certificate when one is configured.
+    // Unsigned builds must not claim a publisher signature they do not have.
   },
   nsis: {
     oneClick: false,

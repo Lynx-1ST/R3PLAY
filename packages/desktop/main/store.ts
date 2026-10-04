@@ -4,6 +4,7 @@ import log from './log'
 log.info('[electron] store.ts')
 
 export interface TypedElectronStore {
+  updateChannel?: 'stable' | 'dev'
   window: {
     width: number
     height: number

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { motion, useAnimationControls } from 'framer-motion'
 import General from './General'
 import About from './About'
+import Updates from './Updates'
 import Player from './Player'
 import KeyboardShortcuts from './KeyboardShortcuts'
 import Lab from './Lab'
@@ -20,6 +21,7 @@ export const categoryIds = [
   'player',
   'keyboard-shortcuts',
   'lab',
+  'updates',
   'about',
 ] as const
 export type Category = (typeof categoryIds)[number]
@@ -39,6 +41,7 @@ const Sidebar = ({
     { name: t`settings.player`, id: 'player' },
     { name: t`settings.keyboard-shortcuts.title`, id: 'keyboard-shortcuts' },
     { name: t`settings.lab.title`, id: 'lab' },
+    { name: t`settings.updates.title`, id: 'updates' },
     { name: t`settings.about`, id: 'about' },
   ]
 
@@ -113,6 +116,7 @@ const Settings = () => {
     { id: 'player', component: <Player /> },
     { id: 'keyboard-shortcuts', component: <KeyboardShortcuts /> },
     { id: 'lab', component: <Lab /> },
+    { id: 'updates', component: <Updates /> },
     { id: 'about', component: <About /> },
   ]
 

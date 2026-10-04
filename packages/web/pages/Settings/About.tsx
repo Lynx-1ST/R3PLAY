@@ -2,6 +2,7 @@ import pkg from '../../../../package.json'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import Updates from './Updates'
 import {
   getLatestRelease,
   githubOwner,
@@ -73,33 +74,37 @@ const About = () => {
           </a>
         </p>
       </div>
-      <div className='space-y-3'>
-        <button
-          type='button'
-          disabled={checking}
-          onClick={() => void checkUpdate()}
-          className='rounded-lg border border-black/10 bg-white/5 px-4 py-2 backdrop-blur-xl hover:bg-black/5 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/10'
-        >
-          {checking ? t('settings.about-checking') : t('settings.about-check-updates')}
-        </button>
-        {release && (
-          <p aria-live='polite'>
-            {newer
-              ? t('settings.about-update-available', { version: release.version })
-              : t('settings.about-up-to-date')}
-          </p>
-        )}
-        <div>
-          <a
-            className={linkClass}
-            href={release?.url || releasesUrl}
-            target='_blank'
-            rel='noreferrer'
+      {window.ipcRenderer ? (
+        <Updates />
+      ) : (
+        <div className='space-y-3'>
+          <button
+            type='button'
+            disabled={checking}
+            onClick={() => void checkUpdate()}
+            className='rounded-lg border border-black/10 bg-white/5 px-4 py-2 backdrop-blur-xl hover:bg-black/5 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/10'
           >
-            {t('settings.about-open-releases')}
-          </a>
+            {checking ? t('settings.about-checking') : t('settings.about-check-updates')}
+          </button>
+          {release && (
+            <p aria-live='polite'>
+              {newer
+                ? t('settings.about-update-available', { version: release.version })
+                : t('settings.about-up-to-date')}
+            </p>
+          )}
+          <div>
+            <a
+              className={linkClass}
+              href={release?.url || releasesUrl}
+              target='_blank'
+              rel='noreferrer'
+            >
+              {t('settings.about-open-releases')}
+            </a>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

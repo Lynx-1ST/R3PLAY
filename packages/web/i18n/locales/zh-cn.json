@@ -141,6 +141,27 @@
     "saved-playlists": "收藏的歌单"
   },
   "settings": {
+    "updates": {
+      "installing": "正在重启以更新…",
+      "loading": "正在读取更新状态…",
+      "downloaded": "下载完成。重启更新前请保存工作。",
+      "progress": "更新下载进度",
+      "up-to-date": "此渠道暂无更新版本。",
+      "check": "检查更新",
+      "checking": "正在检查更新…",
+      "unsupported": "应用内更新支持已安装的 Windows 版本。网页版和开发环境不支持。",
+      "title": "更新",
+      "error": "无法更新，请检查网络后重试。",
+      "available": "发现版本 {{version}}，可在应用内下载。",
+      "channel-help": "Dev 包含最新功能，可能存在问题。切换到稳定版后会等待更新的稳定版本，不会自动降级。",
+      "channel": "更新渠道",
+      "install": "重启并更新",
+      "dev": "Dev — 预览版",
+      "idle": "可以检查更新。",
+      "downloading": "正在下载更新…",
+      "download": "下载更新",
+      "stable": "Stable — 稳定版"
+    },
     "discord-rpc-enable": "在 Discord 上显示正在收听的歌曲",
     "discord-rpc-description": "需要运行 Discord 桌面客户端。显示歌曲、歌手、专辑封面和进度；暂停时隐藏。",
     "settings": "设置",

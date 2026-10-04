@@ -1,66 +1,28 @@
-import { autoUpdater, UpdateInfo } from 'electron-updater'
+import { autoUpdater } from 'electron-updater'
+import { app, BrowserWindow } from 'electron'
 import log from './log'
-import { shell, dialog } from 'electron'
-import { isDev } from './env'
-import { githubOwner, githubRepository, releasesUrl } from '@/shared/project'
 import store from './store'
+import { isDev } from './env'
+import { IpcChannels } from '@/shared/IpcChannels'
+import { UpdateManager } from './updateManager'
 
-let initialized = false
-
+let manager: UpdateManager | undefined
+export function getUpdateManager() {
+  if (!manager)
+    manager = new UpdateManager(
+      autoUpdater,
+      app.getVersion(),
+      store.get('updateChannel') === 'dev' ? 'dev' : 'stable',
+      !isDev && process.platform === 'win32',
+      state => {
+        for (const win of BrowserWindow.getAllWindows())
+          if (!win.isDestroyed()) win.webContents.send(IpcChannels.UpdateState, state)
+      },
+      channel => store.set('updateChannel', channel),
+      error => log.error('[updates]', error)
+    )
+  return manager
+}
 export function checkForUpdates() {
-  if (isDev) return
-  log.info('checkForUpdates')
-  if (!initialized) {
-    initialized = true
-    autoUpdater.setFeedURL({ provider: 'github', owner: githubOwner, repo: githubRepository })
-    autoUpdater.autoDownload = false
-    autoUpdater.on('error', error => log.error('[updates]', error))
-    autoUpdater.on('update-available', info => {
-      void showNewVersionMessage(info)
-    })
-  }
-
-  const showNewVersionMessage = (info: UpdateInfo) => {
-    const language = store.get('settings')?.language
-    const labels =
-      language === 'vi-VN'
-        ? {
-            title: 'Có phiên bản mới',
-            detail: 'Mở GitHub để tải bản cập nhật?',
-            download: 'Tải xuống',
-            cancel: 'Để sau',
-          }
-        : language === 'zh-CN'
-          ? {
-              title: '发现新版本',
-              detail: '是否前往 GitHub 下载新版本安装包？',
-              download: '下载',
-              cancel: '取消',
-            }
-          : {
-              title: 'Update available',
-              detail: 'Open GitHub to download the new release?',
-              download: 'Download',
-              cancel: 'Later',
-            }
-    return dialog
-      .showMessageBox({
-        title: labels.title,
-        message: `${labels.title}: v${info.version}`,
-        detail: labels.detail,
-        buttons: [labels.download, labels.cancel],
-        type: 'question',
-        noLink: true,
-      })
-      .then(result => {
-        if (result.response === 0) {
-          const releaseTag = `v${info.version}`
-          void shell.openExternal(`${releasesUrl}/tag/${encodeURIComponent(releaseTag)}`)
-        }
-      })
-  }
-
-  return autoUpdater.checkForUpdates().catch(error => {
-    log.error('[updates] Check failed:', error)
-  })
+  return getUpdateManager().check()
 }

@@ -3,8 +3,13 @@ import { CacheAPIs } from './CacheAPIs'
 import { RepeatMode } from './playerDataTypes'
 import type { DiscordPlayback } from './discordPresence'
 import type { AudioCacheRequest, AudioCacheReceipt } from './audioCache'
+import type { UpdateChannel, UpdateState } from './updates'
 
 export const enum IpcChannels {
+  UpdateState = 'UpdateState',
+  SetUpdateChannel = 'SetUpdateChannel',
+  DownloadUpdate = 'DownloadUpdate',
+  InstallUpdate = 'InstallUpdate',
   CacheAudio = 'CacheAudio',
   RendererLog = 'RendererLog',
   DiscordPlayback = 'DiscordPlayback',
@@ -52,6 +57,10 @@ export const enum IpcChannels {
 
 // ipcMain.on params
 export interface IpcChannelsParams {
+  [IpcChannels.UpdateState]: void
+  [IpcChannels.SetUpdateChannel]: { channel: UpdateChannel }
+  [IpcChannels.DownloadUpdate]: void
+  [IpcChannels.InstallUpdate]: void
   [IpcChannels.CacheAudio]: AudioCacheRequest
   [IpcChannels.RendererLog]: {
     level: 'error' | 'warn' | 'info' | 'debug' | 'verbose' | 'silly' | 'log'
@@ -130,6 +139,10 @@ export interface IpcChannelsParams {
 
 // ipcRenderer.on params
 export interface IpcChannelsReturns {
+  [IpcChannels.UpdateState]: UpdateState
+  [IpcChannels.SetUpdateChannel]: UpdateState
+  [IpcChannels.DownloadUpdate]: UpdateState
+  [IpcChannels.InstallUpdate]: UpdateState
   [IpcChannels.CacheAudio]: AudioCacheReceipt
   [IpcChannels.ClearAPICache]: void
   [IpcChannels.Minimize]: void
@@ -163,7 +176,7 @@ export interface IpcChannelsReturns {
 
   [IpcChannels.Like]: void
   [IpcChannels.Repeat]: RepeatMode
-  [IpcChannels.CheckUpdate]: void
+  [IpcChannels.CheckUpdate]: UpdateState
   [IpcChannels.VolumeUp]: void
   [IpcChannels.VolumeDown]: void
   [IpcChannels.SyncSettings]: any

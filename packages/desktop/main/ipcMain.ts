@@ -13,7 +13,7 @@ import prettyBytes from 'pretty-bytes'
 import { db, Tables } from './db'
 import { getPlatform } from './utils'
 import { bindingKeyboardShortcuts } from './keyboardShortcuts'
-import { checkForUpdates } from './updateWindow'
+import { checkForUpdates, getUpdateManager } from './updateWindow'
 import { createMenu } from './menu'
 import { createDockMenu } from './dockMenu'
 import { DiscordPresence } from './discordRpc'
@@ -211,6 +211,10 @@ function initOtherIpcMain(win: BrowserWindow | null) {
   handle(IpcChannels.CheckUpdate, e => {
     return checkForUpdates()
   })
+  handle(IpcChannels.UpdateState, () => getUpdateManager().getState())
+  handle(IpcChannels.SetUpdateChannel, (_e, params) => getUpdateManager().setChannel(params?.channel))
+  handle(IpcChannels.DownloadUpdate, () => getUpdateManager().download())
+  handle(IpcChannels.InstallUpdate, () => getUpdateManager().install())
 
   /**
    * Get API cache

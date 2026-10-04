@@ -141,6 +141,27 @@
     "saved-playlists": "Playlist đã lưu"
   },
   "settings": {
+    "updates": {
+      "installing": "Đang khởi động lại để cập nhật…",
+      "loading": "Đang lấy trạng thái cập nhật…",
+      "downloaded": "Đã tải xong. Lưu công việc trước khi khởi động lại để cập nhật.",
+      "progress": "Tiến độ tải cập nhật",
+      "up-to-date": "Không có phiên bản mới hơn trên kênh này.",
+      "check": "Kiểm tra cập nhật",
+      "checking": "Đang kiểm tra cập nhật…",
+      "unsupported": "Cập nhật trực tiếp hỗ trợ bản Windows đã cài đặt. Bản web hoặc môi trường phát triển không hỗ trợ.",
+      "title": "Cập nhật",
+      "error": "Không thể cập nhật. Kiểm tra kết nối mạng và thử lại.",
+      "available": "Có phiên bản {{version}}. Bạn có thể tải ngay trong app.",
+      "channel-help": "Dev có các thay đổi mới nhất và có thể còn lỗi. Đổi về Stable sẽ chờ bản ổn định mới hơn; app không tự hạ phiên bản.",
+      "channel": "Kênh cập nhật",
+      "install": "Khởi động lại để cập nhật",
+      "dev": "Dev — Bản thử nghiệm",
+      "idle": "Sẵn sàng kiểm tra cập nhật.",
+      "downloading": "Đang tải cập nhật…",
+      "download": "Tải cập nhật",
+      "stable": "Stable — Bản ổn định"
+    },
     "discord-rpc-enable": "Hiển thị bài đang nghe trên Discord",
     "discord-rpc-description": "Cần mở Discord desktop. Hiển thị tên bài, nghệ sĩ, bìa album và tiến độ; tự ẩn khi tạm dừng.",
     "settings": "Cài đặt",
