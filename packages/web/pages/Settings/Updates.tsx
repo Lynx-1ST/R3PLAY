@@ -89,9 +89,6 @@ export default function Updates() {
           <option value='stable'>{t('settings.updates.stable')}</option>
           <option value='dev'>{t('settings.updates.dev')}</option>
         </select>
-        <p className='max-w-xl text-14 leading-relaxed text-neutral-600 dark:text-neutral-300'>
-          {t('settings.updates.channel-help')}
-        </p>
       </div>
       <div className='space-y-4 rounded-2xl border border-black/5 bg-black/5 p-5 dark:border-white/10 dark:bg-white/5'>
         <p role={failed || state?.phase === 'error' ? 'alert' : 'status'} aria-live='polite'>

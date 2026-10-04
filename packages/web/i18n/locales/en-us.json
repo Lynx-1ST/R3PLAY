@@ -144,7 +144,7 @@
     "updates": {
       "installing": "Restarting to update…",
       "loading": "Loading update status…",
-      "downloaded": "Download complete. Save your work before restarting to update.",
+      "downloaded": "Download complete.",
       "progress": "Update download progress",
       "up-to-date": "No newer version is available on this channel.",
       "check": "Check for updates",
@@ -153,7 +153,6 @@
       "title": "Updates",
       "error": "Unable to update. Check your network connection and try again.",
       "available": "Version {{version}} is available. Download it in the app.",
-      "channel-help": "Dev includes the newest changes and may have bugs. Switching to Stable waits for a newer stable version; the app never downgrades automatically.",
       "channel": "Update channel",
       "install": "Restart to update",
       "dev": "Dev — Preview",

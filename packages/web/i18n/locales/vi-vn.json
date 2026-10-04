@@ -144,7 +144,7 @@
     "updates": {
       "installing": "Đang khởi động lại để cập nhật…",
       "loading": "Đang lấy trạng thái cập nhật…",
-      "downloaded": "Đã tải xong. Lưu công việc trước khi khởi động lại để cập nhật.",
+      "downloaded": "Đã tải xong.",
       "progress": "Tiến độ tải cập nhật",
       "up-to-date": "Không có phiên bản mới hơn trên kênh này.",
       "check": "Kiểm tra cập nhật",
@@ -153,7 +153,6 @@
       "title": "Cập nhật",
       "error": "Không thể cập nhật. Kiểm tra kết nối mạng và thử lại.",
       "available": "Có phiên bản {{version}}. Bạn có thể tải ngay trong app.",
-      "channel-help": "Dev có các thay đổi mới nhất và có thể còn lỗi. Đổi về Stable sẽ chờ bản ổn định mới hơn; app không tự hạ phiên bản.",
       "channel": "Kênh cập nhật",
       "install": "Khởi động lại để cập nhật",
       "dev": "Dev — Bản thử nghiệm",

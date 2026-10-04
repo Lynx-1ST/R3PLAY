@@ -1,6 +1,6 @@
 # In-app Windows updates
 
-Settings → Updates (also available from About) exposes Stable and Dev channels.
+Settings → About exposes Stable and Dev update channels alongside app information.
 The choice persists in the Electron store independently of synced renderer settings.
 Stable uses the GitHub latest feed; Dev uses the dev feed and permits prereleases.
 Only versions newer than the running app are offered. Returning from Dev to Stable
