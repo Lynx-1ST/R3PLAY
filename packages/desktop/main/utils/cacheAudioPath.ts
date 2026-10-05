@@ -12,10 +12,10 @@ const CACHE_AUDIO_FILENAME_PATTERN =
  * 把请求里的 filename 解析为 audio_cache 下的绝对路径。
  * 返回 null 表示文件名不合法或解析后越出缓存目录，调用方必须拒绝读取。
  */
-export function resolveCacheAudioPath(userDataPath: string, fileName: string): string | null {
+export function resolveCacheAudioPath(userDataPath: string, fileName: string, directory?: string): string | null {
   if (!fileName || !CACHE_AUDIO_FILENAME_PATTERN.test(fileName)) return null
 
-  const cacheDir = path.resolve(userDataPath, AUDIO_CACHE_DIRNAME)
+  const cacheDir = path.resolve(directory ?? path.join(userDataPath, AUDIO_CACHE_DIRNAME))
   const candidate = path.resolve(cacheDir, fileName)
 
   // 白名单已排除分隔符和 ..，这里是对未来格式变更的兜底：解析结果必须仍在缓存目录内

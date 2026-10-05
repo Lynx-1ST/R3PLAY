@@ -13,110 +13,111 @@ import settings from '@/web/states/settings'
 import { downloadTrack } from '@/web/utils/download'
 import { Virtuoso } from 'react-virtuoso'
 
-
-
-const Track = memo(({
-  track,
-  index,
-  isPlaying,
-  state,
-  onClick,
-}: {
-  track?: Track
-  index: number
-  isPlaying: boolean
-  state: PlayerState
-  onClick: (e: React.MouseEvent<HTMLElement>, trackID: number) => void
-}) => {
-  const { showDownloadActions } = useSnapshot(settings)
-  return (
-    <div
-      className={cx(
-        'group mb-3 grid items-center rounded-2xl p-2 pr-4 transition-colors duration-300 hover:bg-black/5 dark:hover:bg-white/5',
-        css`
-          grid-template-columns: 3fr 2fr 1fr;
-        `
-      )}
+const Track = memo(
+  ({
+    track,
+    index,
+    isPlaying,
+    state,
+    onClick,
+  }: {
+    track?: Track
+    index: number
+    isPlaying: boolean
+    state: PlayerState
+    onClick: (e: React.MouseEvent<HTMLElement>, trackID: number) => void
+  }) => {
+    const { showDownloadActions } = useSnapshot(settings)
+    return (
+      <div
+        className={cx(
+          'group mb-3 grid items-center rounded-2xl p-2 pr-4 transition-colors duration-300 hover:bg-black/5 dark:hover:bg-white/5',
+          css`
+            grid-template-columns: 3fr 2fr 1fr;
+          `
+        )}
       onClick={e => track && onClick(e, track.id)}
-      onContextMenu={e => track && onClick(e, track.id)}
-    >
-      {/* Right part */}
-      <div className='flex items-center'>
-        {/* Cover */}
-        <img
-          alt='Cover'
-          className='mr-4 aspect-square h-14 w-14 shrink-0 rounded-12'
-          src={resizeImage(track?.al?.picUrl || '', 'sm')}
-          loading='lazy'
-          decoding='async'
-        />
+      data-track-id={track?.id}
+        onContextMenu={e => track && onClick(e, track.id)}
+      >
+        {/* Right part */}
+        <div className='flex items-center'>
+          {/* Cover */}
+          <img
+            alt='Cover'
+            className='mr-4 aspect-square h-14 w-14 shrink-0 rounded-12'
+            src={resizeImage(track?.al?.picUrl || '', 'sm')}
+            loading='lazy'
+            decoding='async'
+          />
 
-        {/* Track Name and Artists */}
-        <div className='mr-3'>
-          <div
-            className={cx(
-              'line-clamp-1 flex items-center text-16 font-medium transition-colors duration-500',
-              isPlaying ? 'text-brand-700' : 'text-neutral-700 dark:text-neutral-200'
-            )}
-          >
-            {track?.name}
+          {/* Track Name and Artists */}
+          <div className='mr-3'>
+            <div
+              className={cx(
+                'line-clamp-1 flex items-center text-16 font-medium transition-colors duration-500',
+                isPlaying ? 'text-brand-700' : 'text-neutral-700 dark:text-neutral-200'
+              )}
+            >
+              {track?.name}
 
-            {[1318912, 1310848].includes(track?.mark || 0) && (
-              <Icon name='explicit' className='ml-2 mt-px mr-4 h-3.5 w-3.5 ' />
-            )}
+              {[1318912, 1310848].includes(track?.mark || 0) && (
+                <Icon name='explicit' className='mt-px mr-4 ml-2 h-3.5 w-3.5' />
+              )}
+            </div>
+            <div className='mt-1 line-clamp-1 text-14 font-bold'>
+              {track?.ar.map((a, idx) => (
+                <Fragment key={`${a.id}-${idx}`}>
+                  {idx > 0 && ', '}
+                  <NavLink
+                    className='transition-all duration-200 hover:text-black/70 dark:hover:text-white/70'
+                    to={`/artist/${a.id}`}
+                  >
+                    {a.name}
+                  </NavLink>
+                </Fragment>
+              ))}
+            </div>
           </div>
-          <div className='line-clamp-1 mt-1 text-14 font-bold '>
-            {track?.ar.map((a, idx) => (
-              <Fragment key={`${a.id}-${idx}`}>
-                {idx > 0 && ', '}
-                <NavLink
-                  className='transition-all duration-200 hover:text-black/70 dark:hover:text-white/70'
-                  to={`/artist/${a.id}`}
-                >
-                  {a.name}
-                </NavLink>
-              </Fragment>
-            ))}
-          </div>
+
+          {/* Wave icon */}
+          {isPlaying && (
+            <div className='ml-5'>
+              <Wave playing={state === 'playing'} />
+            </div>
+          )}
         </div>
 
-        {/* Wave icon */}
-        {isPlaying && (
-          <div className='ml-5'>
-            <Wave playing={state === 'playing'} />
-          </div>
-        )}
-      </div>
-
-      {/* Album Name */}
-      <div className='flex items-center'>
-        <NavLink
-          to={`/album/${track?.al?.id}`}
-          className='line-clamp-1 text-14 font-bold transition-colors duration-200 hover:text-black/70 dark:hover:text-white/70'
-        >
-          {track?.al?.name}
-        </NavLink>
-      </div>
-
-      {/* Duration */}
-      <div className='flex shrink-0 items-center justify-end gap-2 whitespace-nowrap text-14 font-medium tabular-nums'>
-        {/* Download — opt-in via settings.showDownloadActions */}
-        {showDownloadActions && track && (
-          <button
-            className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-black/10 dark:hover:bg-white/10'
-            onClick={e => {
-              e.stopPropagation()
-              downloadTrack(track.id)
-            }}
+        {/* Album Name */}
+        <div className='flex items-center'>
+          <NavLink
+            to={`/album/${track?.al?.id}`}
+            className='line-clamp-1 text-14 font-bold transition-colors duration-200 hover:text-black/70 dark:hover:text-white/70'
           >
-            <Icon name='download' className='h-4 w-4' />
-          </button>
-        )}
-        {formatDuration(track?.dt || 0, 'en-US', 'hh:mm:ss')}
+            {track?.al?.name}
+          </NavLink>
+        </div>
+
+        {/* Duration */}
+        <div className='flex shrink-0 items-center justify-end gap-2 text-14 font-medium whitespace-nowrap tabular-nums'>
+          {/* Download — opt-in via settings.showDownloadActions */}
+          {showDownloadActions && track && (
+            <button
+              className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 hover:bg-black/10 focus-visible:opacity-100 dark:hover:bg-white/10'
+              onClick={e => {
+                e.stopPropagation()
+                downloadTrack(track.id)
+              }}
+            >
+              <Icon name='download' className='h-4 w-4' />
+            </button>
+          )}
+          {formatDuration(track?.dt || 0, 'en-US', 'hh:mm:ss')}
+        </div>
       </div>
-    </div>
-  )
-})
+    )
+  }
+)
 Track.displayName = 'TrackListVirtualTrack'
 
 function TrackList({
@@ -165,15 +166,16 @@ function TrackList({
   return (
     <div className={cx('@container', className)}>
       <Virtuoso
-        className=' no-scrollbar'
+        className='no-scrollbar'
         style={{
           height: 'calc(100vh - 132px)',
         }}
         data={tracks}
         components={components}
         defaultItemHeight={80}
-        overscan={2000}
-        increaseViewportBy={{ top: 1600, bottom: 1600 }}
+        overscan={300}
+        increaseViewportBy={{ top: 240, bottom: 480 }}
+        computeItemKey={(index, track) => `${track.id}-${index}`}
         totalCount={tracks?.length}
         itemContent={index => {
           const track = tracks?.[index]
@@ -194,6 +196,6 @@ function TrackList({
 }
 
 const TrackListVirtualMemo = React.memo(TrackList)
-TrackListVirtualMemo.displayName = "TrackListVirtual"
+TrackListVirtualMemo.displayName = 'TrackListVirtual'
 
 export default TrackListVirtualMemo

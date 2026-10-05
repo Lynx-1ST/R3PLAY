@@ -176,7 +176,12 @@
       "title": "Thử nghiệm",
       "description": "Các tính năng thử nghiệm",
       "startup-animation": "Animation khi mở ứng dụng",
-      "startup-animation-description": "Hiện logo và hiệu ứng mở đầu. Áp dụng từ lần mở ứng dụng tiếp theo."
+      "startup-animation-description": "Hiện logo và hiệu ứng mở đầu. Áp dụng từ lần mở ứng dụng tiếp theo.",
+      "crossfade": "Crossfade",
+      "crossfade-description": "Trộn phần cuối bài đang nghe với đầu bài tiếp theo trong hàng đợi. Áp dụng khi tự chuyển bài; lặp một bài và Personal FM phát bình thường.",
+      "crossfade-duration": "Thời gian chuyển bài",
+      "seconds": "{{count}} giây",
+      "reduce-hidden": "Giảm hiệu ứng và cập nhật giao diện khi thu nhỏ"
     },
     "unlock": "Mở khóa thêm nguồn nhạc",
     "engine": "Nguồn phát",
@@ -256,7 +261,53 @@
     "session-title": "Khôi phục phiên nghe",
     "session-description": "Nhớ hàng đợi, bài hát, vị trí phát, âm lượng và chế độ lặp. Mở lại ở trạng thái tạm dừng để bạn chủ động nghe tiếp.",
     "session-enable": "Khôi phục phiên nghe khi mở ứng dụng",
-    "search-live-results": "Hiển thị bài hát ngay khi nhập tìm kiếm"
+    "search-live-results": "Hiển thị bài hát ngay khi nhập tìm kiếm",
+    "storage": {
+      "title": "Lưu trữ",
+      "description": "Tự dọn cache theo bài ít dùng nhất. Giữ bài đang phát, file đang mở và vừa sử dụng; dung lượng có thể tạm vượt giới hạn.",
+      "files": "file",
+      "loading": "Đang đọc cache…",
+      "limit": "Giới hạn cache",
+      "move-description": "Chọn thư mục cha. Nhạc hiện có được sao chép vào R3PLAYX-audio-cache. File cũ được giữ để dự phòng; bạn có thể xóa thư mục cache cũ sau khi đóng app.",
+      "choose-folder": "Chọn thư mục",
+      "clear": "Dọn cache không sử dụng",
+      "refresh": "Làm mới",
+      "working": "Đang xử lý… Hãy giữ cửa sổ này mở.",
+      "error": "Không thể cập nhật cache. Kiểm tra quyền truy cập thư mục và dung lượng ổ đĩa.",
+      "desktop-only": "Có trên ứng dụng desktop."
+    },
+    "diagnostics": {
+      "title": "Chẩn đoán",
+      "description": "Xem thống kê app và cảnh báo/lỗi gần nhất. Bản xuất chỉ chứa báo cáo này, đã che thông tin đăng nhập, URL và đường dẫn cá nhân.",
+      "version": "Phiên bản",
+      "platform": "Nền tảng",
+      "memory": "RAM của app",
+      "uptime": "Đã chạy",
+      "minutes": "phút",
+      "recent-errors": "Cảnh báo và lỗi gần nhất",
+      "no-errors": "Không có cảnh báo hoặc lỗi gần đây.",
+      "export": "Xuất báo cáo",
+      "saved": "Đã lưu báo cáo.",
+      "error": "Không thể đọc hoặc xuất báo cáo."
+    },
+    "lastfm": {
+      "description": "Kết nối Last.fm để hiện bài đang nghe và scrobble những bài đã nghe đủ thời lượng. Tạm dừng và tua không được tính vào thời gian nghe.",
+      "unconfigured": "Bản build này chưa cấu hình Last.fm.",
+      "connected": "Đã kết nối: {{username}}",
+      "scrobble": "Bật hiện bài đang nghe và scrobble",
+      "disconnect": "Ngắt kết nối",
+      "pending": "{{count}} lượt nghe đang chờ đồng bộ",
+      "login": "Đăng nhập Last.fm",
+      "complete": "Tôi đã cấp quyền",
+      "cancel": "Hủy",
+      "authorizing": "Cấp quyền trên trình duyệt rồi quay lại đây. App sẽ tự hoàn tất kết nối.",
+      "errors": {
+        "network": "Chưa kết nối được Last.fm. Lượt nghe đủ điều kiện được lưu để thử lại.",
+        "authorization": "Không xác thực được. Hãy thử kết nối lại.",
+        "invalid-session": "Quyền truy cập Last.fm đã hết hoặc bị thu hồi. Hãy kết nối lại.",
+        "rejected": "Last.fm từ chối yêu cầu. Kiểm tra thông tin bài hát hoặc cấu hình API."
+      }
+    }
   },
   "context-menu": {
     "share": "Chia sẻ",

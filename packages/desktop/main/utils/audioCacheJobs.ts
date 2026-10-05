@@ -16,6 +16,8 @@ export interface AudioVariantRepository {
 }
 interface Dependencies {
   userData: string
+  directory?: string
+  afterSave?: () => Promise<void>
   repository: AudioVariantRepository
   download?: typeof downloadAudio
   metadata?: (file: string) => Promise<IAudioMetadata>
@@ -41,7 +43,13 @@ export class AudioCacheJobs {
   private directory: string
 
   constructor(private dependencies: Dependencies) {
-    this.directory = path.join(dependencies.userData, 'audio_cache')
+    this.directory = dependencies.directory ?? path.join(dependencies.userData, 'audio_cache')
+  }
+
+  setDirectory(directory: string) {
+    if (this.jobs.size) throw new Error('Cache jobs are still running')
+    this.directory = directory
+    this.ready = undefined
   }
 
   // A second Electron instance must not clean the first instance's active files.
@@ -217,7 +225,7 @@ export class AudioCacheJobs {
       const previous = repository.find(key)
       if (
         previous?.hash === downloaded.hash &&
-        resolveCacheAudioPath(this.dependencies.userData, previous.fileName) &&
+        resolveCacheAudioPath(this.dependencies.userData, previous.fileName, this.directory) &&
         (await stat(path.join(this.directory, previous.fileName)).then(
           value => value.isFile(),
           () => false
@@ -244,10 +252,11 @@ export class AudioCacheJobs {
       })
       committed = true
       if (previous && previous.fileName !== fileName && !repository.referenced(previous.fileName)) {
-        const oldPath = resolveCacheAudioPath(this.dependencies.userData, previous.fileName)
+        const oldPath = resolveCacheAudioPath(this.dependencies.userData, previous.fileName, this.directory)
         if (oldPath) await unlink(oldPath).catch(() => {})
       }
       report?.('cached', job.request.id, `${level}/${format}`)
+      await this.dependencies.afterSave?.()
     } finally {
       clearTimeout(timeout)
       await unlink(temporary).catch(() => {})

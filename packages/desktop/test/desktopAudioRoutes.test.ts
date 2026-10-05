@@ -11,6 +11,7 @@ vi.mock('../main/runtime', () => ({
     name.includes('enhanced') ? { song_url_v1: mocks.song } : mocks.match,
 }))
 vi.mock('electron', () => ({ app: { getPath: () => '.' } }))
+vi.mock('../main/audioCache', () => ({ audioCacheStorage: { directory: './audio_cache' } }))
 vi.mock('../main/env', () => ({ appName: 'R3PLAYX' }))
 vi.mock('../main/log', () => ({ default: { info: vi.fn(), error: vi.fn(), debug: vi.fn() } }))
 vi.mock('../main/cache', () => ({ default: mocks.cache }))

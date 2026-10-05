@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { proxy } from 'valtio'
+vi.mock('../../utils/backgroundActivity', () => ({ isBackgroundIdle: () => false }))
 const mocks = vi.hoisted(() => ({
   audio: vi.fn(),
   tracks: vi.fn(),
@@ -9,6 +11,8 @@ const mocks = vi.hoisted(() => ({
     audioOutputDeviceId: '',
     audioQuality: 'exhigh',
     audioEffect: 'off',
+    enableCrossfade: false,
+    crossfadeSeconds: 3,
   },
 }))
 vi.mock('howler', () => ({
@@ -75,6 +79,10 @@ vi.mock('howler', () => ({
     stop() {
       this.active = false
     }
+    unload() {
+      this.active = false
+      clearTimeout(this.fadeTimer)
+    }
   },
 }))
 vi.mock('@/web/states/settings', () => ({ default: mocks.settings }))
@@ -113,6 +121,7 @@ const settle = async () => {
   for (let i = 0; i < 12; i++) await Promise.resolve()
 }
 beforeEach(() => {
+  mocks.settings.enableCrossfade = false
   vi.useFakeTimers()
   mocks.instances.length = 0
   mocks.audio
@@ -145,7 +154,12 @@ describe('player session restoration', () => {
       player.play()
       howl.load()
       await settle()
-      expect(cacheAudio).toHaveBeenCalledWith(2, 'https://example.test/song.mp3?dash-id=2', 128000, undefined)
+      expect(cacheAudio).toHaveBeenCalledWith(
+        2,
+        'https://example.test/song.mp3?dash-id=2',
+        128000,
+        undefined
+      )
       expect(howl.active).toBe(true)
       expect(howl.position).toBe(85)
       player.progress = 100
@@ -291,5 +305,63 @@ describe('player session restoration', () => {
     await settle()
     expect(mocks.instances.length).toBe(count)
     expect(player.trackID).toBe(1)
+  })
+  it('preloads the next track and crossfades automatically, ignoring the outgoing end event', async () => {
+    mocks.settings.enableCrossfade = true
+    const player = proxy(new Player())
+    player.init({ ...session, _repeatMode: 'off' })
+    await settle()
+    const outgoing = player.howler as any
+    outgoing.load()
+    player.play()
+    outgoing.position = 182
+    await vi.advanceTimersByTimeAsync(500)
+    const incoming = mocks.instances.at(-1)
+    expect(incoming).not.toBe(outgoing)
+    expect(incoming.active).toBe(false)
+    incoming.load()
+    outgoing.position = 197.5
+    await vi.advanceTimersByTimeAsync(500)
+    expect(player.trackID).toBe(1)
+    expect(player.howler).toBe(incoming)
+    expect(incoming.active).toBe(true)
+    expect(outgoing.active).toBe(true)
+    outgoing.options.onend()
+    expect(player.trackID).toBe(1)
+    await vi.advanceTimersByTimeAsync(2600)
+    expect(outgoing.active).toBe(false)
+  })
+  it('pauses both sounds when the user pauses during crossfade', async () => {
+    mocks.settings.enableCrossfade = true
+    const player = new Player()
+    player.init({ ...session, _repeatMode: 'off' })
+    await settle()
+    const outgoing = player.howler as any
+    outgoing.load()
+    player.play()
+    outgoing.position = 182
+    await vi.advanceTimersByTimeAsync(500)
+    const incoming = mocks.instances.at(-1)
+    incoming.load()
+    outgoing.position = 197.5
+    await vi.advanceTimersByTimeAsync(500)
+    player.pause()
+    expect(incoming.active).toBe(false)
+    expect(outgoing.active).toBe(false)
+    expect(player.state).toBe(State.Paused)
+    await vi.advanceTimersByTimeAsync(4000)
+    expect(incoming.active).toBe(false)
+  })
+  it('does not prepare crossfade in repeat-one', async () => {
+    mocks.settings.enableCrossfade = true
+    const player = new Player()
+    player.init(session)
+    await settle()
+    const howl = player.howler as any
+    howl.load()
+    player.play()
+    howl.position = 197
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(mocks.instances).toHaveLength(1)
   })
 })

@@ -13,6 +13,7 @@ import { getCacheLevel } from './utils/audioVariants'
 import { createHash, randomUUID } from 'node:crypto'
 import { resolveCacheAudioPath } from './utils/cacheAudioPath'
 import { readUnblockCache } from '../../shared/unblockCache'
+import { audioCacheStorage } from './audioCache'
 
 log.info('[electron] cache.ts')
 
@@ -276,11 +277,14 @@ class Cache {
   }
 
   async getAudio(fileName: string, request: FastifyRequest, reply: FastifyReply) {
-    const filePath = resolveCacheAudioPath(app.getPath('userData'), fileName)
+    const filePath = resolveCacheAudioPath(app.getPath('userData'), fileName, audioCacheStorage.directory)
     if (!filePath) return reply.code(400).send({ error: 'Invalid filename' })
     db.sqlite
       .prepare('UPDATE AudioVariant SET queriedAt = ? WHERE fileName = ?')
       .run(Date.now(), fileName)
+    const release = audioCacheStorage.lease(fileName)
+    reply.raw.once('close', release)
+    await audioCacheStorage.touch(fileName)
     return streamCachedAudio(filePath, request, reply)
   }
 
@@ -293,7 +297,7 @@ class Cache {
       level: reportedLevel,
     }: { id: number; url: string; bitrate: number; level?: string }
   ) {
-    const path = `${app.getPath('userData')}/audio_cache`
+    const path = audioCacheStorage.directory
 
     try {
       fs.statSync(path)
@@ -347,9 +351,10 @@ class Cache {
       queriedAt: Date.now(),
     })
     if (previous && previous.fileName !== fileName) {
-      const previousPath = resolveCacheAudioPath(app.getPath('userData'), previous.fileName)
+      const previousPath = resolveCacheAudioPath(app.getPath('userData'), previous.fileName, audioCacheStorage.directory)
       if (previousPath) await fs.promises.unlink(previousPath).catch(() => {})
     }
+    await audioCacheStorage.trim()
   }
 }
 

@@ -7,6 +7,7 @@ import LayoutMobile from '@/web/components/LayoutMobile'
 import ScrollRestoration from '@/web/components/ScrollRestoration'
 import Toaster from './components/Toaster'
 import useApplyKeyboardShortcuts from './hooks/useApplyKeyboardShortcuts'
+import './utils/backgroundActivity'
 const App = () => {
   useApplyKeyboardShortcuts()
 

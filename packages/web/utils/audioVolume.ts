@@ -3,6 +3,7 @@ import player from '@/web/states/player'
 import settings, { isLowPowerDevice } from '@/web/states/settings'
 import { State } from '@/web/utils/player'
 import { registerAudioOutputContext } from './audioOutput'
+import { isBackgroundIdle, subscribeBackgroundActivity } from './backgroundActivity'
 
 /**
  * Single requestAnimationFrame loop that pushes the current audio
@@ -221,6 +222,7 @@ const tick = (now: number) => {
 }
 
 const start = () => {
+  if (isBackgroundIdle() || listeners.size === 0) return
   if (rafId != null) return
   pausedSince = 0
   rafId = requestAnimationFrame(tick)
@@ -231,6 +233,10 @@ const stop = () => {
   cancelAnimationFrame(rafId)
   rafId = null
 }
+subscribeBackgroundActivity(() => {
+  if (isBackgroundIdle()) stop()
+  else start()
+})
 
 // Restart the loop the moment playback resumes after a >1s pause
 // parked it. (Focus/visibility don't need a watcher: the loop keeps

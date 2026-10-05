@@ -7,7 +7,8 @@ import Icon from '@/web/components/Icon'
 import useIsMobile from '@/web/hooks/useIsMobile'
 import useUserLikedTracksIDs, { useMutationLikeATrack } from '@/web/api/hooks/useUserLikedTracksIDs'
 import toast from 'react-hot-toast'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState, useCallback, useRef } from 'react'
+import { Virtuoso } from 'react-virtuoso'
 import contextMenus, { openContextMenu } from '@/web/states/contextMenus'
 import settings from '@/web/states/settings'
 import { downloadTrack } from '@/web/utils/download'
@@ -49,7 +50,7 @@ const Actions = ({ track }: { track: Track }) => {
             })
           }}
           className={cx(
-            'mr-3 flex h-10 w-10 items-center justify-center rounded-full  ',
+            'mr-3 flex h-10 w-10 items-center justify-center rounded-full',
             'transition-colors duration-400 dark:hover:bg-white/30 dark:hover:text-white/70',
             'hover:bg-black/30 hover:text-black/70'
           )}
@@ -72,7 +73,7 @@ const Actions = ({ track }: { track: Track }) => {
             toast('已添加到播放列表')
           }}
           className={cx(
-            'mr-3 flex h-10 w-10 items-center justify-center rounded-full ',
+            'mr-3 flex h-10 w-10 items-center justify-center rounded-full',
             'transition-colors duration-400 dark:hover:bg-white/30 dark:hover:text-white/70',
             'hover:bg-black/30 hover:text-black/70'
           )}
@@ -92,7 +93,7 @@ const Actions = ({ track }: { track: Track }) => {
           <div
             onClick={() => downloadTrack(track.id)}
             className={cx(
-              'mr-3 flex h-10 w-10 items-center justify-center rounded-full ',
+              'mr-3 flex h-10 w-10 items-center justify-center rounded-full',
               'transition-colors duration-400 dark:hover:bg-white/30 dark:hover:text-white/70',
               'hover:bg-black/30 hover:text-black/70'
             )}
@@ -105,7 +106,7 @@ const Actions = ({ track }: { track: Track }) => {
       {/* Like */}
       <button
         className={cx(
-          'rounded-full ',
+          'rounded-full',
           likedTracksIDs?.ids.includes(track.id)
             ? 'group-hover:bg-white/10'
             : cx(
@@ -117,7 +118,7 @@ const Actions = ({ track }: { track: Track }) => {
         <div
           onClick={() => likeATrack.mutateAsync(track.id)}
           className={cx(
-            'flex h-10 w-10 items-center justify-center rounded-full ',
+            'flex h-10 w-10 items-center justify-center rounded-full',
             'transition-colors duration-400 dark:hover:bg-white/30 dark:hover:text-white/70',
             'hover:bg-black/30 hover:text-black/70'
           )}
@@ -132,77 +133,80 @@ const Actions = ({ track }: { track: Track }) => {
   )
 }
 
-const Track  = memo(({
-  track,
-  handleClick,
-}: {
-  track: Track
-  handleClick: (e: React.MouseEvent<HTMLElement>, trackID: number) => void
-})=> {
-  const { track: playingTrack, state } = useSnapshot(player)
+const Track = memo(
+  ({
+    track,
+    handleClick,
+  }: {
+    track: Track
+    handleClick: (e: React.MouseEvent<HTMLElement>, trackID: number) => void
+  }) => {
+    const { track: playingTrack, state } = useSnapshot(player)
 
-  return (
-    <div
-      key={track.id}
-      onClick={e => handleClick(e, track.id)}
-      onContextMenu={e => handleClick(e, track.id)}
-      className={cx(
-        'group relative flex h-14 items-center py-2 text-16 font-medium transition duration-300',
-        'text-black/90 dark:text-white/90'
-      )}
-    >
-      {/* Track no */}
-      <div className='mr-3 lg:mr-6'>
-        {playingTrack?.id === track.id ? (
-          <span className='inline-block'>
-            <Wave playing={state === 'playing'} />
-          </span>
-        ) : (
-          String(track.no).padStart(2, '0')
+    return (
+      <div
+        key={track.id}
+        data-track-id={track.id}
+        onClick={e => handleClick(e, track.id)}
+        onContextMenu={e => handleClick(e, track.id)}
+        className={cx(
+          'group relative flex h-14 items-center py-2 text-16 font-medium transition duration-300',
+          'text-black/90 dark:text-white/90'
         )}
+      >
+        {/* Track no */}
+        <div className='mr-3 lg:mr-6'>
+          {playingTrack?.id === track.id ? (
+            <span className='inline-block'>
+              <Wave playing={state === 'playing'} />
+            </span>
+          ) : (
+            String(track.no).padStart(2, '0')
+          )}
+        </div>
+
+        {/* Track name */}
+        <div className='flex grow items-center'>
+          <span className='line-clamp-1'>{track?.name}</span>
+          {/* Explicit symbol */}
+          {[1318912, 1310848].includes(track.mark) && (
+            <Icon name='explicit' className='mt-px mr-1 ml-2 h-3.5 w-3.5' />
+          )}
+          {/* Other artists */}
+          {track?.ar?.length > 1 && (
+            <div className=''>
+              <span className='px-1'>-</span>
+              {track.ar.slice(1).map((artist, index) => (
+                <span key={artist.id}>
+                  <NavLink
+                    to={`/artist/${artist.id}`}
+                    className='transition duration-300 hover:text-black/40 hover:dark:text-white/40'
+                  >
+                    {artist.name}
+                  </NavLink>
+                  {index !== track.ar.length - 2 && ', '}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop menu  */}
+        <div className={cx('text-black/90 dark:text-white/90')}>
+          <Actions track={track} />
+        </div>
+
+        {/* Mobile menu */}
+        {/* <div className='lg:hidden'> */}
+        {/*   <div className='h-10 w-10 rounded-full bg-night-900'></div> */}
+        {/* </div> */}
+
+        {/* Track duration */}
+        <div className='text-right lg:block'>{formatDuration(track.dt, 'en-US', 'hh:mm:ss')}</div>
       </div>
-
-      {/* Track name */}
-      <div className='flex grow items-center'>
-        <span className='line-clamp-1'>{track?.name}</span>
-        {/* Explicit symbol */}
-        {[1318912, 1310848].includes(track.mark) && (
-          <Icon name='explicit' className='ml-2 mr-1 mt-px h-3.5 w-3.5' />
-        )}
-        {/* Other artists */}
-        {track?.ar?.length > 1 && (
-          <div className=''>
-            <span className='px-1'>-</span>
-            {track.ar.slice(1).map((artist, index) => (
-              <span key={artist.id}>
-                <NavLink
-                  to={`/artist/${artist.id}`}
-                  className='transition duration-300 hover:text-black/40 hover:dark:text-white/40'
-                >
-                  {artist.name}
-                </NavLink>
-                {index !== track.ar.length - 2 && ', '}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Desktop menu  */}
-      <div className={cx('text-black/90 dark:text-white/90')}>
-        <Actions track={track} />
-      </div>
-
-      {/* Mobile menu */}
-      {/* <div className='lg:hidden'> */}
-      {/*   <div className='h-10 w-10 rounded-full bg-night-900'></div> */}
-      {/* </div> */}
-
-      {/* Track duration */}
-      <div className='text-right lg:block'>{formatDuration(track.dt, 'en-US', 'hh:mm:ss')}</div>
-    </div>
-  )
-})
+    )
+  }
+)
 
 const TrackList = ({
   tracks,
@@ -218,53 +222,81 @@ const TrackList = ({
   placeholderRows?: number
 }) => {
   const isMobile = useIsMobile()
-
-  const handleClick = (e: React.MouseEvent<HTMLElement>, trackID: number) => {
-    if (isLoading) return
-    if (e.type === 'contextmenu') {
-      e.preventDefault()
-      openContextMenu({
-        event: e,
-        type: 'track',
-        dataSourceID: trackID,
-        options: {
-          useCursorPosition: true,
-        },
-      })
-      return
+  const root = useRef<HTMLDivElement>(null)
+  const [scrollParent, setScrollParent] = useState<HTMLElement>()
+  useEffect(() => {
+    let parent = root.current?.parentElement
+    while (parent && parent !== document.body) {
+      if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY)) {
+        setScrollParent(parent)
+        return
+      }
+      parent = parent.parentElement
     }
+  }, [])
 
-    if (isMobile) {
-      onPlay?.(trackID)
-    } else {
-      if (e.detail === 2) onPlay?.(trackID)
-    }
-  }
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>, trackID: number) => {
+      if (isLoading) return
+      if (e.type === 'contextmenu') {
+        e.preventDefault()
+        openContextMenu({
+          event: e,
+          type: 'track',
+          dataSourceID: trackID,
+          options: {
+            useCursorPosition: true,
+          },
+        })
+        return
+      }
+
+      if (isMobile) {
+        onPlay?.(trackID)
+      } else {
+        if (e.detail === 2) onPlay?.(trackID)
+      }
+    },
+    [isLoading, isMobile, onPlay]
+  )
 
   return (
-    <div className={cx(className)}>
-      {(isLoading ? [] : tracks)?.map(track => (
-        <Track key={track.id} track={track} handleClick={handleClick} />
-      ))}
+    <div ref={root} className={cx(className)}>
+      {!isLoading && (tracks?.length ?? 0) > 100 ? (
+        <Virtuoso
+          data={tracks}
+          customScrollParent={scrollParent}
+          useWindowScroll={!scrollParent}
+          defaultItemHeight={56}
+          overscan={200}
+          increaseViewportBy={280}
+          computeItemKey={(index, track) => `${track.id}-${index}`}
+          itemContent={(_index, track) => <Track track={track} handleClick={handleClick} />}
+        />
+      ) : (
+        (isLoading ? [] : tracks)?.map(track => (
+          <Track key={track.id} track={track} handleClick={handleClick} />
+        ))
+      )}
       {(isLoading ? Array.from(new Array(placeholderRows).keys()) : []).map(index => (
         <div
           key={index}
           className={cx(
-            'group relative flex h-14 items-center py-2 text-16 font-medium  transition duration-300 ease-in-out',
+            'group relative flex h-14 items-center py-2 text-16 font-medium transition duration-300 ease-in-out',
             'text-black dark:text-white'
           )}
         >
           {/* Track no */}
-          <div className='mr-3 rounded-full  lg:mr-6'>00</div>
+          <div className='mr-3 rounded-full lg:mr-6'>00</div>
 
           {/* Track name */}
           <div className='flex grow items-center'>
-            <span className='mr-4 rounded-full '>PLACEHOLDER1234567</span>
+            <span className='mr-4 rounded-full'>PLACEHOLDER1234567</span>
           </div>
 
           {/* Track duration */}
           <div className='hidden text-right lg:block'>
-            <span className='rounded-full '>00:00</span>
+            <span className='rounded-full'>00:00</span>
           </div>
         </div>
       ))}

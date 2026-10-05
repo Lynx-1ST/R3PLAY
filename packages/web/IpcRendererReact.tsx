@@ -20,6 +20,24 @@ const IpcRendererReact = () => {
   const { track, state, trackID } = useSnapshot(player)
   const { enableDiscordRpc, language } = useSnapshot(settings)
   const trackIDRef = useRef(0)
+  useEffect(() => {
+    if (!window.env?.isElectron || isLyricsWindow) return
+    const sync = () => {
+      const current = player.track
+      window.ipcRenderer?.send(IpcChannels.LastFmPlayback, {
+        playing: player.state === PlayerState.Playing && player.howler.playing(),
+        trackId: current?.id ?? 0,
+        title: current?.name ?? '',
+        artist: current?.ar?.[0]?.name ?? '',
+        album: current?.al?.name ?? '',
+        duration: (current?.dt ?? 0) / 1000,
+        progress: player.liveCurrentTime(),
+      })
+    }
+    sync()
+    const timer = setInterval(sync, 1000)
+    return () => clearInterval(timer)
+  }, [trackID, state])
 
   useEffect(() => {
     if (!window.env?.isElectron || isLyricsWindow || !enableDiscordRpc) return

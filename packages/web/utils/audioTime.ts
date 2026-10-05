@@ -1,6 +1,7 @@
 import player from '@/web/states/player'
 import { State } from '@/web/utils/player'
 import { subscribeKey } from 'valtio/utils'
+import { isBackgroundIdle, subscribeBackgroundActivity } from './backgroundActivity'
 
 /**
  * Single requestAnimationFrame loop that pushes the current audio playback
@@ -57,6 +58,7 @@ const tick = () => {
 }
 
 const start = () => {
+  if (isBackgroundIdle() || listeners.size === 0) return
   if (rafId != null) return
   lastTime = -1
   unchangedFrames = 0
@@ -68,6 +70,10 @@ const stop = () => {
   cancelAnimationFrame(rafId)
   rafId = null
 }
+subscribeBackgroundActivity(() => {
+  if (isBackgroundIdle()) stop()
+  else start()
+})
 
 // Wake the parked loop when playback resumes or a seek lands, so
 // subscribers don't miss the transition. (The lyrics window's progress

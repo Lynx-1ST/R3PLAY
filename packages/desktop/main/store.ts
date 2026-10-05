@@ -4,6 +4,8 @@ import log from './log'
 log.info('[electron] store.ts')
 
 export interface TypedElectronStore {
+  audioCacheDirectory?: string
+  audioCacheLimitGB?: number
   updateChannel?: 'stable' | 'dev'
   window: {
     width: number

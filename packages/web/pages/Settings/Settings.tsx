@@ -10,6 +10,8 @@ import About from './About'
 import Player from './Player'
 import KeyboardShortcuts from './KeyboardShortcuts'
 import Lab from './Lab'
+import Storage from './Storage'
+import Diagnostics from './Diagnostics'
 import PageTransition from '@/web/components/PageTransition'
 import { ease } from '@/web/utils/const'
 import useIsMobile from '@/web/hooks/useIsMobile'
@@ -20,6 +22,8 @@ export const categoryIds = [
   'player',
   'keyboard-shortcuts',
   'lab',
+  'storage',
+  'diagnostics',
   'about',
 ] as const
 export type Category = (typeof categoryIds)[number]
@@ -39,6 +43,8 @@ const Sidebar = ({
     { name: t`settings.player`, id: 'player' },
     { name: t`settings.keyboard-shortcuts.title`, id: 'keyboard-shortcuts' },
     { name: t`settings.lab.title`, id: 'lab' },
+    { name: t('settings.storage.title'), id: 'storage' },
+    { name: t('settings.diagnostics.title'), id: 'diagnostics' },
     { name: t`settings.about`, id: 'about' },
   ]
 
@@ -113,6 +119,8 @@ const Settings = () => {
     { id: 'player', component: <Player /> },
     { id: 'keyboard-shortcuts', component: <KeyboardShortcuts /> },
     { id: 'lab', component: <Lab /> },
+    { id: 'storage', component: <Storage /> },
+    { id: 'diagnostics', component: <Diagnostics /> },
     { id: 'about', component: <About /> },
   ]
 

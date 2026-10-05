@@ -15,12 +15,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import type { PlaybackQuality } from '@/shared/api/Track'
 import AudioOutputDevices from '@/web/components/Tools/Devices'
+import LastFm from './LastFm'
 
 function Player() {
   return (
     <div className='iterms-center flex w-full justify-between'>
       <div className='w-full'>
         <ListeningSessionSettings />
+        <LastFm />
         <PlaybackQualitySelector />
         {window.env?.isElectron && <AudioOutputDevices />}
         {window.env?.isElectron && <DiscordRpcSettings />}

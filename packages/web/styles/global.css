@@ -891,3 +891,6 @@ input[type='number']::-webkit-outer-spin-button {
 .dark .top-bar-frost {
   background-color: rgba(0, 0, 0, 0.32);
 }
+
+/* Pause visual work while minimized; music continues independently. */
+html[data-background-idle] *, html[data-background-idle] *::before, html[data-background-idle] *::after { animation-play-state: paused !important; }

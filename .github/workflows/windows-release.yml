@@ -116,6 +116,8 @@ jobs:
 
       - name: Build workspaces
         env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_API_SECRET: ${{ secrets.LASTFM_API_SECRET }}
           ELECTRON_WEB_SERVER_PORT: 42710
           ELECTRON_DEV_NETEASE_API_PORT: 30001
           UNBLOCK_SERVER_PORT: 30003

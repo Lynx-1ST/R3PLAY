@@ -16,7 +16,7 @@ const env = dotenv.config({
 })
 const envForEsbuild: Record<string, string> = {}
 Object.entries(env.parsed || {}).forEach(([key, value]) => {
-  envForEsbuild[`process.env.${key}`] = JSON.stringify(value)
+  envForEsbuild[`process.env.${key}`] = JSON.stringify(process.env[key] ?? value)
 })
 
 const argv = minimist(process.argv.slice(2))

@@ -13,6 +13,7 @@ import { CacheAPIs } from '@/shared/CacheAPIs'
 import { FetchTracksResponse, PlaybackQuality } from '@/shared/api/Track'
 import store from '@/desktop/main/store'
 import { db, Tables } from '@/desktop/main/db'
+import { audioCacheStorage } from '@/desktop/main/audioCache'
 const match = loadRuntimePackage('@unblockneteasemusic/server')
 
 log.info('[electron] appServer/routes/r3play/audio.ts')
@@ -27,12 +28,12 @@ const getAudioFromCache = async (id: number, level?: PlaybackQuality, fallback =
       (fallback
         ? row.source !== 'netease' && row.level === 'unknown'
         : row.source === 'netease' && (!level || row.level === level)) &&
-      fs.existsSync(`${app.getPath('userData')}/audio_cache/${row.fileName}`)
+      fs.existsSync(`${audioCacheStorage.directory}/${row.fileName}`)
   )
   if (!cache) return
   const audioFileName = cache.fileName
 
-  const isAudioFileExists = fs.existsSync(`${app.getPath('userData')}/audio_cache/${audioFileName}`)
+  const isAudioFileExists = fs.existsSync(`${audioCacheStorage.directory}/${audioFileName}`)
   if (!isAudioFileExists) return
 
   log.debug(`[server] Audio cache hit ${id}`)

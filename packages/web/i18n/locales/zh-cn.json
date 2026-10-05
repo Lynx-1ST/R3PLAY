@@ -176,7 +176,12 @@
       "title": "实验室",
       "description": "这里可能有一些测试功能",
       "startup-animation": "启动动画",
-      "startup-animation-description": "显示标志和开场效果，下次打开应用时生效。"
+      "startup-animation-description": "显示标志和开场效果，下次打开应用时生效。",
+      "crossfade": "交叉淡化",
+      "crossfade-description": "自动切歌时将当前歌曲结尾与下一首开头混合。单曲循环和私人 FM 保持正常播放。",
+      "crossfade-duration": "过渡时长",
+      "seconds": "{{count}} 秒",
+      "reduce-hidden": "最小化时减少特效和界面更新"
     },
     "unlock": "解锁更多歌源",
     "engine": "引擎",
@@ -256,7 +261,53 @@
     "session-title": "恢复收听会话",
     "session-description": "记住播放队列、歌曲、进度、音量和循环模式。重新打开时暂停，点击播放即可继续。",
     "session-enable": "启动时恢复收听会话",
-    "search-live-results": "输入搜索时显示歌曲"
+    "search-live-results": "输入搜索时显示歌曲",
+    "storage": {
+      "title": "存储",
+      "description": "优先清理最久未使用的音频缓存。保留正在播放、已打开及最近使用的文件，因此可能暂时超过限制。",
+      "files": "文件",
+      "loading": "正在读取缓存…",
+      "limit": "缓存上限",
+      "move-description": "选择父目录，将音频复制到 R3PLAYX-audio-cache。旧文件保留作备用；关闭应用后可自行删除旧缓存目录。",
+      "choose-folder": "选择目录",
+      "clear": "清理未使用缓存",
+      "refresh": "刷新",
+      "working": "正在处理… 请保持此窗口打开。",
+      "error": "无法更新缓存，请检查文件夹权限和磁盘空间。",
+      "desktop-only": "仅桌面应用可用。"
+    },
+    "diagnostics": {
+      "title": "诊断",
+      "description": "查看应用统计及近期警告和错误。导出仅包含此报告，隐藏凭据、URL 和个人路径。",
+      "version": "版本",
+      "platform": "平台",
+      "memory": "应用内存",
+      "uptime": "已运行",
+      "minutes": "分钟",
+      "recent-errors": "近期警告与错误",
+      "no-errors": "没有近期警告或错误。",
+      "export": "导出报告",
+      "saved": "报告已保存。",
+      "error": "无法读取或导出报告。"
+    },
+    "lastfm": {
+      "description": "连接 Last.fm，显示正在播放并记录实际听过的歌曲。暂停和跳转不计入收听时间。",
+      "unconfigured": "此版本尚未配置 Last.fm。",
+      "connected": "已连接：{{username}}",
+      "scrobble": "启用正在播放和收听记录",
+      "disconnect": "断开连接",
+      "pending": "{{count}} 条记录等待同步",
+      "login": "登录 Last.fm",
+      "complete": "我已授权",
+      "cancel": "取消",
+      "authorizing": "在浏览器授权后返回，应用将自动完成连接。",
+      "errors": {
+        "network": "Last.fm 暂时不可用，将保存并重试有效记录。",
+        "authorization": "授权失败，请重新连接。",
+        "invalid-session": "Last.fm 授权失效，请重新连接。",
+        "rejected": "Last.fm 拒绝了请求，请检查歌曲信息或 API 配置。"
+      }
+    }
   },
   "context-menu": {
     "share": "分享",

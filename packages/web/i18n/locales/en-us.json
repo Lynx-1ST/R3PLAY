@@ -176,7 +176,13 @@
       "title": "Lab",
       "description": "There are some experimental functions",
       "startup-animation": "Startup animation",
-      "startup-animation-description": "Show the logo and opening effects. Applies the next time you open the app."
+      "startup-animation-description": "Show the logo and opening effects. Applies the next time you open the app.",
+      "crossfade": "Crossfade",
+      "crossfade-description": "Blend the end of a song into the next one in your queue. Applies to automatic transitions; repeat-one and Personal FM use normal playback.",
+      "crossfade-duration": "Transition duration",
+      "seconds_one": "{{count}} second",
+      "seconds_other": "{{count}} seconds",
+      "reduce-hidden": "Reduce visual work while minimized"
     },
     "unlock": "Unlock More Music Source",
     "engine": "Engine",
@@ -256,7 +262,53 @@
     "session-title": "Listening session",
     "session-description": "Remember the queue, song, position, volume and repeat mode. Reopen paused so you can choose when to resume.",
     "session-enable": "Restore the listening session on startup",
-    "search-live-results": "Show songs while typing in search"
+    "search-live-results": "Show songs while typing in search",
+    "storage": {
+      "title": "Storage",
+      "description": "Audio cache is automatically trimmed by least recently used first. Playing, open and newly used files are kept; usage may temporarily exceed the limit.",
+      "files": "files",
+      "loading": "Loading cache…",
+      "limit": "Cache limit",
+      "move-description": "Choose a parent folder. Existing audio is copied into R3PLAYX-audio-cache. Old files are kept as a fallback; you can remove the old cache folder after closing the app.",
+      "choose-folder": "Choose folder",
+      "clear": "Clear unused cache",
+      "refresh": "Refresh",
+      "working": "Working… Keep this window open.",
+      "error": "Could not update the cache. Check folder permissions and available disk space.",
+      "desktop-only": "Available in the desktop app."
+    },
+    "diagnostics": {
+      "title": "Diagnostics",
+      "description": "View app statistics and recent warnings/errors. Export contains only this report, with credentials, URLs and personal paths removed.",
+      "version": "Version",
+      "platform": "Platform",
+      "memory": "App memory",
+      "uptime": "Running for",
+      "minutes": "minutes",
+      "recent-errors": "Recent warnings and errors",
+      "no-errors": "No recent warnings or errors.",
+      "export": "Export report",
+      "saved": "Report saved.",
+      "error": "Could not read or export the report."
+    },
+    "lastfm": {
+      "description": "Connect Last.fm to update Now Playing and scrobble tracks you actually listen to. Pauses and seeks do not count toward listening time.",
+      "unconfigured": "Last.fm is not configured in this build yet.",
+      "connected": "Connected as {{username}}",
+      "scrobble": "Enable Now Playing and scrobbling",
+      "disconnect": "Disconnect",
+      "pending": "{{count}} scrobbles waiting to sync",
+      "login": "Log in to Last.fm",
+      "complete": "I have authorized access",
+      "cancel": "Cancel",
+      "authorizing": "Approve access in your browser, then return here. Connection completes automatically.",
+      "errors": {
+        "network": "Last.fm is unavailable. Eligible scrobbles are kept and retried later.",
+        "authorization": "Authorization failed. Please try connecting again.",
+        "invalid-session": "Last.fm access expired or was revoked. Please reconnect.",
+        "rejected": "Last.fm rejected a request. Check track metadata or API configuration."
+      }
+    }
   },
   "context-menu": {
     "share": "Share",

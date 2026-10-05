@@ -1,4 +1,5 @@
 import { Howl, Howler } from 'howler'
+import { ref } from 'valtio'
 import {
   fetchAudioSourceWithReactQuery,
   fetchTracksWithReactQuery,
@@ -21,6 +22,7 @@ import settings from '@/web/states/settings'
 import { setAudioOutput } from './audioOutput'
 import { readListeningSession, moveQueueItem } from './listeningSession'
 import i18n from '@/web/i18n/i18n'
+import { isBackgroundIdle } from './backgroundActivity'
 
 type TrackID = number
 export enum TrackListSourceType {
@@ -58,6 +60,20 @@ export class Player {
   private _audioPrepared = false
   private _audioRequest = 0
   private _fadeRequest = 0
+  private _prefetch: {
+    index: number
+    id: number
+    key: string
+    howl: Howl
+    track: Track
+    info: Player['audioInfo']
+  } | null = null
+  private _prefetching = false
+  private _outgoing: Howl | null = null
+  private _crossfadeTimer: ReturnType<typeof setTimeout> | undefined
+  private _crossfadeAttempt = false
+  private _lastProgressAt = 0
+  private _prefetchVersion = 0
 
   state: State = State.Initializing
   mode: Mode = Mode.TrackList
@@ -251,6 +267,7 @@ export class Player {
     return this.state === State.Loading ? 0 : this._progress
   }
   set progress(value) {
+    this._cancelCrossfade()
     this._progress = value
     _howler.seek(value)
     this._onUserSeek?.()
@@ -289,7 +306,7 @@ export class Player {
     this._volume = clamp(value, 0, 1)
     this._fadeRequest++
     // User volume is applied globally; the per-track gain is only for fades.
-    _howler.volume(1)
+    if (!this._outgoing) _howler.volume(1)
     Howler.volume(this._volume)
     if (this.state === State.Paused) _howler.pause()
   }
@@ -313,6 +330,7 @@ export class Player {
   }
 
   private _setStateToLoading() {
+    this._cancelCrossfade()
     this._audioRequest++
     this._audioPrepared = false
     this._scrobble()
@@ -331,9 +349,149 @@ export class Player {
     this._progressInterval = setInterval(() => {
       if (this.state === State.Playing && _howler.state() === 'loaded') {
         const position = _howler.seek()
-        if (typeof position === 'number' && Number.isFinite(position)) this._progress = position
+        if (typeof position === 'number' && Number.isFinite(position)) {
+          if (!isBackgroundIdle() || Date.now() - this._lastProgressAt >= 2500) {
+            this._progress = position
+            this._lastProgressAt = Date.now()
+          }
+          this._checkCrossfade(position)
+        }
       }
     }, 500)
+  }
+
+  private _cancelCrossfade() {
+    this._prefetchVersion++
+    clearTimeout(this._crossfadeTimer)
+    this._outgoing?.unload()
+    this._outgoing = null
+    this._prefetch?.howl.unload()
+    this._prefetch = null
+    this._crossfadeAttempt = false
+    _howler.volume(1)
+  }
+
+  private _crossfadeKey() {
+    return `${this._audioRequest}:${this._nextTrackIndex}:${this.trackList[this._nextTrackIndex ?? -1]}:${settings.audioQuality}:${settings.audioEffect}`
+  }
+
+  private _checkCrossfade(position: number) {
+    if (
+      !settings.enableCrossfade ||
+      this.mode !== Mode.TrackList ||
+      this.repeatMode === RepeatMode.One
+    ) {
+      if (this._prefetch || this._outgoing) this._cancelCrossfade()
+      return
+    }
+    if (this._outgoing || this._crossfadeAttempt) return
+    const index = this._nextTrackIndex
+    if (index === undefined || this.trackList[index] === this.trackID) return
+    const seconds = Math.max(1, Math.min(12, Number(settings.crossfadeSeconds) || 3))
+    const remaining = _howler.duration() - position
+    if (remaining <= 0 || _howler.duration() <= seconds * 2) return
+    const key = this._crossfadeKey()
+    if (this._prefetch && this._prefetch.key !== key) this._cancelCrossfade()
+    if (!this._prefetch && !this._prefetching && remaining <= seconds + 15)
+      void this._prepareCrossfade(index, key)
+    const prepared = this._prefetch
+    if (!prepared || prepared.howl.state() !== 'loaded' || remaining > seconds) return
+    this._crossfadeAttempt = true
+    const previous = _howler
+    const duration = Math.min(seconds, remaining) * 1000
+    prepared.howl.once('play', () => {
+      if (
+        this._prefetch !== prepared ||
+        this.state !== State.Playing ||
+        this._crossfadeKey() !== key
+      ) {
+        prepared.howl.unload()
+        return
+      }
+      void this._scrobble()
+      this._trackIndex = prepared.index
+      this._track = prepared.track
+      this.audioInfo = prepared.info
+      void this._cacheAudio((prepared.howl as any)._src, { ...prepared.info, id: prepared.id })
+      this._progress = 0
+      this._prefetch = null
+      this._outgoing = ref(previous)
+      _howler = prepared.howl
+      ;(window as any).howler = _howler
+      this._updateMediaSessionMetaData()
+      previous.fade(previous.volume(), 0, duration)
+      _howler.fade(0, 1, duration)
+      this._crossfadeTimer = setTimeout(() => {
+        previous.unload()
+        if (this._outgoing === previous) this._outgoing = null
+        this._crossfadeAttempt = false
+      }, duration + 50)
+    })
+    prepared.howl.play()
+  }
+
+  private async _prepareCrossfade(index: number, key: string) {
+    this._prefetching = true
+    const version = this._prefetchVersion
+    try {
+      const id = this.trackList[index]
+      const [source, track] = await Promise.all([this._fetchAudioSource(id), this._fetchTrack(id)])
+      if (
+        version !== this._prefetchVersion ||
+        !source.audio ||
+        !track ||
+        key !== this._crossfadeKey() ||
+        !settings.enableCrossfade ||
+        this.state !== State.Playing
+      )
+        return
+      const howl = new Howl({
+        src: [
+          source.audio.includes('?')
+            ? `${source.audio}&dash-id=${id}`
+            : `${source.audio}?dash-id=${id}`,
+        ],
+        format: ['mp3', 'flac', 'webm'],
+        html5: true,
+        autoplay: false,
+        volume: 0,
+        onend: () => {
+          if (_howler === howl) this._howlerOnEndCallback()
+        },
+        onloaderror: () => {
+          if (this._prefetch?.howl === howl) this._cancelCrossfade()
+        },
+        onplayerror: () => {
+          if (this._prefetch?.howl === howl) this._cancelCrossfade()
+        },
+      })
+      this._prefetch = {
+        index,
+        id,
+        key,
+        // Howl owns native media elements; Valtio must preserve their identity.
+        howl: ref(howl),
+        track,
+        info: { bitrate: source.bitrate, format: source.format, level: source.level },
+      }
+      const node = (howl as any)._sounds?.[0]?._node
+      if (node instanceof HTMLMediaElement) {
+        node.crossOrigin = 'anonymous'
+        node.load()
+      }
+      await setAudioOutput(
+        settings.audioOutputDeviceId,
+        node instanceof HTMLMediaElement ? node : undefined
+      )
+      if (this._prefetch?.howl !== howl || key !== this._crossfadeKey()) howl.unload()
+    } catch {
+      if (version === this._prefetchVersion) {
+        this._prefetch?.howl.unload()
+        this._prefetch = null
+      }
+    } finally {
+      this._prefetching = false
+    }
   }
 
   private async _scrobble() {
@@ -362,6 +520,10 @@ export class Player {
   async setDevice(deviceId: MediaDeviceInfo['deviceId']) {
     const node = (_howler as any)._sounds?.[0]?._node
     await setAudioOutput(deviceId, node instanceof HTMLMediaElement ? node : undefined)
+    for (const howl of [this._prefetch?.howl, this._outgoing]) {
+      const other = (howl as any)?._sounds?.[0]?._node
+      if (other instanceof HTMLMediaElement) await setAudioOutput(deviceId, other)
+    }
     settings.audioOutputDeviceId = deviceId
   }
 
@@ -464,7 +626,7 @@ export class Player {
       autoplay,
       volume: 1,
       onend: () => {
-        this._howlerOnEndCallback()
+        if (_howler === howler) this._howlerOnEndCallback()
       },
       onloaderror: () => {
         if (_howler !== howler) return
@@ -617,6 +779,7 @@ export class Player {
    * @param {boolean} fade fade out
    */
   pause(fade: boolean = false) {
+    this._cancelCrossfade()
     const fadeRequest = ++this._fadeRequest
     const howler = _howler
     this.state = State.Paused
@@ -740,6 +903,7 @@ export class Player {
     this.originTrackList = this.originTrackList.filter(id => this.trackList.includes(id))
     if (index < this._trackIndex) this._trackIndex--
     if (!current) return
+    this._cancelCrossfade()
     this._audioRequest++
     this._audioPrepared = false
     _howler.stop()

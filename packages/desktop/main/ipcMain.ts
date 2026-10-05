@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, app } from 'electron'
+import { BrowserWindow, ipcMain, app, dialog } from 'electron'
 import { IpcChannels, IpcChannelsParams } from '@/shared/IpcChannels'
 import cache from './cache'
 import log from './log'
@@ -18,7 +18,9 @@ import { createMenu } from './menu'
 import { createDockMenu } from './dockMenu'
 import { DiscordPresence } from './discordRpc'
 import { trustedListener } from './utils/trustedIpc'
-import { audioCacheJobs } from './audioCache'
+import { audioCacheJobs, audioCacheStorage } from './audioCache'
+import { getDiagnostics, exportDiagnostics } from './diagnostics'
+import { lastfm } from './lastfm'
 
 const discordPresence = new DiscordPresence()
 
@@ -44,6 +46,53 @@ export function initIpcMain(
   store: Store<TypedElectronStore>
 ) {
   const { on } = trustedIpc(win)
+  const { handle } = trustedIpc(win)
+  handle(IpcChannels.LastFmStatus, () => lastfm.status())
+  handle(IpcChannels.LastFmConnect, () => lastfm.connect())
+  handle(IpcChannels.LastFmComplete, () => lastfm.complete())
+  handle(IpcChannels.LastFmDisconnect, () => lastfm.disconnect())
+  handle(IpcChannels.LastFmSetEnabled, (_event, params) => lastfm.setEnabled(params?.enabled))
+  on(IpcChannels.LastFmPlayback, (_event, playback) => lastfm.update(playback))
+  win?.webContents.on('did-start-loading', () => lastfm.reset())
+  win?.webContents.on('render-process-gone', () => lastfm.reset())
+  handle(IpcChannels.GetCacheStatus, () => audioCacheStorage.status())
+  on(IpcChannels.Play, (_event, params) => {
+    if (params?.trackID && Number.isSafeInteger(params.trackID))
+      audioCacheStorage.protectTrack(params.trackID)
+  })
+  handle(IpcChannels.SetCacheLimit, async (_event, params) => {
+    if (![1, 2, 5, 10, 20, 50].includes(params?.limitGB)) throw new Error('Invalid cache limit')
+    store.set('audioCacheLimitGB', params.limitGB)
+    return audioCacheStorage.trim()
+  })
+  handle(IpcChannels.ClearAudioCache, async () => {
+    await audioCacheJobs.cancelAll()
+    try {
+      return await audioCacheStorage.trim(true)
+    } finally {
+      audioCacheJobs.resume()
+    }
+  })
+  handle(IpcChannels.ChooseCacheDirectory, async () => {
+    if (!win) return null
+    const selected = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (selected.canceled || !selected.filePaths[0]) return null
+    await audioCacheJobs.cancelAll()
+    try {
+      const result = await audioCacheStorage.changeDirectory(
+        path.join(selected.filePaths[0], 'R3PLAYX-audio-cache'),
+        directory => store.set('audioCacheDirectory', directory)
+      )
+      audioCacheJobs.setDirectory(audioCacheStorage.directory)
+      return result
+    } finally {
+      audioCacheJobs.resume()
+    }
+  })
+  handle(IpcChannels.GetDiagnostics, () => getDiagnostics())
+  handle(IpcChannels.ExportDiagnostics, () => (win ? exportDiagnostics(win) : false))
   on(IpcChannels.GetSavedSettings, event => {
     event.returnValue = store.get('settings') ?? null
   })
@@ -77,7 +126,15 @@ export function initIpcMain(
  */
 function initWindowIpcMain(win: BrowserWindow | null) {
   const { on, handle } = trustedIpc(win)
-  handle(IpcChannels.IsWindowVisible, () => win?.isVisible() ?? false)
+  const syncVisibility = () => {
+    if (win && !win.isDestroyed())
+      win.webContents.send(IpcChannels.IsWindowVisible, win.isVisible() && !win.isMinimized())
+  }
+  win?.on('show', syncVisibility)
+  win?.on('hide', syncVisibility)
+  win?.on('minimize', syncVisibility)
+  win?.on('restore', syncVisibility)
+  handle(IpcChannels.IsWindowVisible, () => !!win?.isVisible() && !win.isMinimized())
   on(IpcChannels.Minimize, () => {
     win?.minimize()
   })
@@ -103,7 +160,7 @@ function initWindowIpcMain(win: BrowserWindow | null) {
   })
 
   on(IpcChannels.Close, () => {
-    app.exit()
+    app.quit()
   })
 
   on(IpcChannels.Hide, () => {
@@ -191,6 +248,12 @@ function initStoreIpcMain(
 function initOtherIpcMain(win: BrowserWindow | null) {
   const { on, handle } = trustedIpc(win)
   void audioCacheJobs.initialize().catch(error => log.warn('[audio cache] Recovery failed', error))
+  const maintenanceTimer = setInterval(() => {
+    void lastfm.flush()
+    void audioCacheStorage.trim().catch(() => log.warn('[audio cache] Maintenance failed'))
+  }, 60000)
+  maintenanceTimer.unref()
+  app.once('before-quit', () => clearInterval(maintenanceTimer))
   handle(IpcChannels.CacheAudio, (_event, request) => audioCacheJobs.submit(request))
   /**
    * 清除API缓存
@@ -256,8 +319,8 @@ function initOtherIpcMain(win: BrowserWindow | null) {
    * 获取音频缓存文件夹大小
    */
   on(IpcChannels.GetAudioCacheSize, event => {
-    fastFolderSize(path.join(app.getPath('userData'), './audio_cache'), (error, bytes) => {
-      if (error) throw error
+    fastFolderSize(audioCacheStorage.directory, (error, bytes) => {
+      if (error) log.warn('[audio cache] Could not read cache size')
       event.returnValue = prettyBytes(bytes ?? 0)
     })
   })

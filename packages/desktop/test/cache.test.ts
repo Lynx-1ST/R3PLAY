@@ -23,6 +23,7 @@ vi.doMock('../main/db', () => ({
   },
 }))
 vi.doMock('electron', () => ({ app: {} }))
+vi.doMock('../main/audioCache', () => ({ audioCacheStorage: { directory: './audio_cache' } }))
 vi.doMock('../main/log', () => ({ default: { info: vi.fn() } }))
 
 testCacheContract(async () => ({

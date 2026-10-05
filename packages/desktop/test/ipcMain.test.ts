@@ -22,6 +22,7 @@ vi.mock('electron', () => ({
 }))
 vi.mock('../main/cache', () => ({ default: { get: mocks.get, set: mocks.set } }))
 vi.mock('../main/audioCache', () => ({
+  audioCacheStorage: { protectTrack: vi.fn(), status: vi.fn(), trim: vi.fn() },
   audioCacheJobs: {
     submit: mocks.submitAudio,
     initialize: vi.fn(async () => {}),
@@ -29,6 +30,8 @@ vi.mock('../main/audioCache', () => ({
     resume: vi.fn(),
   },
 }))
+vi.mock('../main/lastfm', () => ({ lastfm: { reset: vi.fn(), update: vi.fn(), flush: vi.fn() } }))
+vi.mock('../main/diagnostics', () => ({ getDiagnostics: vi.fn(), exportDiagnostics: vi.fn() }))
 vi.mock('../main/log', () => ({ default: { info: vi.fn() } }))
 vi.mock('../main/db', () => ({
   db: { truncate: mocks.truncate, vacuum: mocks.vacuum },

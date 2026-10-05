@@ -4,8 +4,22 @@ import { RepeatMode } from './playerDataTypes'
 import type { DiscordPlayback } from './discordPresence'
 import type { AudioCacheRequest, AudioCacheReceipt } from './audioCache'
 import type { UpdateChannel, UpdateState } from './updates'
+import type { CacheStatus, Diagnostics } from './maintenance'
+import type { LastFmPlayback, LastFmStatus } from './lastfm'
 
 export const enum IpcChannels {
+  LastFmStatus = 'LastFmStatus',
+  LastFmConnect = 'LastFmConnect',
+  LastFmComplete = 'LastFmComplete',
+  LastFmDisconnect = 'LastFmDisconnect',
+  LastFmSetEnabled = 'LastFmSetEnabled',
+  LastFmPlayback = 'LastFmPlayback',
+  GetCacheStatus = 'GetCacheStatus',
+  ChooseCacheDirectory = 'ChooseCacheDirectory',
+  SetCacheLimit = 'SetCacheLimit',
+  ClearAudioCache = 'ClearAudioCache',
+  GetDiagnostics = 'GetDiagnostics',
+  ExportDiagnostics = 'ExportDiagnostics',
   UpdateState = 'UpdateState',
   SetUpdateChannel = 'SetUpdateChannel',
   DownloadUpdate = 'DownloadUpdate',
@@ -59,6 +73,18 @@ export const enum IpcChannels {
 
 // ipcMain.on params
 export interface IpcChannelsParams {
+  [IpcChannels.LastFmStatus]: void
+  [IpcChannels.LastFmConnect]: void
+  [IpcChannels.LastFmComplete]: void
+  [IpcChannels.LastFmDisconnect]: void
+  [IpcChannels.LastFmSetEnabled]: { enabled: boolean }
+  [IpcChannels.LastFmPlayback]: LastFmPlayback
+  [IpcChannels.GetCacheStatus]: void
+  [IpcChannels.ChooseCacheDirectory]: void
+  [IpcChannels.SetCacheLimit]: { limitGB: number }
+  [IpcChannels.ClearAudioCache]: void
+  [IpcChannels.GetDiagnostics]: void
+  [IpcChannels.ExportDiagnostics]: void
   [IpcChannels.IsWindowVisible]: void
   [IpcChannels.UpdateState]: void
   [IpcChannels.SetUpdateChannel]: { channel: UpdateChannel }
@@ -143,6 +169,18 @@ export interface IpcChannelsParams {
 
 // ipcRenderer.on params
 export interface IpcChannelsReturns {
+  [IpcChannels.LastFmStatus]: LastFmStatus
+  [IpcChannels.LastFmConnect]: LastFmStatus
+  [IpcChannels.LastFmComplete]: LastFmStatus
+  [IpcChannels.LastFmDisconnect]: LastFmStatus
+  [IpcChannels.LastFmSetEnabled]: LastFmStatus
+  [IpcChannels.LastFmPlayback]: void
+  [IpcChannels.GetCacheStatus]: CacheStatus
+  [IpcChannels.ChooseCacheDirectory]: CacheStatus | null
+  [IpcChannels.SetCacheLimit]: CacheStatus
+  [IpcChannels.ClearAudioCache]: CacheStatus
+  [IpcChannels.GetDiagnostics]: Diagnostics
+  [IpcChannels.ExportDiagnostics]: boolean
   [IpcChannels.IsWindowVisible]: boolean
   [IpcChannels.UpdateState]: UpdateState
   [IpcChannels.SetUpdateChannel]: UpdateState

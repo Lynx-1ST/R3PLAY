@@ -4,6 +4,18 @@ import { isLinux, isMac, isProd, isWindows } from './env'
 const { contextBridge, ipcRenderer } = require('electron')
 
 const allowedChannels = new Set<IpcChannels>([
+  IpcChannels.LastFmStatus,
+  IpcChannels.LastFmConnect,
+  IpcChannels.LastFmComplete,
+  IpcChannels.LastFmDisconnect,
+  IpcChannels.LastFmSetEnabled,
+  IpcChannels.LastFmPlayback,
+  IpcChannels.GetCacheStatus,
+  IpcChannels.ChooseCacheDirectory,
+  IpcChannels.SetCacheLimit,
+  IpcChannels.ClearAudioCache,
+  IpcChannels.GetDiagnostics,
+  IpcChannels.ExportDiagnostics,
   IpcChannels.CacheAudio,
   IpcChannels.DiscordPlayback,
   IpcChannels.ClearAPICache,

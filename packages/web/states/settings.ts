@@ -6,6 +6,9 @@ import { getKeyboardShortcutDefaultSettings } from '@/shared/defaultSettings'
 import type { PlaybackQuality } from '@/shared/api/Track'
 
 interface Settings {
+  reduceWhenHidden: boolean
+  enableCrossfade: boolean
+  crossfadeSeconds: number
   enableStartupAnimation: boolean
   showSearchSuggestions: boolean
   restoreListeningSession: boolean
@@ -58,6 +61,9 @@ export const isLowPowerDevice = () => {
 }
 
 const initSettings: Settings = {
+  reduceWhenHidden: true,
+  enableCrossfade: false,
+  crossfadeSeconds: 3,
   enableStartupAnimation: true,
   showSearchSuggestions: true,
   restoreListeningSession: true,
