@@ -5,6 +5,7 @@ import settings from './states/settings'
 import toast from 'react-hot-toast'
 import { changeAccentColor, changeTheme } from './utils/theme'
 import { RepeatMode } from '@/shared/playerDataTypes'
+import reactQueryClient from './utils/reactQueryClient'
 
 const on = <T extends keyof IpcChannelsParams & keyof IpcChannelsReturns>(
   channel: T,
@@ -14,6 +15,9 @@ const on = <T extends keyof IpcChannelsParams & keyof IpcChannelsReturns>(
 }
 
 export function ipcRenderer() {
+  on(IpcChannels.LastFmStatus, (_event, status) => {
+    reactQueryClient.setQueryData(['lastfm-status'], status)
+  })
   on(IpcChannels.Play, (e, { trackID }) => {
     if (!trackID) {
       player.play(true)

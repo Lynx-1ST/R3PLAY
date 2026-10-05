@@ -26,7 +26,18 @@ const store = new Store<{
 })
 class LastFmService {
   private client = new LastFmClient(apiKey, apiSecret)
-  private data = new LastFmData((method, params) => this.client.read(method, params))
+  private data = new LastFmData((method, params, signal) =>
+    this.client.read(method, params, signal)
+  )
+  onStatusChange?: (status: LastFmStatus) => void
+  private publishedStatus = ''
+  private publishStatus() {
+    const status = this.status()
+    const key = JSON.stringify(status)
+    if (key === this.publishedStatus) return
+    this.publishedStatus = key
+    this.onStatusChange?.(status)
+  }
   private loveBusy = new Set<string>()
   private cachedSession: Session | null | undefined
   private token: string | null = null
@@ -43,10 +54,12 @@ class LastFmService {
       const pending = store.get('pending')
       if (pending.length >= 500) {
         this.error = 'rejected'
+        this.publishStatus()
         return
       }
       pending.push(record)
       store.set('pending', pending)
+      this.publishStatus()
       void this.flush()
     }
   )
@@ -90,6 +103,7 @@ class LastFmService {
       this.listening.reset()
       this.data.clear()
     }
+    this.publishStatus()
   }
   async connect() {
     if (this.authBusy) return this.status()
@@ -114,6 +128,7 @@ class LastFmService {
       if (generation === this.generation) this.fail(error)
     } finally {
       if (generation === this.generation) this.authBusy = false
+      this.publishStatus()
     }
     return this.status()
   }
@@ -148,6 +163,7 @@ class LastFmService {
         this.fail(error)
     } finally {
       if (generation === this.generation) this.authBusy = false
+      this.publishStatus()
     }
     return this.status()
   }
@@ -162,12 +178,14 @@ class LastFmService {
     store.set('pending', [])
     this.listening.reset()
     this.error = undefined
+    this.publishStatus()
     return this.status()
   }
   setEnabled(enabled: boolean) {
     if (typeof enabled !== 'boolean') throw new Error('Invalid Last.fm setting')
     store.set('enabled', enabled)
     this.listening.reset()
+    this.publishStatus()
     return this.status()
   }
   async read(request: LastFmReadRequest): Promise<LastFmReadResult> {
@@ -194,7 +212,7 @@ class LastFmService {
         sk: session.key,
       })
       if (generation !== this.generation) return { error: 'cancelled' }
-      this.data.clear()
+      this.data.clear(false)
       return { loved: request.loved }
     } catch (error) {
       if (generation !== this.generation) return { error: 'cancelled' }
@@ -254,6 +272,7 @@ class LastFmService {
       }
     } finally {
       this.flushing = false
+      this.publishStatus()
     }
   }
 }

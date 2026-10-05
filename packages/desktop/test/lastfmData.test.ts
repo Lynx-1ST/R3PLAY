@@ -37,12 +37,16 @@ it('deduplicates reads, normalizes singleton records and invalidates cached data
     data.read({ kind: 'recent', page: 2 }, 'rj'),
   ])
   expect(read).toHaveBeenCalledTimes(1)
-  expect(read).toHaveBeenCalledWith('user.getRecentTracks', {
-    user: 'rj',
-    page: '2',
-    limit: '30',
-    extended: '1',
-  })
+  expect(read).toHaveBeenCalledWith(
+    'user.getRecentTracks',
+    {
+      user: 'rj',
+      page: '2',
+      limit: '30',
+      extended: '1',
+    },
+    expect.any(AbortSignal)
+  )
   expect(results[0]).toMatchObject({
     page: 2,
     pages: 5,
@@ -66,7 +70,7 @@ it('uses an explicit public user and does not require sign-in for charts', async
   expect(await data.read({ kind: 'profile', username: 'other' }, 'owner')).toMatchObject({
     profile: { name: 'other', scrobbles: 123 },
   })
-  expect(read).toHaveBeenLastCalledWith('user.getInfo', { user: 'other' })
+  expect(read).toHaveBeenLastCalledWith('user.getInfo', { user: 'other' }, expect.any(AbortSignal))
   expect(await data.read({ kind: 'chart-tracks' })).toMatchObject({ tracks: [] })
 })
 it('does not cache malformed payloads or leak upstream errors', async () => {
@@ -154,4 +158,38 @@ it('bounds queued requests and cancels queued work after account changes', async
   const results = await Promise.all(requests)
   expect(results.every(result => result.error === 'cancelled')).toBe(true)
   expect(read).toHaveBeenCalledTimes(1)
+})
+it('starts the new account without waiting for an old request and rejects its stale rate limit', async () => {
+  let rejectOld!: (error: unknown) => void
+  let oldSignal!: AbortSignal
+  const read = vi
+    .fn()
+    .mockImplementationOnce((_method, _params, signal) => {
+      oldSignal = signal
+      return new Promise((_resolve, reject) => {
+        rejectOld = reject
+      })
+    })
+    .mockResolvedValue({ user: { name: 'new' } })
+  const data = new LastFmData(read, 0)
+  const old = data.read({ kind: 'profile' }, 'old')
+  await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(1))
+  data.clear()
+  expect(oldSignal.aborted).toBe(true)
+  expect(await data.read({ kind: 'profile' }, 'new')).toMatchObject({ profile: { name: 'new' } })
+  rejectOld(new LastFmError(29))
+  expect(await old).toMatchObject({ error: 'cancelled' })
+  expect(await data.read({ kind: 'profile', username: 'third' })).not.toHaveProperty('error')
+})
+it('resets account backoff but preserves it for a metadata-only invalidation', async () => {
+  const read = vi
+    .fn()
+    .mockRejectedValueOnce(new LastFmError(29))
+    .mockResolvedValue({ user: { name: 'new' } })
+  const data = new LastFmData(read, 0)
+  await data.read({ kind: 'profile' }, 'old')
+  data.clear(false)
+  expect(await data.read({ kind: 'profile' }, 'new')).toMatchObject({ error: 'rate-limited' })
+  data.clear()
+  expect(await data.read({ kind: 'profile' }, 'new')).toMatchObject({ profile: { name: 'new' } })
 })

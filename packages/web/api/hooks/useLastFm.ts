@@ -3,14 +3,13 @@ import { IpcChannels } from '@/shared/IpcChannels'
 import type { LastFmReadRequest, LastFmReadResult } from '@/shared/lastfm'
 import { useEffect } from 'react'
 
-export function useLastFmStatus() {
+export function useLastFmStatus(enabled = true) {
   return useQuery({
     queryKey: ['lastfm-status'],
     queryFn: () => window.ipcRenderer!.invoke(IpcChannels.LastFmStatus),
-    enabled: !!window.env?.isElectron,
-    staleTime: 5000,
-    refetchInterval: 10000,
-    refetchOnWindowFocus: true,
+    enabled: !!window.env?.isElectron && enabled,
+    staleTime: Infinity,
+    refetchOnWindowFocus: 'always',
     retry: 1,
   })
 }

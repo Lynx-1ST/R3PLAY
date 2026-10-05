@@ -20,12 +20,18 @@ export class LastFmClient {
     private secret: string,
     private request: typeof fetch = fetch
   ) {}
-  async read(method: string, values: Record<string, string> = {}): Promise<unknown> {
+  async read(
+    method: string,
+    values: Record<string, string> = {},
+    signal?: AbortSignal
+  ): Promise<unknown> {
     const params = new URLSearchParams({ ...values, method, api_key: this.key, format: 'json' })
     const response = await this.request(`https://ws.audioscrobbler.com/2.0/?${params}`, {
       method: 'GET',
       headers: { 'User-Agent': 'R3PLAYX/Last.fm' },
-      signal: AbortSignal.timeout(15000),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
+        : AbortSignal.timeout(15000),
     })
     if (response.status === 429) throw new LastFmError(29)
     const result = await response.json()

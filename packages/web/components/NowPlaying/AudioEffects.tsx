@@ -18,8 +18,9 @@ export default function AudioEffects({ mini }: { mini: boolean }) {
   const [position, setPosition] = useState({ left: 0, top: 0 })
   useLayoutEffect(() => {
     if (!open) return
-    let frame: number
+    let frame: number | null = null
     const update = () => {
+      frame = null
       const anchor = root.current?.getBoundingClientRect()
       const menu = panel.current?.getBoundingClientRect()
       if (anchor && menu) {
@@ -41,10 +42,28 @@ export default function AudioEffects({ mini }: { mini: boolean }) {
           previous.left === left && previous.top === top ? previous : { left, top }
         )
       }
-      frame = requestAnimationFrame(update)
     }
+    const schedule = () => {
+      if (frame === null) frame = requestAnimationFrame(update)
+    }
+    const observer = new ResizeObserver(schedule)
+    // Layout shifts in the fixed player (queue collapse, fonts, viewport) can
+    // move the anchor even if its own dimensions stay the same.
+    let ancestor: HTMLElement | null = root.current
+    while (ancestor && ancestor !== document.body) {
+      observer.observe(ancestor)
+      ancestor = ancestor.parentElement
+    }
+    if (panel.current) observer.observe(panel.current)
+    window.addEventListener('resize', schedule)
+    window.addEventListener('scroll', schedule, true)
     update()
-    return () => cancelAnimationFrame(frame)
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame)
+      observer.disconnect()
+      window.removeEventListener('resize', schedule)
+      window.removeEventListener('scroll', schedule, true)
+    }
   }, [open, mini])
   const { trackID } = useSnapshot(player)
   const { data: user } = useUser()

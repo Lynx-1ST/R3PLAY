@@ -151,3 +151,44 @@ it('uses signed writes for the authenticated account and handles invalid session
   })
   expect(lastfm.status().connected).toBe(false)
 })
+it('publishes safe status changes for auth, toggles, queued uploads and invalid sessions', async () => {
+  const { lastfm } = await import('../main/lastfm')
+  const listener = vi.fn()
+  lastfm.onStatusChange = listener
+  await lastfm.connect()
+  expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ authorizing: true }))
+  await lastfm.complete()
+  expect(listener).toHaveBeenLastCalledWith(
+    expect.objectContaining({ connected: true, username: 'test-user' })
+  )
+  lastfm.setEnabled(false)
+  expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }))
+  lastfm.setEnabled(true)
+  mocks.fetch.mockImplementation(async (_url, options) => {
+    if (options.body?.get('method') === 'track.scrobble') throw new Error('offline')
+    return new Response('{}')
+  })
+  const track = {
+    playing: true,
+    trackId: 1,
+    title: 'Song',
+    artist: 'Artist',
+    album: 'Album',
+    duration: 100,
+    progress: 0,
+  }
+  for (let i = 0; i <= 52; i += 2) {
+    lastfm.update({ ...track, progress: i })
+    await vi.advanceTimersByTimeAsync(2000)
+  }
+  expect(listener).toHaveBeenCalledWith(expect.objectContaining({ pending: 1 }))
+  expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ error: 'network' }))
+  mocks.fetch.mockResolvedValueOnce(new Response(JSON.stringify({ error: 9 })))
+  await lastfm.love({ artist: 'Artist', track: 'Song', loved: true })
+  expect(listener).toHaveBeenLastCalledWith(
+    expect.objectContaining({ connected: false, error: 'invalid-session' })
+  )
+  const serialized = JSON.stringify(listener.mock.calls)
+  for (const privateValue of [key, secret, sessionKey])
+    expect(serialized).not.toContain(privateValue)
+})

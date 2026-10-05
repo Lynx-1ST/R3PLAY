@@ -9,6 +9,7 @@ import { useEffectOnce } from 'react-use'
 import { useSnapshot } from 'valtio'
 import { appName } from './utils/const'
 import settings from './states/settings'
+import { useLastFmStatus } from './api/hooks/useLastFm'
 
 // See utils/isLyricsWindow.ts — the lyrics window is a read-only consumer
 // of player state pushed from the main window; it never sends these events
@@ -20,8 +21,10 @@ const IpcRendererReact = () => {
   const { track, state, trackID } = useSnapshot(player)
   const { enableDiscordRpc, language } = useSnapshot(settings)
   const trackIDRef = useRef(0)
+  const { data: lastfm } = useLastFmStatus(!isLyricsWindow)
+  const scrobbling = !!lastfm?.configured && !!lastfm.connected && lastfm.enabled
   useEffect(() => {
-    if (!window.env?.isElectron || isLyricsWindow) return
+    if (!window.env?.isElectron || isLyricsWindow || !scrobbling) return
     const sync = () => {
       const current = player.track
       window.ipcRenderer?.send(IpcChannels.LastFmPlayback, {
@@ -35,9 +38,10 @@ const IpcRendererReact = () => {
       })
     }
     sync()
-    const timer = setInterval(sync, 1000)
+    if (state !== PlayerState.Playing) return
+    const timer = setInterval(sync, 2000)
     return () => clearInterval(timer)
-  }, [trackID, state])
+  }, [trackID, state, scrobbling, lastfm?.username])
 
   useEffect(() => {
     if (!window.env?.isElectron || isLyricsWindow || !enableDiscordRpc) return
@@ -55,6 +59,7 @@ const IpcRendererReact = () => {
       })
     }
     syncPresence()
+    if (state !== PlayerState.Playing) return
     const timer = setInterval(syncPresence, 5000)
     return () => clearInterval(timer)
   }, [enableDiscordRpc, track, state, language])

@@ -9,6 +9,7 @@ import type {
 } from '../../../shared/lastfm'
 import { LastFmError } from './lastfmClient'
 import { decodeHTML } from 'entities'
+import { setTimeout as wait } from 'node:timers/promises'
 
 type ObjectValue = Record<string, unknown>
 const object = (value: unknown): ObjectValue =>
@@ -118,14 +119,26 @@ export class LastFmData {
   private lastStart = 0
   private generation = 0
   private retryAfter = 0
+  private controller = new AbortController()
   constructor(
-    private fetch: (method: string, params: Record<string, string>) => Promise<unknown>,
+    private fetch: (
+      method: string,
+      params: Record<string, string>,
+      signal?: AbortSignal
+    ) => Promise<unknown>,
     private spacing = 750
   ) {}
-  clear() {
+  clear(resetScheduling = true) {
     this.generation++
+    this.controller.abort()
+    this.controller = new AbortController()
     this.cache.clear()
     this.pending.clear()
+    this.queue = Promise.resolve()
+    if (resetScheduling) {
+      this.lastStart = 0
+      this.retryAfter = 0
+    }
   }
   async read(input: LastFmReadRequest, owner?: string): Promise<LastFmReadResult> {
     const q = object(input)
@@ -187,15 +200,22 @@ export class LastFmData {
     if (Date.now() < this.retryAfter) return empty('rate-limited')
     if (this.pending.size >= 8) return empty('rate-limited')
     const generation = this.generation
+    const signal = this.controller.signal
     const job = this.queue.then(async () => {
       if (generation !== this.generation) return empty('cancelled')
       if (Date.now() < this.retryAfter) return empty('rate-limited')
       const delay = Math.max(0, this.lastStart + this.spacing - Date.now())
-      if (delay) await new Promise(resolve => setTimeout(resolve, delay))
+      if (delay) {
+        try {
+          await wait(delay, undefined, { signal })
+        } catch {
+          return empty('cancelled')
+        }
+      }
       if (generation !== this.generation) return empty('cancelled')
       this.lastStart = Date.now()
       try {
-        const response = object(await this.fetch(method, params))
+        const response = object(await this.fetch(method, params, signal))
         if (generation !== this.generation) return empty('cancelled')
         if (!response[root] || typeof response[root] !== 'object') return empty('network')
         const result = normalize(kind, object(response[root]))
@@ -207,6 +227,7 @@ export class LastFmData {
         })
         return result
       } catch (error) {
+        if (generation !== this.generation) return empty('cancelled')
         const reason = lastFmDataError(error)
         if (reason === 'rate-limited') this.retryAfter = Date.now() + 30000
         return empty(reason)

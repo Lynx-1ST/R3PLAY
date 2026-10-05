@@ -5,15 +5,15 @@ import { IpcChannels } from '@/shared/IpcChannels'
 import { BlockTitle, Option, OptionText, Switch } from './Controls'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { useLastFmStatus } from '@/web/api/hooks/useLastFm'
 
 export default function LastFm() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const [status, setStatus] = useState<LastFmStatus>()
+  const { data: status, isError } = useLastFmStatus()
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
   const updateStatus = (value: LastFmStatus | undefined) => {
-    setStatus(value)
     queryClient.setQueryData(['lastfm-status'], value)
   }
   const run = async (action: () => Promise<LastFmStatus | undefined>) => {
@@ -27,23 +27,6 @@ export default function LastFm() {
       setBusy(false)
     }
   }
-  useEffect(() => {
-    let cancelled = false
-    const refresh = async () => {
-      try {
-        const result = await window.ipcRenderer?.invoke(IpcChannels.LastFmStatus)
-        if (!cancelled) updateStatus(result)
-      } catch {
-        if (!cancelled) setFailed(true)
-      }
-    }
-    void refresh()
-    window.addEventListener('focus', refresh)
-    return () => {
-      cancelled = true
-      window.removeEventListener('focus', refresh)
-    }
-  }, [])
   useEffect(() => {
     if (!status?.authorizing) return
     let cancelled = false,
@@ -156,7 +139,7 @@ export default function LastFm() {
           {t('settings.lastfm.authorizing')}
         </p>
       )}
-      {(failed || status?.error) && (
+      {(failed || isError || status?.error) && (
         <p role='alert' className='mt-3 text-sm text-red-600'>
           {t(`settings.lastfm.errors.${status?.error ?? 'network'}`)}
         </p>

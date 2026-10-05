@@ -1,5 +1,7 @@
 import { cloudSearch } from '@/web/api/search'
 import { matchLastFmTrack, normalizeLastFmName } from './lastfmMatch'
+import { AbortableQueue } from './abortableQueue'
+import { readArtworkCache, writeArtworkCache } from './artworkCache'
 
 export type ArtworkTarget = {
   kind: 'track' | 'artist' | 'album'
@@ -7,6 +9,15 @@ export type ArtworkTarget = {
   artist?: string
   album?: string
 }
+export const artworkIdentity = (target?: ArtworkTarget) =>
+  target
+    ? JSON.stringify([
+        target.kind,
+        normalizeLastFmName(target.name),
+        target.kind === 'artist' ? '' : normalizeLastFmName(target.artist || ''),
+        target.kind === 'track' ? normalizeLastFmName(target.album || '') : '',
+      ])
+    : ''
 const safeImage = (value?: string) => {
   try {
     const url = new URL(value || '')
@@ -64,19 +75,14 @@ export function selectArtwork(
 }
 
 // Keep passive artwork lookups from flooding the interactive search endpoint.
-let active = 0
-const waiting: (() => void)[] = []
+const queue = new AbortableQueue(2)
 export async function resolveArtwork(target: ArtworkTarget, signal: AbortSignal) {
-  await new Promise<void>(resolve => {
-    const start = () => {
-      active++
-      resolve()
-    }
-    if (active < 2) start()
-    else waiting.push(start)
-  })
-  try {
-    if (signal.aborted) return ''
+  if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
+  const key = artworkIdentity(target)
+  const cached = await readArtworkCache(key)
+  if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
+  if (cached !== undefined) return cached ? safeImage(cached) : ''
+  return queue.run(async () => {
     const response = await cloudSearch(
       {
         keywords: target.kind === 'artist' ? target.name : `${target.name} ${target.artist || ''}`,
@@ -86,9 +92,9 @@ export async function resolveArtwork(target: ArtworkTarget, signal: AbortSignal)
       { signal, timeout: 8000 }
     )
     if (response.code !== 200) throw new Error('artwork search failed')
-    return selectArtwork(target, response.result || {})
-  } finally {
-    active--
-    waiting.shift()?.()
-  }
+    if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
+    const image = selectArtwork(target, response.result || {})
+    await writeArtworkCache(key, image)
+    return image
+  }, signal)
 }

@@ -47,6 +47,10 @@ export function initIpcMain(
 ) {
   const { on } = trustedIpc(win)
   const { handle } = trustedIpc(win)
+  lastfm.onStatusChange = status => {
+    if (win && !win.isDestroyed() && !win.webContents.isDestroyed())
+      win.webContents.send(IpcChannels.LastFmStatus, status)
+  }
   handle(IpcChannels.LastFmStatus, () => lastfm.status())
   handle(IpcChannels.LastFmRead, (_event, params) => lastfm.read(params))
   handle(IpcChannels.LastFmLove, (_event, params) => lastfm.love(params))

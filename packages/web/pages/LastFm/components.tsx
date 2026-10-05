@@ -15,7 +15,7 @@ import { matchLastFmTrack } from '@/web/utils/lastfmMatch'
 import player from '@/web/states/player'
 import toast from 'react-hot-toast'
 import { useQuery } from '@tanstack/react-query'
-import { resolveArtwork, type ArtworkTarget } from '@/web/utils/lastfmArtwork'
+import { resolveArtwork, artworkIdentity, type ArtworkTarget } from '@/web/utils/lastfmArtwork'
 
 export const buttonClass =
   'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black/5 px-4 py-2 text-sm font-semibold transition-colors hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-color-600 disabled:opacity-50 dark:bg-white/10 dark:hover:bg-white/15'
@@ -50,7 +50,7 @@ export function Artwork({
     return () => observer.disconnect()
   }, [])
   const fallback = useQuery({
-    queryKey: ['lastfm-artwork', target],
+    queryKey: ['lastfm-artwork', artworkIdentity(target)],
     queryFn: ({ signal }) => resolveArtwork(target!, signal),
     enabled: visible && !!target && (!src || failedSources.includes(src)),
     staleTime: 24 * 60 * 60 * 1000,

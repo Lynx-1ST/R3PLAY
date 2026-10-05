@@ -1,7 +1,17 @@
 import { describe, it, expect, vi } from 'vitest'
 vi.mock('@/web/api/search', () => ({ cloudSearch: vi.fn() }))
-import { selectArtwork } from '@/web/utils/lastfmArtwork'
+import { selectArtwork, artworkIdentity } from '@/web/utils/lastfmArtwork'
 describe('Last.fm artwork identity', () => {
+  it('shares equivalent metadata keys while keeping albums and entity types distinct', () => {
+    const target = { kind: 'track' as const, name: 'Luv', artist: 'Travis', album: 'Album' }
+    expect(artworkIdentity(target)).toBe(
+      artworkIdentity({ ...target, name: 'ＬＵＶ', artist: ' travis ', album: 'album' })
+    )
+    expect(artworkIdentity(target)).not.toBe(artworkIdentity({ ...target, album: 'Live' }))
+    expect(artworkIdentity({ kind: 'artist', name: 'Ash' })).not.toBe(
+      artworkIdentity({ kind: 'album', name: 'Ash', artist: 'Ash' })
+    )
+  })
   it('uses the matching recording rather than the first search cover', () => {
     const song = (id: number, artist: string) =>
       ({
