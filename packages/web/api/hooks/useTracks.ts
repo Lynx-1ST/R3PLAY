@@ -7,20 +7,32 @@ import {
   FetchTracksParams,
   FetchTracksResponse,
   TrackApiNames,
-  UnblockParam,
-  UnblockResponse,
 } from '@/shared/api/Track'
 import { CacheAPIs } from '@/shared/CacheAPIs'
 import { useQuery } from '@tanstack/react-query'
 import settings from '@/web/states/settings'
+import { useCallback, useMemo } from 'react'
+import { AbortableQueue } from '@/web/utils/abortableQueue'
 
-export async function fetchLongTracks(params: FetchTracksParams) {
+export async function fetchLongTracks(params: FetchTracksParams, signal?: AbortSignal) {
+  const controller = new AbortController()
+  const requestSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal
+  const queue = new AbortableQueue(4)
   const promiseArr: Promise<FetchTracksResponse>[] = []
   for (let offset = 0; offset < params.ids.length; offset += 500) {
-    promiseArr.push(fetchTracks({ ...params, ids: params.ids.slice(offset, offset + 500) }))
+    const ids = params.ids.slice(offset, offset + 500)
+    promiseArr.push(
+      queue.run(() => fetchTracks({ ...params, ids }, { signal: requestSignal }), requestSignal)
+    )
   }
 
-  const results = await Promise.all(promiseArr)
+  let results: FetchTracksResponse[]
+  try {
+    results = await Promise.all(promiseArr)
+  } catch (error) {
+    controller.abort()
+    throw error
+  }
   const mergedResponse: FetchTracksResponse = results.reduce(
     (acc, curr) => {
       // 合并 code 字段
@@ -47,20 +59,44 @@ export async function fetchLongTracks(params: FetchTracksParams) {
   return mergedResponse
 }
 
-export default function useTracks(params: FetchTracksParams) {
-  return useQuery({
-    queryKey: [TrackApiNames.FetchTracks, params],
-    queryFn: async () => {
-      // fetch from cache as initial data
+const canonicalTrackIds = (ids: number[]) => [...new Set(ids)].sort((a, b) => a - b)
+function orderTracks(data: FetchTracksResponse, ids: number[]): FetchTracksResponse {
+  if (!data.songs) return data
+  const byId = new Map(data.songs.map(track => [track.id, track]))
+  return {
+    ...data,
+    songs: ids.flatMap(id => {
+      const track = byId.get(id)
+      return track ? [track] : []
+    }),
+  }
+}
+function trackMetadataOptions(ids: number[]) {
+  return {
+    // Metadata belongs to a set of songs, while playback order belongs to the
+    // caller. One response can serve reordered queues and duplicate entries.
+    queryKey: [TrackApiNames.FetchTracks, 'metadata', { ids }] as const,
+    queryFn: async ({ signal }: { signal: AbortSignal }): Promise<FetchTracksResponse> => {
       const cache = await window.ipcRenderer?.invoke(IpcChannels.GetApiCache, {
         api: CacheAPIs.Track,
-        query: {
-          ids: params.ids.join(','),
-        },
+        query: { ids: ids.join(',') },
       })
-      if (cache) return cache
-      return await fetchLongTracks(params)
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
+      if (cache) return cache as FetchTracksResponse
+      return fetchLongTracks({ ids }, signal)
     },
+  }
+}
+
+export default function useTracks(params: FetchTracksParams) {
+  const ids = useMemo(() => canonicalTrackIds(params.ids), [params.ids])
+  const select = useCallback(
+    (data: FetchTracksResponse) => orderTracks(data, params.ids),
+    [params.ids]
+  )
+  return useQuery({
+    ...trackMetadataOptions(ids),
+    select,
     enabled: params.ids.length !== 0,
     refetchInterval: false,
     refetchOnWindowFocus: false,
@@ -69,24 +105,16 @@ export default function useTracks(params: FetchTracksParams) {
 }
 
 export function fetchTracksWithReactQuery(params: FetchTracksParams) {
-  return reactQueryClient.fetchQuery({
-    queryKey: [TrackApiNames.FetchTracks, params],
-    queryFn: async () => {
-      const cache = await window.ipcRenderer?.invoke(IpcChannels.GetApiCache, {
-        api: CacheAPIs.Track,
-        query: {
-          ids: params.ids.join(','),
-        },
-      })
-      if (cache) return cache as FetchTracksResponse
-      return fetchTracks(params)
-    },
-    retry: 4,
-    retryDelay: (retryCount: number) => {
-      return retryCount * 500
-    },
-    staleTime: 86400000,
-  })
+  return reactQueryClient
+    .fetchQuery({
+      ...trackMetadataOptions(canonicalTrackIds(params.ids)),
+      retry: 4,
+      retryDelay: (retryCount: number) => {
+        return retryCount * 500
+      },
+      staleTime: 86400000,
+    })
+    .then(data => orderTracks(data, params.ids))
 }
 
 export function fetchAudioSourceWithReactQuery(params: FetchAudioSourceParams) {

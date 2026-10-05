@@ -1,4 +1,4 @@
-import { subscribe as subscribeState } from 'valtio'
+import { subscribeKey } from 'valtio/utils'
 import player from '@/web/states/player'
 import settings, { isLowPowerDevice } from '@/web/states/settings'
 import { State } from '@/web/utils/player'
@@ -70,7 +70,7 @@ const tickIntervalMs = () =>
 
 function getHowlerAudioElement(): HTMLMediaElement | null {
   try {
-    const howler: any = (window as any).howler
+    const howler = (window as Window & { howler?: { _sounds?: { _node?: unknown }[] } }).howler
     if (!howler?._sounds?.length) return null
     const node = howler._sounds[0]._node
     return node instanceof HTMLMediaElement ? node : null
@@ -83,8 +83,9 @@ function tryConnect(audioEl: HTMLMediaElement) {
   if (webAudioFailed) return
   try {
     if (!sharedCtx || sharedCtx.state === 'closed') {
-      const Ctor: typeof AudioContext =
-        (window as any).AudioContext || (window as any).webkitAudioContext
+      const Ctor =
+        window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
       if (!Ctor) {
         webAudioFailed = true
         return
@@ -134,12 +135,16 @@ function dispatch() {
 const tick = (now: number) => {
   // When the window/tab is hidden (minimized, background tab, system
   // sleep) or simply unfocused (user is in another app), nobody can
-  // see the breathing light, so skip reading the analyser and firing
-  // listeners entirely. RAF stays scheduled — the browser already
-  // throttles hidden tabs — and we keep decaying toward 0 so the next
-  // visible frame doesn't start from a stale loud value.
+  // see the breathing light, so skip reading the analyser. Preserve the
+  // existing decay curve, then park when its visible value reaches silence.
   if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
     smoothed = smoothed * 0.9
+    if (Math.round(smoothed * 1000) === 0) {
+      smoothed = 0
+      dispatch()
+      rafId = null
+      return
+    }
     dispatch()
     rafId = requestAnimationFrame(tick)
     return
@@ -239,12 +244,13 @@ subscribeBackgroundActivity(() => {
 })
 
 // Restart the loop the moment playback resumes after a >1s pause
-// parked it. (Focus/visibility don't need a watcher: the loop keeps
-// running — just doing nothing — whenever the window is unfocused.)
+// parked it. Progress mutations must not wake a deliberately idle visual loop.
+// Focus restores the original live analyser.
 if (typeof window !== 'undefined') {
-  subscribeState(player, () => {
-    if (player.state === State.Playing && listeners.size > 0) start()
+  subscribeKey(player, 'state', state => {
+    if (state === State.Playing && listeners.size > 0) start()
   })
+  window.addEventListener('focus', start)
 }
 
 export function subscribeAudioVolume(listener: Listener): () => void {

@@ -53,3 +53,45 @@ it('propagates a failed chunk', async () => {
   fetchTracks.mockRejectedValue(new Error('network'))
   await expect(fetchLongTracks({ ids: [1] })).rejects.toThrow('network')
 })
+it('bounds a 10,000-track burst while preserving every song and privilege', async () => {
+  let active = 0,
+    peak = 0
+  const ids = Array.from({ length: 10000 }, (_, i) => i + 1)
+  fetchTracks.mockImplementation(async ({ ids: chunk }) => {
+    active++
+    peak = Math.max(peak, active)
+    await new Promise(resolve => setTimeout(resolve, 1))
+    active--
+    return {
+      code: 200,
+      songs: chunk.map((id: number) => ({ id })),
+      privileges: Object.fromEntries(chunk.map((id: number) => [id, { id }])),
+    }
+  })
+  const data = await fetchLongTracks({ ids })
+  expect(data.songs?.map(song => song.id)).toEqual(ids)
+  expect(Object.keys(data.privileges)).toHaveLength(10000)
+  expect(peak).toBeLessThanOrEqual(4)
+  expect(fetchTracks).toHaveBeenCalledTimes(20)
+})
+it('removes waiting chunks and aborts in-flight HTTP requests when a list is cancelled', async () => {
+  const controller = new AbortController()
+  fetchTracks.mockImplementation(
+    (_params, { signal }) =>
+      new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), {
+          once: true,
+        })
+      })
+  )
+  const request = fetchLongTracks(
+    { ids: Array.from({ length: 10000 }, (_, i) => i + 1) },
+    controller.signal
+  )
+  const rejected = expect(request).rejects.toMatchObject({ name: 'AbortError' })
+  await vi.waitFor(() => expect(fetchTracks).toHaveBeenCalledTimes(4))
+  controller.abort()
+  await rejected
+  await Promise.resolve()
+  expect(fetchTracks).toHaveBeenCalledTimes(4)
+})
