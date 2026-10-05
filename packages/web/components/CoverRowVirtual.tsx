@@ -3,7 +3,7 @@ import { cx } from '@emotion/css'
 import Loading from '@/web/components/Animation/Loading'
 import useSettings from '@/web/hooks/useSettings'
 import scrollPositions, { VIRTUOSO_SCROLL_PREFIX } from '@/web/states/scrollPositions'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { prefetchAlbum } from '@/web/api/hooks/useAlbum'
 import { prefetchPlaylist } from '@/web/api/hooks/usePlaylist'
 import { Virtuoso } from 'react-virtuoso'
@@ -149,7 +149,7 @@ const CoverItemHoverCardContent: FC<{
   return (
     <HoverPortal>
       <div
-        className='pointer-events-none fixed z-10 transition-all duration-300 ease-in-out opacity-100'
+        className='pointer-events-none fixed z-10 opacity-100 transition-all duration-300 ease-in-out'
         style={{
           left: `${rect.x - rect.width / 2}px`,
           top: `${rect.y + rect.height / 5}px`,
@@ -173,9 +173,7 @@ const CoverItemHoverCardContent: FC<{
               src={imageUrl}
               className='rounded-18 aspect-square w-1/6 rounded'
             />
-            <h4 className='flex-auto self-center text-center text-2xl font-bold'>
-              {item.name}
-            </h4>
+            <h4 className='flex-auto self-center text-center text-2xl font-bold'>{item.name}</h4>
           </header>
           {playlist && (
             <footer className='flex w-full justify-around gap-2 text-stone-700'>
@@ -197,10 +195,10 @@ CoverItemHoverCardContent.displayName = 'CoverItemHoverCardContent'
 const CoverItem: FC<{
   item: Item
   tileCssPx: number
-  goTo: (id: number) => void
+  to: string
   prefetch: (id: number) => void
   showTrackListName: boolean
-}> = memo(({ item, tileCssPx, goTo, prefetch, showTrackListName }) => {
+}> = memo(({ item, tileCssPx, to, prefetch, showTrackListName }) => {
   const imageUrl = useMemo(() => getImageUrl(item, tileCssPx), [item, tileCssPx])
   const [hoverRect, setHoverRect] = useState<{
     width: number
@@ -208,7 +206,7 @@ const CoverItem: FC<{
     x: number
     y: number
   } | null>(null)
-  const rootRef = useRef<HTMLDivElement>(null)
+  const rootRef = useRef<HTMLAnchorElement>(null)
   const rafRef = useRef<number | undefined>(undefined)
 
   // Warm the HTTP cache so hover-cards / detail navigations are instant.
@@ -248,39 +246,34 @@ const CoverItem: FC<{
     setHoverRect(null)
   }, [])
 
-  const handleClick = useCallback(() => goTo(item.id), [goTo, item.id])
-
   return (
-    <div
+    <Link
       ref={rootRef}
-      className='group relative'
-      onClick={handleClick}
+      to={to}
+      aria-label={item.name}
+      className='group relative block min-w-0 rounded-24 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-brand-700'
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
     >
-      <div className='relative aspect-square w-full rounded-24 overflow-hidden'>
+      <div className='relative aspect-square w-full overflow-hidden rounded-24'>
         <img
           alt={item.name}
           src={imageUrl}
           decoding='async'
-          className='absolute inset-0 w-full h-full object-cover'
+          className='absolute inset-0 h-full w-full object-cover'
         />
       </div>
       {showTrackListName && (
         <>
-          <h4 className='relative mb-4 mt-1 box-border h-7 overflow-hidden text-ellipsis whitespace-nowrap text-center sm:text-sm lg:-mb-4 lg:text-base 2xl:mb-0 2xl:text-lg'>
-            <span className='bottom-0 left-0 right-0 flex-col justify-end p-1'>{item.name}</span>
+          <h4 className='relative mt-1 mb-4 box-border h-7 overflow-hidden text-center text-ellipsis whitespace-nowrap sm:text-sm lg:-mb-4 lg:text-base 2xl:mb-0 2xl:text-lg'>
+            <span className='right-0 bottom-0 left-0 flex-col justify-end p-1'>{item.name}</span>
           </h4>
           {hoverRect && (
-            <CoverItemHoverCardContent
-              item={item}
-              imageUrl={imageUrl}
-              rect={hoverRect}
-            />
+            <CoverItemHoverCardContent item={item} imageUrl={imageUrl} rect={hoverRect} />
           )}
         </>
       )}
-    </div>
+    </Link>
   )
 })
 CoverItem.displayName = 'CoverItem'
@@ -300,7 +293,9 @@ interface CoverRowProps {
 
 // Stable Footer — receives loading state via Virtuoso's `context` prop
 // so its component identity never changes (prevents Virtuoso remount).
-const StableFooter: React.ComponentType<{ context?: { isLoadingMore: boolean } }> = ({ context }) => (
+const StableFooter: React.ComponentType<{ context?: { isLoadingMore: boolean } }> = ({
+  context,
+}) => (
   <div className='flex h-16 items-center justify-center'>
     {context?.isLoadingMore && <Loading />}
   </div>
@@ -321,28 +316,22 @@ const CoverRow = ({
   style,
   onEndReached,
 }: CoverRowProps) => {
-  const navigate = useNavigate()
   const location = useLocation()
   const { showTrackListName } = useSettings()
 
-  const goTo = useCallback((id: number) => {
-    if (albums) navigate(`/album/${id}`)
-    if (playlists) navigate(`/playlist/${id}`)
-  }, [albums, playlists, navigate])
-
-  const prefetch = useCallback((id: number) => {
-    if (albums) prefetchAlbum({ id })
-    if (playlists) prefetchPlaylist({ id })
-  }, [albums, playlists])
+  const prefetch = useCallback(
+    (id: number) => {
+      if (albums) prefetchAlbum({ id })
+      if (playlists) prefetchPlaylist({ id })
+    },
+    [albums, playlists]
+  )
 
   // Pin the source array's identity to either `albums` or `playlists`
   // (only one is ever supplied). Doing `albums || playlists || []`
   // inline allocates a fresh `[]` every render when both are undefined,
   // invalidating every downstream useMemo.
-  const items: Item[] = useMemo(
-    () => albums || playlists || [],
-    [albums, playlists]
-  )
+  const items: Item[] = useMemo(() => albums || playlists || [], [albums, playlists])
 
   const rows = useMemo(() => {
     const out: Item[][] = []
@@ -405,9 +394,7 @@ const CoverRow = ({
       index += batchSize
 
       if (index < urlsToLoad.length) {
-        requestIdleCallback ?
-          requestIdleCallback(loadBatch) :
-          setTimeout(loadBatch, 0)
+        requestIdleCallback ? requestIdleCallback(loadBatch) : setTimeout(loadBatch, 0)
       }
     }
 
@@ -426,10 +413,7 @@ const CoverRow = ({
 
   // Virtuoso context — passes dynamic state to stable Footer component
   // without changing component identity (which would cause full remount).
-  const virtuosoContext = useMemo(
-    () => ({ isLoadingMore }),
-    [isLoadingMore]
-  )
+  const virtuosoContext = useMemo(() => ({ isLoadingMore }), [isLoadingMore])
 
   // Track whether the initial mount animation has played. After the first
   // render, we stop adding the animation class so recycled/appended rows
@@ -453,21 +437,23 @@ const CoverRow = ({
           'virtuoso-grid-item grid w-full grid-cols-4 gap-4 lg:mb-6 lg:gap-6',
           !initialAnimDone.current && index < 5 && 'cover-row-enter'
         )}
-        style={!initialAnimDone.current && index < 5 ? { animationDelay: `${index * 0.04}s` } : undefined}
+        style={
+          !initialAnimDone.current && index < 5 ? { animationDelay: `${index * 0.04}s` } : undefined
+        }
       >
         {(row || []).map((item: Item) => (
           <CoverItem
             key={item.id}
             item={item}
             tileCssPx={tileCssPx}
-            goTo={goTo}
+            to={`/${albums ? 'album' : 'playlist'}/${item.id}`}
             prefetch={prefetch}
             showTrackListName={showTrackListName}
           />
         ))}
       </div>
     ),
-    [goTo, prefetch, showTrackListName, tileCssPx]
+    [albums, prefetch, showTrackListName, tileCssPx]
   )
 
   // Scroll restoration: jump straight to the saved region on mount (the

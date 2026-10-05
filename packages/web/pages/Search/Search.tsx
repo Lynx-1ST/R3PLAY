@@ -3,7 +3,7 @@ import { resizeImage } from '@/web/utils/common'
 import dayjs from 'dayjs'
 import { useMemo, useCallback, useState, useRef, memo } from 'react'
 import toast from 'react-hot-toast'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import Image from '@/web/components/Image'
 import Icon from '@/web/components/Icon'
 import { cx } from '@emotion/css'
@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
 import Loading from '@/web/components/Animation/Loading'
 import {
   useSearchBestMatch,
-  useSearchResults,
+  useSearchResultsInfinite,
   useSearchTracksInfinite,
 } from '@/web/api/hooks/useSearch'
 
@@ -31,68 +31,65 @@ const TRACKS_PREVIEW_COUNT = 30
 const TRACKS_GRID_COLUMNS = 3
 
 const Artists = ({ artists }: { artists: Artist[] }) => {
-  const navigate = useNavigate()
+  const { t } = useTranslation()
   return (
     <>
       {artists.map(artist => (
-        <div
-          onClick={() => navigate(`/artist/${artist.id}`)}
+        <Link
+          to={`/artist/${artist.id}`}
           key={artist.id}
-          className='flex cursor-pointer items-center py-2.5'
+          className='flex min-w-0 items-center rounded-lg py-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:outline-solid'
         >
           <img
             src={resizeImage(artist.img1v1Url, 'xs')}
-            className='mr-4 h-14 w-14 rounded-full'
+            alt=''
+            className='mr-4 h-14 w-14 shrink-0 rounded-full'
           />
-          <div>
-            <div className='text-lg font-semibold'>{artist.name}</div>
+          <div className='min-w-0'>
+            <div className='truncate text-lg font-semibold'>{artist.name}</div>
             <div className='mt-0.5 text-sm font-semibold opacity-60'>
-              {artist.occupation || 'Artist'}
+              {artist.occupation || t`search.artist`}
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </>
   )
 }
 
 const Albums = ({ albums }: { albums: Album[] }) => {
-  const navigate = useNavigate()
   return (
     <>
       {albums.map(album => (
-        <div
-          onClick={() => navigate(`/album/${album.id}`)}
+        <Link
+          to={`/album/${album.id}`}
           key={album.id}
-          className='flex cursor-pointer items-center py-2.5'
+          className='flex min-w-0 items-center rounded-lg py-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:outline-solid'
         >
-          <img src={resizeImage(album.picUrl, 'xs')} className='mr-4 h-14 w-14 rounded-lg' />
-          <div>
-            <div className='text-lg font-semibold'>{album.name}</div>
+          <img
+            alt=''
+            src={resizeImage(album.picUrl, 'xs')}
+            className='mr-4 h-14 w-14 shrink-0 rounded-lg'
+          />
+          <div className='min-w-0'>
+            <div className='truncate text-lg font-semibold'>{album.name}</div>
             <div className='mt-0.5 text-sm font-semibold opacity-60'>
               {album?.artist?.name} · {dayjs(album.publishTime).year()}
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </>
   )
 }
 
 const TrackItem = memo(
-  ({
-    track,
-    onPlay,
-    hint,
-  }: {
-    track?: Track
-    onPlay: (id: number) => void
-    hint?: string
-  }) => {
+  ({ track, onPlay, hint }: { track?: Track; onPlay: (id: number) => void; hint?: string }) => {
+    const { t } = useTranslation()
     return (
       <div
         title={hint}
-        className='flex cursor-pointer items-center justify-between'
+        className='flex min-w-0 cursor-pointer items-center justify-between'
         onClick={e => {
           if (e.detail === 2 && track?.id) onPlay(track.id)
         }}
@@ -103,14 +100,26 @@ const TrackItem = memo(
           animation={false}
           placeholder={false}
         />
-        <div className='mr-3 grow'>
+        <div className='mr-3 min-w-0 grow'>
           <div className='line-clamp-1 text-16 font-medium text-neutral-700 dark:text-neutral-200'>
             {track?.name}
           </div>
-          <div className='line-clamp-1 mt-1 text-14 font-bold text-neutral-700 dark:text-neutral-300'>
+          <div className='mt-1 line-clamp-1 text-14 font-bold text-neutral-700 dark:text-neutral-300'>
             {track?.ar?.map(a => a.name).join(', ')}
           </div>
         </div>
+        <button
+          type='button'
+          disabled={!track?.id}
+          aria-label={`${t`player.play`}: ${track?.name ?? ''}`}
+          className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black/5 hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:outline-solid dark:bg-white/5 dark:hover:bg-white/10'
+          onClick={event => {
+            event.stopPropagation()
+            if (track?.id) onPlay(track.id)
+          }}
+        >
+          <Icon name='play' className='h-4 w-4' />
+        </button>
       </div>
     )
   }
@@ -150,13 +159,14 @@ const SectionHeader = ({
       <div className='text-14 font-bold uppercase'>{title}</div>
       {hint && <div className='text-12 font-medium opacity-50'>{hint}</div>}
       {onShowAll && (
-        <div
+        <button
+          type='button'
           onClick={onShowAll}
-          className='ml-auto flex cursor-pointer items-center gap-1 text-12 font-bold uppercase opacity-70 hover:opacity-100'
+          className='ml-auto flex min-h-11 items-center gap-1 rounded-lg text-12 font-bold uppercase opacity-70 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:outline-solid'
         >
           {t`search.show-all`}
           <Icon name='right-arrow' className='flex h-4 w-4 items-center' />
-        </div>
+        </button>
       )}
     </div>
   )
@@ -184,17 +194,38 @@ const chunkTracks = (tracks: Track[]): Track[][] => {
   return rows
 }
 
+const MoreResults = ({ query }: { query: ReturnType<typeof useSearchResultsInfinite> }) => {
+  const { t } = useTranslation()
+  if (!query.hasNextPage) return null
+  return (
+    <div className='flex flex-col items-center gap-2 py-4'>
+      {query.isFetchNextPageError && <p role='alert'>{t`search.error`}</p>}
+      <button
+        type='button'
+        disabled={query.isFetching}
+        className='min-h-11 rounded-full bg-black/10 px-5 text-14 font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:outline-solid disabled:opacity-50 dark:bg-white/10'
+        onClick={() => query.fetchNextPage({ cancelRefetch: false })}
+      >
+        {query.isFetchingNextPage
+          ? t`search.loading-more`
+          : query.isFetchNextPageError
+            ? t`search.retry`
+            : t`search.load-more`}
+      </button>
+    </div>
+  )
+}
+
 const Search = () => {
   const { keywords = '' } = useParams()
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<SearchTab>('all')
 
   const bestMatchQuery = useSearchBestMatch(keywords)
   const tracksQuery = useSearchTracksInfinite(keywords)
-  const artistQuery = useSearchResults(keywords, 'Artist', 30)
-  const albumQuery = useSearchResults(keywords, 'Album', 30)
-  const playlistQuery = useSearchResults(keywords, 'Playlist', 50)
+  const artistQuery = useSearchResultsInfinite(keywords, 'Artist', 30)
+  const albumQuery = useSearchResultsInfinite(keywords, 'Album', 30)
+  const playlistQuery = useSearchResultsInfinite(keywords, 'Playlist', 50)
 
   const queries = [bestMatchQuery, tracksQuery, artistQuery, albumQuery, playlistQuery]
   const isFetching = queries.some(q => q.isFetching)
@@ -203,8 +234,7 @@ const Search = () => {
   // Full-page spinner only while nothing has rendered yet; once any query
   // resolves, sections stream in independently. keepPreviousData makes
   // keyword changes stale-while-revalidate instead of a loading flash.
-  const showInitialLoader =
-    keywords.length > 0 && !hasAnyData && queries.some(q => q.isLoading)
+  const showInitialLoader = keywords.length > 0 && !hasAnyData && queries.some(q => q.isLoading)
 
   const retryAll = useCallback(() => {
     queries.forEach(q => q.isError && q.refetch())
@@ -215,9 +245,18 @@ const Search = () => {
     [tracksQuery.data]
   )
 
-  const artists = artistQuery.data?.result?.artists ?? []
-  const albums = albumQuery.data?.result?.albums ?? []
-  const playlists = playlistQuery.data?.result?.playlists ?? []
+  const artists = useMemo(
+    () => artistQuery.data?.pages.flatMap(page => page.result?.artists ?? []) ?? [],
+    [artistQuery.data]
+  )
+  const albums = useMemo(
+    () => albumQuery.data?.pages.flatMap(page => page.result?.albums ?? []) ?? [],
+    [albumQuery.data]
+  )
+  const playlists = useMemo(
+    () => playlistQuery.data?.pages.flatMap(page => page.result?.playlists ?? []) ?? [],
+    [playlistQuery.data]
+  )
 
   // 最佳匹配
   const bestMatch = useMemo(() => {
@@ -264,17 +303,6 @@ const Search = () => {
     [t]
   )
 
-  const navigateBestMatch = useCallback(
-    (match: Artist | Album) => {
-      if ((match as Artist).albumSize !== undefined) {
-        navigate(`/artist/${match.id}`)
-      } else if ((match as Album).artist !== undefined) {
-        navigate(`/album/${match.id}`)
-      }
-    },
-    [navigate]
-  )
-
   const trackRows = useMemo(() => chunkTracks(tracks), [tracks])
 
   const handleEndReached = useCallback(() => {
@@ -289,7 +317,7 @@ const Search = () => {
 
   const trackListItemContent = useCallback(
     (_index: number, row: Track[]) => (
-      <div className='grid grid-cols-3 gap-5 gap-y-6 py-1'>
+      <div className='grid grid-cols-1 gap-5 gap-y-6 py-1 lg:grid-cols-3'>
         {row.map(track => (
           <TrackItem key={track.id} track={track} onPlay={handlePlayTracks} hint={playHint} />
         ))}
@@ -301,24 +329,24 @@ const Search = () => {
   const tabs: SearchTab[] = ['all', 'tracks', 'artists', 'albums', 'playlists']
 
   return (
-    <div>
-      <div className='mt-6 mb-8 flex items-center gap-3 text-4xl font-semibold'>
-        <span>
+    <div className='px-4 text-neutral-800 md:px-0 dark:text-neutral-200'>
+      <div className='mt-6 mb-8 flex items-center gap-3 text-2xl font-semibold sm:text-4xl'>
+        <span className='min-w-0 break-words'>
           {t`search.search`} &quot;{keywords}&quot;
         </span>
-        {isFetching && (
-          <span className='h-2.5 w-2.5 animate-pulse rounded-full bg-brand-700' />
-        )}
+        {isFetching && <span className='h-2.5 w-2.5 animate-pulse rounded-full bg-brand-700' />}
       </div>
 
       {/* Tabs */}
-      <div className='mb-6 flex gap-2'>
+      <div className='mb-6 flex flex-wrap gap-2'>
         {tabs.map(tab => (
           <button
             key={tab}
+            type='button'
+            aria-pressed={activeTab === tab}
             onClick={() => setActiveTab(tab)}
             className={cx(
-              'rounded-full px-4 py-1.5 text-14 font-bold transition-colors',
+              'min-h-11 rounded-full px-4 py-1.5 text-14 font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:outline-solid',
               activeTab === tab
                 ? 'bg-brand-700 text-white'
                 : 'bg-black/10 text-neutral-800 hover:bg-black/20 dark:bg-white/10 dark:text-neutral-200 dark:hover:bg-white/20'
@@ -349,35 +377,36 @@ const Search = () => {
           {bestMatch.length > 0 && (
             <div className='mb-6'>
               <SectionHeader title={t`search.best-match`} />
-              <div className='grid grid-cols-2'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 {bestMatch.map((match: any) => (
-                  <div
-                    onClick={() => navigateBestMatch(match)}
+                  <Link
+                    to={`/${match.albumSize !== undefined ? 'artist' : 'album'}/${match.id}`}
                     key={`${match.id}${match.picUrl}`}
-                    className='btn-hover-animation flex cursor-pointer items-center py-3 after:rounded-xl after:bg-gray-100 dark:after:bg-white/10'
+                    className='btn-hover-animation flex min-w-0 items-center rounded-xl py-3 after:rounded-xl after:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:outline-solid dark:after:bg-white/10'
                   >
                     <img
+                      alt=''
                       src={resizeImage(match.picUrl, 'xs')}
                       className={cx(
                         'mr-6 h-20 w-20',
                         match.occupation === '歌手' ? 'rounded-full' : 'rounded-xl'
                       )}
                     />
-                    <div>
-                      <div className='text-xl font-semibold'>{match.name}</div>
+                    <div className='min-w-0'>
+                      <div className='truncate text-xl font-semibold'>{match.name}</div>
                       <div className='mt-0.5 font-medium opacity-60'>
                         {match.occupation === '歌手'
                           ? t`search.artist`
                           : `${match.artist?.name} · ${dayjs(match.publishTime).year()}`}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
           )}
 
-          <div className='grid grid-cols-2 gap-6'>
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
             {artists.length > 0 && (
               <div>
                 <SectionHeader title={t`search.artist`} />
@@ -392,7 +421,7 @@ const Search = () => {
             )}
 
             {(tracksQuery.isError || tracks.length > 0) && (
-              <div className='col-span-2'>
+              <div className='md:col-span-2'>
                 <SectionHeader
                   title={t`search.song`}
                   hint={playHint}
@@ -401,24 +430,22 @@ const Search = () => {
                 {tracksQuery.isError && tracks.length === 0 ? (
                   <SectionError onRetry={tracksQuery.refetch} />
                 ) : (
-                  <div className='mt-4 grid grid-cols-3 gap-5 gap-y-6 pb-6'>
-                    {tracks
-                      .slice(0, TRACKS_PREVIEW_COUNT)
-                      .map(track => (
-                        <TrackItem
-                          key={track.id}
-                          track={track}
-                          onPlay={handlePlayTracks}
-                          hint={playHint}
-                        />
-                      ))}
+                  <div className='mt-4 grid grid-cols-1 gap-5 gap-y-6 pb-6 lg:grid-cols-3'>
+                    {tracks.slice(0, TRACKS_PREVIEW_COUNT).map(track => (
+                      <TrackItem
+                        key={track.id}
+                        track={track}
+                        onPlay={handlePlayTracks}
+                        hint={playHint}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
             )}
 
             {playlists.length > 0 && (
-              <div className='col-span-2'>
+              <div className='md:col-span-2'>
                 <SectionHeader title={t`search.playlist`} />
                 <CoverRowVirtual playlists={playlists} />
               </div>
@@ -452,10 +479,13 @@ const Search = () => {
       {!showInitialLoader && !showEmptyState && activeTab === 'artists' && (
         <div>
           <SectionHeader title={t`search.artist`} />
-          {artistQuery.isError ? (
+          {artistQuery.isError && artists.length === 0 ? (
             <SectionError onRetry={artistQuery.refetch} />
           ) : (
-            <Artists artists={artists} />
+            <>
+              <Artists artists={artists} />
+              <MoreResults query={artistQuery} />
+            </>
           )}
         </div>
       )}
@@ -463,10 +493,13 @@ const Search = () => {
       {!showInitialLoader && !showEmptyState && activeTab === 'albums' && (
         <div>
           <SectionHeader title={t`search.album`} />
-          {albumQuery.isError ? (
+          {albumQuery.isError && albums.length === 0 ? (
             <SectionError onRetry={albumQuery.refetch} />
           ) : (
-            <Albums albums={albums} />
+            <>
+              <Albums albums={albums} />
+              <MoreResults query={albumQuery} />
+            </>
           )}
         </div>
       )}
@@ -474,10 +507,16 @@ const Search = () => {
       {!showInitialLoader && !showEmptyState && activeTab === 'playlists' && (
         <div>
           <SectionHeader title={t`search.playlist`} />
-          {playlistQuery.isError ? (
+          {playlistQuery.isError && playlists.length === 0 ? (
             <SectionError onRetry={playlistQuery.refetch} />
           ) : (
-            <CoverRowVirtual playlists={playlists} />
+            <>
+              <CoverRowVirtual
+                playlists={playlists}
+                style={{ height: 'max(240px, calc(100vh - 340px))' }}
+              />
+              <MoreResults query={playlistQuery} />
+            </>
           )}
         </div>
       )}

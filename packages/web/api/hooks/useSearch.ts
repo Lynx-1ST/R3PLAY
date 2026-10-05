@@ -93,6 +93,39 @@ export function useSearchResults(
 
 const SEARCH_PAGE_SIZE = 30
 
+const SEARCH_RESULT_FIELDS = {
+  Artist: { items: 'artists', count: 'artistCount' },
+  Album: { items: 'albums', count: 'albumCount' },
+  Playlist: { items: 'playlists', count: 'playlistCount' },
+} as const
+
+export function useSearchResultsInfinite(
+  keywords: string,
+  type: keyof typeof SEARCH_RESULT_FIELDS,
+  limit = SEARCH_PAGE_SIZE
+) {
+  const fields = SEARCH_RESULT_FIELDS[type]
+  return useInfiniteQuery({
+    queryKey: [SearchApiNames.CloudSearch, keywords, type, 'infinite', limit],
+    queryFn: ({ pageParam, signal }) =>
+      cloudSearch({ keywords, limit, offset: pageParam, type }, { signal }).then(ensureOk),
+    enabled: hasKeywords(keywords),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _pages, offset) => {
+      const items = lastPage.result?.[fields.items] ?? []
+      if (items.length === 0) return undefined
+      const nextOffset = offset + limit
+      const count = lastPage.result?.[fields.count]
+      if (count === undefined) return items.length === limit ? nextOffset : undefined
+      return nextOffset < count ? nextOffset : undefined
+    },
+  })
+}
+
 // 云搜索 - 单曲 (infinite)
 export function useSearchTracksInfinite(keywords: string) {
   return useInfiniteQuery({

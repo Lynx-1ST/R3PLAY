@@ -110,6 +110,8 @@
     "playlist": "歌单",
     "show-all": "查看全部",
     "double-click-to-play": "双击播放",
+    "load-more": "加载更多",
+    "loading-more": "正在加载更多…",
     "no-results": "没有找到相关结果",
     "error": "加载失败，请重试",
     "retry": "重试",

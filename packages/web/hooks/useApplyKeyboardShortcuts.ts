@@ -86,13 +86,23 @@ const useApplyKeyboardShortcuts = () => {
     const handle = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
 
-      if (!target) {
+      if (!target || event.defaultPrevented) {
         return
       }
 
       // 所有输入框都禁用快捷键
 
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return
+      }
+
+      // Native controls own their activation keys; Space must not also toggle playback.
+      if (
+        (event.code === 'Space' || event.code === 'Enter') &&
+        target.closest(
+          'button, a, select, [role="button"], [role="link"], [contenteditable="true"]'
+        )
+      ) {
         return
       }
 
