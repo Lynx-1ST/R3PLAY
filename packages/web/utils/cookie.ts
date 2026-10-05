@@ -75,6 +75,7 @@ export function removeAllCookies() {
   cookies.forEach(cookie => {
     const splitted = cookie.split('=')
     const name = splitted[0].trim()
+    document.cookie = `${name}=;max-age=0;path=/`
     document.cookie = `${name}=;max-age=0`
   })
 }

@@ -126,5 +126,6 @@ export function logout() {
   return request({
     url: '/logout',
     method: 'post',
+    timeout: 5000,
   })
 }

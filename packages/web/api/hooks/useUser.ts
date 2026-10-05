@@ -1,5 +1,6 @@
 import { dailyCheckIn, fetchUserAccount } from '@/web/api/user'
-import { UserApiNames, FetchUserAccountResponse } from '@/shared/api/User'
+import { UserApiNames, FetchUserAccountResponse, DailyCheckInResponse } from '@/shared/api/User'
+import { isAxiosError } from 'axios'
 import { CacheAPIs } from '@/shared/CacheAPIs'
 import { IpcChannels } from '@/shared/IpcChannels'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -11,7 +12,7 @@ export default function useUser() {
   const key = [UserApiNames.FetchUserAccount]
   return useQuery({
     queryKey: key,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const existsQueryData = reactQueryClient.getQueryData(key)
       if (!existsQueryData) {
         window.ipcRenderer
@@ -19,7 +20,7 @@ export default function useUser() {
             api: CacheAPIs.UserAccount,
           })
           .then(cache => {
-            if (cache) reactQueryClient.setQueryData(key, cache)
+            if (cache && !signal.aborted) reactQueryClient.setQueryData(key, cache)
           })
       }
 
@@ -33,9 +34,9 @@ export function useRefreshCookie() {
   const user = useUser()
   return useQuery({
     queryKey: [UserApiNames.RefreshCookie],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const result = await refreshCookie()
-      if (result?.code === 200) {
+      if (result?.code === 200 && !signal.aborted) {
         setCookies(result.cookie)
       }
       return result
@@ -50,12 +51,23 @@ export function useDailyCheckIn() {
   return useQuery({
     queryKey: [UserApiNames.DailyCheckIn],
     queryFn: async () => {
-      try {
-        Promise.allSettled([dailyCheckIn(0), dailyCheckIn(1)])
-        return 'ok'
-      } catch (e: any) {
-        return 'error'
+      const results = await Promise.allSettled([dailyCheckIn(0), dailyCheckIn(1)])
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          // The API proxy sends duplicate check-ins as HTTP 400 with code -2.
+          if (
+            isAxiosError<DailyCheckInResponse>(result.reason) &&
+            result.reason.response?.data.code === -2
+          )
+            continue
+          throw result.reason
+        }
+        // NetEase returns -2 when this device type has already checked in today.
+        if (result.value.code !== 200 && result.value.code !== -2) {
+          throw new Error(`daily check-in failed, code: ${result.value.code}`)
+        }
       }
+      return 'ok'
     },
     refetchInterval: 1000 * 60 * 30,
     enabled: !!user.data?.profile?.userId,
@@ -71,10 +83,26 @@ export const useIsLoggedIn = () => {
 }
 
 export const logout = async () => {
-  await logoutAPI()
+  try {
+    await logoutAPI()
+  } catch (error) {
+    console.warn('[logout] Remote logout failed; clearing the local session', error)
+  }
+  await reactQueryClient.cancelQueries()
   removeAllCookies()
-  await window.ipcRenderer?.invoke(IpcChannels.Logout)
-  await reactQueryClient.refetchQueries({ queryKey: [UserApiNames.FetchUserAccount] })
+  try {
+    await window.ipcRenderer?.invoke(IpcChannels.Logout)
+  } finally {
+    // Keep the account query's observers attached so mounted views receive the guest state.
+    reactQueryClient.removeQueries({
+      predicate: query => query.queryKey[0] !== UserApiNames.FetchUserAccount,
+    })
+    reactQueryClient.setQueryData<FetchUserAccountResponse>([UserApiNames.FetchUserAccount], {
+      code: 200,
+      profile: null,
+      account: null,
+    })
+  }
 }
 
 export const useMutationLogout = () => {
