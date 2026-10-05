@@ -4,10 +4,15 @@ import log from './log'
 import { AudioCacheJobs } from './utils/audioCacheJobs'
 import { AudioCacheStorage } from './utils/audioCacheStorage'
 import store from './store'
-import path from 'node:path'
+import { defaultCacheDirectory } from './utils/defaultCacheDirectory'
 
 export const audioCacheStorage = new AudioCacheStorage(
-  store.get('audioCacheDirectory') ?? path.join(app.getPath('userData'), 'audio_cache'),
+  defaultCacheDirectory(
+    app.getPath('exe'),
+    app.getPath('userData'),
+    app.isPackaged,
+    store.get('audioCacheDirectory')
+  ),
   () => store.get('audioCacheLimitGB') ?? 5,
   file => {
     db.sqlite.prepare('DELETE FROM AudioVariant WHERE fileName = ?').run(file)

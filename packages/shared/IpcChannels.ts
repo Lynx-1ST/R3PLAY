@@ -4,7 +4,7 @@ import { RepeatMode } from './playerDataTypes'
 import type { DiscordPlayback } from './discordPresence'
 import type { AudioCacheRequest, AudioCacheReceipt } from './audioCache'
 import type { UpdateChannel, UpdateState } from './updates'
-import type { CacheStatus, Diagnostics } from './maintenance'
+import type { CacheStatus, Diagnostics, CacheDirectoryResult } from './maintenance'
 import type { LastFmPlayback, LastFmStatus } from './lastfm'
 
 export const enum IpcChannels {
@@ -176,7 +176,7 @@ export interface IpcChannelsReturns {
   [IpcChannels.LastFmSetEnabled]: LastFmStatus
   [IpcChannels.LastFmPlayback]: void
   [IpcChannels.GetCacheStatus]: CacheStatus
-  [IpcChannels.ChooseCacheDirectory]: CacheStatus | null
+  [IpcChannels.ChooseCacheDirectory]: CacheDirectoryResult
   [IpcChannels.SetCacheLimit]: CacheStatus
   [IpcChannels.ClearAudioCache]: CacheStatus
   [IpcChannels.GetDiagnostics]: Diagnostics

@@ -4,6 +4,12 @@ export interface CacheStatus {
   files: number
   limitGB: number
 }
+export type CacheDirectoryResult =
+  | CacheStatus
+  | {
+      error: 'permission' | 'conflict' | 'failed'
+    }
+  | null
 export interface Diagnostics {
   version: string
   platform: string

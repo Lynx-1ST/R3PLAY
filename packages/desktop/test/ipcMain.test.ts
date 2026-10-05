@@ -15,24 +15,33 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   setEnabled: vi.fn(),
   submitAudio: vi.fn(() => ({ status: 'queued' })),
+  chooseFolder: vi.fn(),
+  changeDirectory: vi.fn(),
+  resumeCache: vi.fn(),
 }))
 vi.mock('electron', () => ({
   ipcMain: { on: mocks.on, handle: mocks.handle },
   app: { once: vi.fn(), exit: mocks.exit, getPath: () => '.' },
+  dialog: { showOpenDialog: mocks.chooseFolder },
 }))
 vi.mock('../main/cache', () => ({ default: { get: mocks.get, set: mocks.set } }))
 vi.mock('../main/audioCache', () => ({
-  audioCacheStorage: { protectTrack: vi.fn(), status: vi.fn(), trim: vi.fn() },
+  audioCacheStorage: {
+    protectTrack: vi.fn(),
+    status: vi.fn(),
+    trim: vi.fn(),
+    changeDirectory: mocks.changeDirectory,
+  },
   audioCacheJobs: {
     submit: mocks.submitAudio,
     initialize: vi.fn(async () => {}),
     cancelAll: vi.fn(async () => {}),
-    resume: vi.fn(),
+    resume: mocks.resumeCache,
   },
 }))
 vi.mock('../main/lastfm', () => ({ lastfm: { reset: vi.fn(), update: vi.fn(), flush: vi.fn() } }))
 vi.mock('../main/diagnostics', () => ({ getDiagnostics: vi.fn(), exportDiagnostics: vi.fn() }))
-vi.mock('../main/log', () => ({ default: { info: vi.fn() } }))
+vi.mock('../main/log', () => ({ default: { info: vi.fn(), warn: vi.fn() } }))
 vi.mock('../main/db', () => ({
   db: { truncate: mocks.truncate, vacuum: mocks.vacuum },
   Tables: {},
@@ -157,3 +166,18 @@ it('keeps trusted window controls, cache writes, tray/taskbar, settings and invo
   expect(mocks.truncate).toHaveBeenCalled()
   expect(await send(IpcChannels.GetPlatform)).toEqual(['windows'])
 })
+it.each(['EPERM', 'EACCES', 'EROFS'])(
+  'reports %s without switching cache folders and resumes downloads',
+  async code => {
+    mocks.chooseFolder.mockResolvedValue({ canceled: false, filePaths: ['C:/protected'] })
+    mocks.changeDirectory.mockRejectedValue(Object.assign(new Error('denied'), { code }))
+    const handler = registrations.find(
+      ([channel]) => channel === IpcChannels.ChooseCacheDirectory
+    )![1]
+    expect(
+      await handler({ sender: win.webContents, senderFrame: win.webContents.mainFrame })
+    ).toEqual({ error: 'permission' })
+    expect(store.set).not.toHaveBeenCalled()
+    expect(mocks.resumeCache).toHaveBeenCalledOnce()
+  }
+)

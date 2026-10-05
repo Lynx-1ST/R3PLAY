@@ -275,7 +275,12 @@
       "refresh": "Refresh",
       "working": "Working… Keep this window open.",
       "error": "Could not update the cache. Check folder permissions and available disk space.",
-      "desktop-only": "Available in the desktop app."
+      "desktop-only": "Available in the desktop app.",
+      "errors": {
+        "permission": "Cannot write to this folder. Choose another folder, such as Downloads or Documents.",
+        "conflict": "The destination contains conflicting cache files. Choose another folder.",
+        "failed": "Could not change the cache folder. The current folder is unchanged."
+      }
     },
     "diagnostics": {
       "title": "Diagnostics",

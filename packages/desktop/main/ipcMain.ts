@@ -76,6 +76,7 @@ export function initIpcMain(
   handle(IpcChannels.ChooseCacheDirectory, async () => {
     if (!win) return null
     const selected = await dialog.showOpenDialog(win, {
+      defaultPath: audioCacheStorage.directory,
       properties: ['openDirectory', 'createDirectory'],
     })
     if (selected.canceled || !selected.filePaths[0]) return null
@@ -87,6 +88,16 @@ export function initIpcMain(
       )
       audioCacheJobs.setDirectory(audioCacheStorage.directory)
       return result
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      log.warn('[audio cache] Folder change failed', code ?? 'unknown')
+      return {
+        error: ['EPERM', 'EACCES', 'EROFS'].includes(code ?? '')
+          ? 'permission'
+          : code === 'EEXIST'
+            ? 'conflict'
+            : 'failed',
+      }
     } finally {
       audioCacheJobs.resume()
     }

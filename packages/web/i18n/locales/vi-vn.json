@@ -274,7 +274,12 @@
       "refresh": "Làm mới",
       "working": "Đang xử lý… Hãy giữ cửa sổ này mở.",
       "error": "Không thể cập nhật cache. Kiểm tra quyền truy cập thư mục và dung lượng ổ đĩa.",
-      "desktop-only": "Có trên ứng dụng desktop."
+      "desktop-only": "Có trên ứng dụng desktop.",
+      "errors": {
+        "permission": "Không có quyền ghi vào thư mục này. Hãy chọn thư mục khác, ví dụ Downloads hoặc Documents.",
+        "conflict": "Thư mục đích có file cache trùng tên nhưng khác nội dung. Hãy chọn thư mục khác.",
+        "failed": "Không thể đổi thư mục cache. Thư mục hiện tại vẫn được giữ nguyên."
+      }
     },
     "diagnostics": {
       "title": "Chẩn đoán",

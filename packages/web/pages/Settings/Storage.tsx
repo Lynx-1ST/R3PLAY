@@ -1,22 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IpcChannels } from '@/shared/IpcChannels'
-import type { CacheStatus } from '@/shared/maintenance'
+import type { CacheStatus, CacheDirectoryResult } from '@/shared/maintenance'
 import { BlockTitle, BlockDescription, Option, OptionText, Select } from './Controls'
 
 export default function Storage() {
   const { t } = useTranslation()
   const [status, setStatus] = useState<CacheStatus>()
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(false)
-  const run = async (action: () => Promise<CacheStatus | null | undefined>) => {
+  const [error, setError] = useState<'permission' | 'conflict' | 'failed' | null>(null)
+  const run = async (action: () => Promise<CacheDirectoryResult | undefined>) => {
     setBusy(true)
-    setError(false)
+    setError(null)
     try {
       const result = await action()
-      if (result) setStatus(result)
+      if (result && 'error' in result) setError(result.error)
+      else if (result) setStatus(result)
     } catch {
-      setError(true)
+      setError('failed')
     } finally {
       setBusy(false)
     }
@@ -60,7 +61,6 @@ export default function Storage() {
         </Option>
       )}
       <p className='mb-3 text-xs break-all opacity-60'>{status?.directory}</p>
-      <BlockDescription>{t('settings.storage.move-description')}</BlockDescription>
       <div className='flex flex-wrap gap-3'>
         <button
           disabled={busy}
@@ -97,7 +97,7 @@ export default function Storage() {
       )}
       {error && (
         <p role='alert' className='mt-3 text-sm text-red-600'>
-          {t('settings.storage.error')}
+          {t(`settings.storage.errors.${error}`)}
         </p>
       )}
     </div>
