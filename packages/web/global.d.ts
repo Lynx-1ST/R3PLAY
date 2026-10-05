@@ -6,6 +6,7 @@ export {}
 declare global {
   interface Window {
     ipcRenderer?: {
+      getSavedSettings?: () => Record<string, unknown> | null
       invoke: <T extends keyof IpcChannelsParams>(
         channel: T,
         params?: IpcChannelsParams[T]

@@ -65,6 +65,7 @@ if (isProd) {
 }
 
 contextBridge.exposeInMainWorld('ipcRenderer', {
+  getSavedSettings: () => ipcRenderer.sendSync(IpcChannels.GetSavedSettings),
   invoke: (channel: IpcChannels, ...args: any[]) => {
     assertAllowedChannel(channel)
     return ipcRenderer.invoke(channel, ...args)

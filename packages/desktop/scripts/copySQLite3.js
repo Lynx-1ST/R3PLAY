@@ -39,5 +39,20 @@ exports.default = async function (context) {
 
     fs.mkdirSync(path.dirname(to), { recursive: true })
     fs.copyFileSync(from, to)
+    if (platform === 'win32') {
+      const resources = path.join(context.appOutDir, 'resources')
+      const manifest = { 'bin/better_sqlite3.node': fs.statSync(to).size }
+      const walk = directory => {
+        for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+          const file = path.join(directory, entry.name)
+          if (entry.isDirectory()) walk(file)
+          else
+            manifest[path.relative(resources, file).split(path.sep).join('/')] =
+              fs.statSync(file).size
+        }
+      }
+      walk(path.join(resources, 'runtime/node_modules'))
+      fs.writeFileSync(path.join(resources, 'runtime-manifest.json'), JSON.stringify(manifest))
+    }
   }
 }

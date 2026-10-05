@@ -24,7 +24,7 @@ const TAG = '[script/build.main.ts]'
 const spinner = ora(`${TAG} Main Process Building...`)
 
 const options: BuildOptions = {
-  entryPoints: ['./main/index.ts', './main/rendererPreload.ts'],
+  entryPoints: ['./main/index.ts', './main/app.ts', './main/rendererPreload.ts'],
   outdir: './dist',
   platform: 'node',
   format: 'cjs',
@@ -36,6 +36,7 @@ const options: BuildOptions = {
   external: [
     ...builtinModules.filter(x => !/^_|^(internal|v8|node-inspect)\/|\//.test(x)),
     'electron',
+    './app.js',
     '@neteasecloudmusicapienhanced/api',
   ],
 }

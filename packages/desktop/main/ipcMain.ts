@@ -44,6 +44,9 @@ export function initIpcMain(
   store: Store<TypedElectronStore>
 ) {
   const { on } = trustedIpc(win)
+  on(IpcChannels.GetSavedSettings, event => {
+    event.returnValue = store.get('settings') ?? null
+  })
   on(IpcChannels.RendererLog, (event, message) => {
     if (
       !message ||
@@ -213,7 +216,9 @@ function initOtherIpcMain(win: BrowserWindow | null) {
     return checkForUpdates()
   })
   handle(IpcChannels.UpdateState, () => getUpdateManager().getState())
-  handle(IpcChannels.SetUpdateChannel, (_e, params) => getUpdateManager().setChannel(params?.channel))
+  handle(IpcChannels.SetUpdateChannel, (_e, params) =>
+    getUpdateManager().setChannel(params?.channel)
+  )
   handle(IpcChannels.DownloadUpdate, () => getUpdateManager().download())
   handle(IpcChannels.InstallUpdate, () => getUpdateManager().install())
 

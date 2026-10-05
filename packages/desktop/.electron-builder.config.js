@@ -53,7 +53,7 @@ module.exports = {
     oneClick: false,
     perMachine: true,
     allowToChangeInstallationDirectory: true,
-    deleteAppDataOnUninstall: true,
+    deleteAppDataOnUninstall: false,
     artifactName: '${productName}-${version}-${os}-${arch}-Setup.${ext}',
   },
   portable: {

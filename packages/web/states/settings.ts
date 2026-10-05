@@ -95,12 +95,13 @@ const STORAGE_KEY = 'settings'
 
 let statesInStorage = {}
 try {
-  statesInStorage = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+  const stored = localStorage.getItem(STORAGE_KEY)
+  statesInStorage = stored ? JSON.parse(stored) : (window.ipcRenderer?.getSavedSettings?.() ?? {})
   // Remove the short-lived audio-source experiment from older fork builds.
   delete (statesInStorage as Record<string, unknown>).audioSourceMode
   delete (statesInStorage as Record<string, unknown>).showDesktopLyrics
 } catch {
-  // ignore
+  statesInStorage = window.ipcRenderer?.getSavedSettings?.() ?? {}
 }
 
 const settings = proxy<Settings>(merge(initSettings, statesInStorage))

@@ -44,6 +44,7 @@ export const enum IpcChannels {
   VolumeUp = 'VolumeUp',
   VolumeDown = 'VolumeDown',
   SyncSettings = 'SyncSettings',
+  GetSavedSettings = 'GetSavedSettings',
   SyncTheme = 'SyncTheme',
   SyncAccentColor = 'SyncAccentColor',
   GetAudioCacheSize = 'GetAudioCacheSize',
@@ -119,6 +120,7 @@ export interface IpcChannelsParams {
   [IpcChannels.VolumeUp]: void
   [IpcChannels.VolumeDown]: void
   [IpcChannels.SyncSettings]: any
+  [IpcChannels.GetSavedSettings]: void
   [IpcChannels.SyncAccentColor]: {
     color: string
   }
@@ -183,6 +185,7 @@ export interface IpcChannelsReturns {
   [IpcChannels.VolumeUp]: void
   [IpcChannels.VolumeDown]: void
   [IpcChannels.SyncSettings]: any
+  [IpcChannels.GetSavedSettings]: Record<string, unknown> | null
   [IpcChannels.SyncAccentColor]: {
     color: string
   }
