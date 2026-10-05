@@ -57,7 +57,7 @@ jobs:
             try { existing = (await github.rest.repos.getReleaseByTag(params)).data; }
             catch (error) { if (error.status !== 404) throw error; }
             if (process.env.REBUILD === 'true') {
-              if (!existing || existing.draft || existing.prerelease) throw new Error('Rebuild requires an existing stable release.');
+              if (!existing || existing.prerelease) throw new Error('Rebuild requires an existing stable release.');
             } else if (existing) {
               throw new Error('Release already exists. Use a new dev revision or the explicit rebuild workflow.');
             }
@@ -125,7 +125,15 @@ jobs:
           ENABLE_FLAC: 'true'
           ENABLE_LOCAL_VIP: 'svip'
           IS_ELECTRON: 'yes'
-        run: pnpm exec turbo run build
+        # Older tags may not allowlist release environment variables in turbo.json.
+        run: pnpm exec turbo run build --env-mode=loose
+
+      - name: Verify compiled Last.fm configuration
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_API_SECRET: ${{ secrets.LASTFM_API_SECRET }}
+        run: |
+          node -e "const fs=require('node:fs'); const bundle=fs.readFileSync('packages/desktop/dist/app.js','utf8'); for(const name of ['LASTFM_API_KEY','LASTFM_API_SECRET']) { const value=process.env[name]||''; if(!/^[a-f0-9]{32}$/i.test(value)||!bundle.includes(value)) throw new Error('Last.fm configuration missing from main-process build: '+name); } console.log('Compiled Last.fm configuration verified without exposing credentials.');"
 
       - name: Package Windows app
         env:
@@ -192,6 +200,7 @@ jobs:
             version = $env:RELEASE_VERSION
             commit = $env:RELEASE_COMMIT
             workflow = 'windows-release.yml'
+            workflowCommit = $env:GITHUB_SHA
             runUrl = "https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
             runAttempt = $env:GITHUB_RUN_ATTEMPT
             runnerOS = $env:RUNNER_OS

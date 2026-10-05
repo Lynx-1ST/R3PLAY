@@ -1,7 +1,15 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalPassThroughEnv": [
-    "IS_ELECTRON"
+    "IS_ELECTRON",
+    "LASTFM_API_KEY",
+    "LASTFM_API_SECRET",
+    "ELECTRON_WEB_SERVER_PORT",
+    "ELECTRON_DEV_NETEASE_API_PORT",
+    "UNBLOCK_SERVER_PORT",
+    "VITE_APP_NETEASE_API_URL",
+    "ENABLE_FLAC",
+    "ENABLE_LOCAL_VIP"
   ],
   "tasks": {
     "post-install": {
@@ -11,36 +19,24 @@
       "cache": false
     },
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/**"
-      ],
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
       "cache": false
     },
     "build:web": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "cache": false
     },
     "pack": {
-      "outputs": [
-        "release/**"
-      ],
+      "outputs": ["release/**"],
       "cache": false
     },
     "pack:test": {
-      "outputs": [
-        "release/**"
-      ],
+      "outputs": ["release/**"],
       "cache": false
     },
     "test": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "outputs": []
     }
   }
