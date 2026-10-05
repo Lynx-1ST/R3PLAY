@@ -5,6 +5,8 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 const allowedChannels = new Set<IpcChannels>([
   IpcChannels.LastFmStatus,
+  IpcChannels.LastFmRead,
+  IpcChannels.LastFmLove,
   IpcChannels.LastFmConnect,
   IpcChannels.LastFmComplete,
   IpcChannels.LastFmDisconnect,

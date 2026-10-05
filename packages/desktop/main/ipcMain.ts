@@ -48,6 +48,8 @@ export function initIpcMain(
   const { on } = trustedIpc(win)
   const { handle } = trustedIpc(win)
   handle(IpcChannels.LastFmStatus, () => lastfm.status())
+  handle(IpcChannels.LastFmRead, (_event, params) => lastfm.read(params))
+  handle(IpcChannels.LastFmLove, (_event, params) => lastfm.love(params))
   handle(IpcChannels.LastFmConnect, () => lastfm.connect())
   handle(IpcChannels.LastFmComplete, () => lastfm.complete())
   handle(IpcChannels.LastFmDisconnect, () => lastfm.disconnect())

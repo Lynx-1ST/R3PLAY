@@ -2,7 +2,15 @@ import { safeStorage, shell } from 'electron'
 import Store from 'electron-store'
 import { LastFmClient, LastFmError } from './utils/lastfmClient'
 import { LastFmListening, type ScrobbleRecord } from './utils/lastfmListening'
-import type { LastFmPlayback, LastFmStatus } from '../../shared/lastfm'
+import type {
+  LastFmPlayback,
+  LastFmStatus,
+  LastFmReadRequest,
+  LastFmReadResult,
+  LastFmLoveRequest,
+  LastFmLoveResult,
+} from '../../shared/lastfm'
+import { LastFmData, lastFmDataError, validLastFmName } from './utils/lastfmData'
 
 const apiKey = process.env.LASTFM_API_KEY ?? ''
 const apiSecret = process.env.LASTFM_API_SECRET ?? ''
@@ -18,6 +26,8 @@ const store = new Store<{
 })
 class LastFmService {
   private client = new LastFmClient(apiKey, apiSecret)
+  private data = new LastFmData((method, params) => this.client.read(method, params))
+  private loveBusy = new Set<string>()
   private cachedSession: Session | null | undefined
   private token: string | null = null
   private authBusy = false
@@ -78,6 +88,7 @@ class LastFmService {
       store.delete('session')
       this.cachedSession = null
       this.listening.reset()
+      this.data.clear()
     }
   }
   async connect() {
@@ -125,6 +136,7 @@ class LastFmService {
       store.set('session', safeStorage.encryptString(JSON.stringify(session)).toString('base64'))
       store.set('owner', session.name)
       this.cachedSession = session
+      this.data.clear()
       this.token = null
       this.error = undefined
       this.listening.reset()
@@ -141,6 +153,7 @@ class LastFmService {
   }
   disconnect() {
     this.generation++
+    this.data.clear()
     this.authBusy = false
     this.token = null
     this.cachedSession = null
@@ -156,6 +169,40 @@ class LastFmService {
     store.set('enabled', enabled)
     this.listening.reset()
     return this.status()
+  }
+  async read(request: LastFmReadRequest): Promise<LastFmReadResult> {
+    if (!this.status().configured) return { error: 'not-configured', page: 1, pages: 1, total: 0 }
+    return this.data.read(request, this.session()?.name)
+  }
+  async love(request: LastFmLoveRequest): Promise<LastFmLoveResult> {
+    if (
+      !validLastFmName(request?.artist) ||
+      !validLastFmName(request?.track) ||
+      typeof request?.loved !== 'boolean'
+    )
+      return { error: 'invalid-input' }
+    const session = this.session()
+    if (!session) return { error: 'not-connected' }
+    const key = JSON.stringify([session.name, request.artist, request.track])
+    if (this.loveBusy.has(key)) return { error: 'rate-limited' }
+    this.loveBusy.add(key)
+    const generation = this.generation
+    try {
+      await this.client.call(request.loved ? 'track.love' : 'track.unlove', {
+        artist: request.artist,
+        track: request.track,
+        sk: session.key,
+      })
+      if (generation !== this.generation) return { error: 'cancelled' }
+      this.data.clear()
+      return { loved: request.loved }
+    } catch (error) {
+      if (generation !== this.generation) return { error: 'cancelled' }
+      if (error instanceof LastFmError && error.code === 9) this.fail(error)
+      return { error: lastFmDataError(error) }
+    } finally {
+      this.loveBusy.delete(key)
+    }
   }
   update(playback: LastFmPlayback) {
     if (this.session() && store.get('enabled')) this.listening.update(playback)

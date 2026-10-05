@@ -5,10 +5,19 @@ import type { DiscordPlayback } from './discordPresence'
 import type { AudioCacheRequest, AudioCacheReceipt } from './audioCache'
 import type { UpdateChannel, UpdateState } from './updates'
 import type { CacheStatus, Diagnostics, CacheDirectoryResult } from './maintenance'
-import type { LastFmPlayback, LastFmStatus } from './lastfm'
+import type {
+  LastFmPlayback,
+  LastFmStatus,
+  LastFmReadRequest,
+  LastFmReadResult,
+  LastFmLoveRequest,
+  LastFmLoveResult,
+} from './lastfm'
 
 export const enum IpcChannels {
   LastFmStatus = 'LastFmStatus',
+  LastFmRead = 'LastFmRead',
+  LastFmLove = 'LastFmLove',
   LastFmConnect = 'LastFmConnect',
   LastFmComplete = 'LastFmComplete',
   LastFmDisconnect = 'LastFmDisconnect',
@@ -75,6 +84,8 @@ export const enum IpcChannels {
 // ipcMain.on params
 export interface IpcChannelsParams {
   [IpcChannels.LastFmStatus]: void
+  [IpcChannels.LastFmRead]: LastFmReadRequest
+  [IpcChannels.LastFmLove]: LastFmLoveRequest
   [IpcChannels.LastFmConnect]: void
   [IpcChannels.LastFmComplete]: void
   [IpcChannels.LastFmDisconnect]: void
@@ -172,6 +183,8 @@ export interface IpcChannelsParams {
 // ipcRenderer.on params
 export interface IpcChannelsReturns {
   [IpcChannels.LastFmStatus]: LastFmStatus
+  [IpcChannels.LastFmRead]: LastFmReadResult
+  [IpcChannels.LastFmLove]: LastFmLoveResult
   [IpcChannels.LastFmConnect]: LastFmStatus
   [IpcChannels.LastFmComplete]: LastFmStatus
   [IpcChannels.LastFmDisconnect]: LastFmStatus

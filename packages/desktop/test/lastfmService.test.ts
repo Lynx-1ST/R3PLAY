@@ -118,3 +118,36 @@ it('ignores an authorization response arriving after cancellation and permits a 
   expect(lastfm.status()).toMatchObject({ authorizing: true, error: undefined })
   expect((await lastfm.complete()).connected).toBe(true)
 })
+it('reads public profiles without exposing credentials and requires a session to love tracks', async () => {
+  const { lastfm } = await import('../main/lastfm')
+  expect(await lastfm.love({ artist: 'Artist', track: 'Track', loved: true })).toEqual({
+    error: 'not-connected',
+  })
+  mocks.fetch.mockResolvedValueOnce(
+    new Response(JSON.stringify({ user: { name: 'public-user', playcount: '123' } }))
+  )
+  expect(await lastfm.read({ kind: 'profile', username: 'public-user' })).toMatchObject({
+    profile: { name: 'public-user', scrobbles: 123 },
+  })
+  const params = new URL(String(mocks.fetch.mock.calls.at(-1)![0])).searchParams
+  expect(params.get('method')).toBe('user.getInfo')
+  expect(params.has('sk')).toBe(false)
+  expect(params.has('api_sig')).toBe(false)
+})
+it('uses signed writes for the authenticated account and handles invalid sessions', async () => {
+  const { lastfm } = await import('../main/lastfm')
+  await lastfm.connect()
+  await lastfm.complete()
+  expect(await lastfm.love({ artist: 'Artist', track: 'Track', loved: true })).toEqual({
+    loved: true,
+  })
+  const call = mocks.fetch.mock.calls.at(-1)![1]
+  expect(call.method).toBe('POST')
+  expect(call.body.get('method')).toBe('track.love')
+  expect(call.body.get('sk')).toBe(sessionKey)
+  mocks.fetch.mockResolvedValueOnce(new Response(JSON.stringify({ error: 9 })))
+  expect(await lastfm.love({ artist: 'Artist', track: 'Track', loved: false })).toEqual({
+    error: 'invalid-session',
+  })
+  expect(lastfm.status().connected).toBe(false)
+})
