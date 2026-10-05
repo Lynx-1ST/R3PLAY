@@ -1,10 +1,11 @@
 import type { LastFmTrack } from '@/shared/lastfm'
-const normalize = (value: string) =>
+export const normalizeLastFmName = (value: string) =>
   value
     .normalize('NFKC')
     .toLocaleLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()
+const normalize = normalizeLastFmName
 export function matchLastFmTrack(
   target: Pick<LastFmTrack, 'name' | 'artist' | 'album'>,
   songs: Track[]

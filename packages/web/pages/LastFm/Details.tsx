@@ -52,7 +52,16 @@ export default function Details({
           <div className='space-y-8'>
             <header className='flex flex-col gap-5 sm:flex-row'>
               <div className='w-36 shrink-0'>
-                <Artwork src={item.image} name={item.name} round={!track} />
+                <Artwork
+                  src={item.image}
+                  name={item.name}
+                  round={!track}
+                  target={
+                    track
+                      ? { kind: 'track', name: track, artist, album: data.track?.album }
+                      : { kind: 'artist', name: artist }
+                  }
+                />
               </div>
               <div className='min-w-0 flex-1'>
                 <p className='mb-2 text-xs font-semibold tracking-widest uppercase opacity-60'>

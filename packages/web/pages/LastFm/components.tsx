@@ -14,6 +14,8 @@ import { cloudSearch } from '@/web/api/search'
 import { matchLastFmTrack } from '@/web/utils/lastfmMatch'
 import player from '@/web/states/player'
 import toast from 'react-hot-toast'
+import { useQuery } from '@tanstack/react-query'
+import { resolveArtwork, type ArtworkTarget } from '@/web/utils/lastfmArtwork'
 
 export const buttonClass =
   'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black/5 px-4 py-2 text-sm font-semibold transition-colors hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-color-600 disabled:opacity-50 dark:bg-white/10 dark:hover:bg-white/15'
@@ -23,23 +25,52 @@ export function Artwork({
   src,
   name,
   round = false,
+  target,
 }: {
   src: string
   name: string
   round?: boolean
+  target?: ArtworkTarget
 }) {
-  const [failed, setFailed] = useState(false)
+  const [failedSources, setFailedSources] = useState<string[]>([])
+  const [visible, setVisible] = useState(false)
+  const container = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!container.current) return
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '100px' }
+    )
+    observer.observe(container.current)
+    return () => observer.disconnect()
+  }, [])
+  const fallback = useQuery({
+    queryKey: ['lastfm-artwork', target],
+    queryFn: ({ signal }) => resolveArtwork(target!, signal),
+    enabled: visible && !!target && (!src || failedSources.includes(src)),
+    staleTime: 24 * 60 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
+  const image = src && !failedSources.includes(src) ? src : fallback.data || ''
   return (
     <div
+      ref={container}
       className={`flex aspect-square shrink-0 items-center justify-center overflow-hidden bg-black/5 dark:bg-white/10 ${round ? 'rounded-full' : 'rounded-xl'}`}
     >
-      {src && !failed ? (
+      {image && !failedSources.includes(image) ? (
         <img
-          src={src}
+          src={image}
           alt=''
           loading='lazy'
           decoding='async'
-          onError={() => setFailed(true)}
+          onError={() => setFailedSources(sources => [...sources, image])}
           className='h-full w-full object-cover'
         />
       ) : (
@@ -146,7 +177,11 @@ export function TrackList({
             {start + index + 1}
           </span>
           <div className='w-12'>
-            <Artwork src={track.image} name={track.name} />
+            <Artwork
+              src={track.image}
+              name={track.name}
+              target={{ kind: 'track', name: track.name, artist: track.artist, album: track.album }}
+            />
           </div>
           <div className='min-w-0 flex-1'>
             <button
@@ -259,7 +294,12 @@ export function ArtistGrid({
           className='min-w-0 rounded-xl p-2 text-left transition-colors hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 dark:hover:bg-white/5'
           onClick={() => onArtist(artist.name)}
         >
-          <Artwork src={artist.image} name={artist.name} round />
+          <Artwork
+            src={artist.image}
+            name={artist.name}
+            round
+            target={{ kind: 'artist', name: artist.name }}
+          />
           <p className='mt-3 truncate text-sm font-semibold'>{artist.name}</p>
           <p className='mt-1 text-xs opacity-60'>
             {artist.match > 0
@@ -294,7 +334,11 @@ export function AlbumGrid({
               )
             }
           >
-            <Artwork src={album.image} name={album.name} />
+            <Artwork
+              src={album.image}
+              name={album.name}
+              target={{ kind: 'album', name: album.name, artist: album.artist }}
+            />
             <p className='mt-3 truncate text-sm font-semibold'>{album.name}</p>
           </button>
           <button
