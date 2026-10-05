@@ -55,7 +55,13 @@ jobs:
             const params = { ...context.repo, tag: process.env.RELEASE_TAG };
             let existing;
             try { existing = (await github.rest.repos.getReleaseByTag(params)).data; }
-            catch (error) { if (error.status !== 404) throw error; }
+            catch (error) {
+              if (error.status !== 404) throw error;
+              if (process.env.REBUILD === 'true') {
+                const releases = await github.paginate(github.rest.repos.listReleases, { ...context.repo, per_page: 100 });
+                existing = releases.find(release => release.tag_name === process.env.RELEASE_TAG);
+              }
+            }
             if (process.env.REBUILD === 'true') {
               if (!existing || existing.prerelease) throw new Error('Rebuild requires an existing stable release.');
             } else if (existing) {
