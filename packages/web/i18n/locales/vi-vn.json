@@ -282,6 +282,16 @@
       }
     },
     "diagnostics": {
+      "process-main": "Main",
+      "process-renderer": "Renderer",
+      "process-gpu": "GPU",
+      "process-utility": "Utility",
+      "process-other": "Khác",
+      "process-details": "Chi tiết process",
+      "process-type": "Process",
+      "working-set": "Working set",
+      "private-memory": "Bộ nhớ riêng",
+      "memory-note": "Working set có thể chứa trang nhớ dùng chung. Tổng này không phải RAM vật lý riêng hay bộ nhớ JavaScript.",
       "title": "Chẩn đoán",
       "description": "Xem thống kê app và cảnh báo/lỗi gần nhất. Bản xuất chỉ chứa báo cáo này, đã che thông tin đăng nhập, URL và đường dẫn cá nhân.",
       "version": "Phiên bản",

@@ -4,7 +4,7 @@ import { parse, join } from 'node:path'
 import log from './log'
 import { audioCacheStorage } from './audioCache'
 import { redactDiagnosticLine } from './utils/diagnosticRedaction'
-import type { Diagnostics } from '../../shared/maintenance'
+import type { Diagnostics, DiagnosticProcessType } from '../../shared/maintenance'
 
 async function recentErrors() {
   let file
@@ -27,14 +27,42 @@ async function recentErrors() {
   }
 }
 export async function getDiagnostics(): Promise<Diagnostics> {
+  // One on-demand snapshot; do not add a background metrics polling loop.
+  const metrics = app.getAppMetrics()
+  const memoryKB = { main: 0, renderer: 0, gpu: 0, utility: 0, other: 0 }
+  const toMB = (kb: number) => Math.round((kb / 1024) * 10) / 10
+  const types: Record<string, DiagnosticProcessType> = {
+    Browser: 'main',
+    Tab: 'renderer',
+    GPU: 'gpu',
+    Utility: 'utility',
+  }
+  const processes = metrics.map(metric => {
+    const type = types[metric.type] ?? 'other'
+    memoryKB[type] += metric.memory.workingSetSize
+    return {
+      pid: metric.pid,
+      type,
+      memoryMB: toMB(metric.memory.workingSetSize),
+      ...(metric.memory.privateBytes === undefined
+        ? {}
+        : { privateMB: toMB(metric.memory.privateBytes) }),
+    }
+  })
   return {
     version: app.getVersion(),
     platform: process.platform,
     electron: process.versions.electron,
     uptimeSeconds: Math.floor(process.uptime()),
-    memoryMB: Math.round(
-      app.getAppMetrics().reduce((n, metric) => n + metric.memory.workingSetSize, 0) / 1024
-    ),
+    memoryMB: toMB(Object.values(memoryKB).reduce((total, kb) => total + kb, 0)),
+    memoryByType: {
+      main: toMB(memoryKB.main),
+      renderer: toMB(memoryKB.renderer),
+      gpu: toMB(memoryKB.gpu),
+      utility: toMB(memoryKB.utility),
+      other: toMB(memoryKB.other),
+    },
+    processes,
     cache: await audioCacheStorage.status(),
     recentErrors: await recentErrors(),
   }

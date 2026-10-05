@@ -283,6 +283,16 @@
       }
     },
     "diagnostics": {
+      "process-main": "Main",
+      "process-renderer": "Renderer",
+      "process-gpu": "GPU",
+      "process-utility": "Utility",
+      "process-other": "Other",
+      "process-details": "Process details",
+      "process-type": "Process",
+      "working-set": "Working set",
+      "private-memory": "Private memory",
+      "memory-note": "Working sets can share pages. This total is not unique physical RAM or JavaScript heap size.",
       "title": "Diagnostics",
       "description": "View app statistics and recent warnings/errors. Export contains only this report, with credentials, URLs and personal paths removed.",
       "version": "Version",

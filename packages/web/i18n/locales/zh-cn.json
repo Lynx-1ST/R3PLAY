@@ -282,6 +282,16 @@
       }
     },
     "diagnostics": {
+      "process-main": "主进程",
+      "process-renderer": "渲染进程",
+      "process-gpu": "GPU",
+      "process-utility": "工具进程",
+      "process-other": "其他",
+      "process-details": "进程详情",
+      "process-type": "进程",
+      "working-set": "工作集",
+      "private-memory": "私有内存",
+      "memory-note": "工作集可能包含共享页面。此总量不代表独占物理内存或 JavaScript 堆大小。",
       "title": "诊断",
       "description": "查看应用统计及近期警告和错误。导出仅包含此报告，隐藏凭据、URL 和个人路径。",
       "version": "版本",

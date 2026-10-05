@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 
-const fixture = vi.hoisted(() => ({ path: '', fail: false }))
+const fixture = vi.hoisted(() => ({ path: '', fail: false, metrics: [] as any[] }))
 vi.mock('electron', () => ({
-  app: { getVersion: () => '2.9.6', getAppMetrics: () => [] },
+  app: { getVersion: () => '2.9.6', getAppMetrics: () => fixture.metrics },
   dialog: {},
 }))
 vi.mock('../main/log', () => ({
@@ -30,7 +30,7 @@ vi.mock('../main/audioCache', () => ({
     status: async () => ({ directory: 'cache', bytes: 10, files: 1, limitGB: 5 }),
   },
 }))
-import { clearLogs } from '../main/diagnostics'
+import { clearLogs, getDiagnostics } from '../main/diagnostics'
 
 let directory = ''
 afterEach(async () => {
@@ -54,4 +54,22 @@ it('clears current and rotated logs while preserving unrelated profile files', a
 it('reports a failure instead of claiming an inaccessible log was cleared', async () => {
   fixture.fail = true
   await expect(clearLogs()).rejects.toThrow('Unable to clear application log')
+})
+
+it('reports each PID and totals all process groups from one metric snapshot', async () => {
+  fixture.metrics = [
+    { pid: 1, type: 'Browser', memory: { workingSetSize: 102400, privateBytes: 51200 } },
+    { pid: 2, type: 'Tab', memory: { workingSetSize: 204800 } },
+    { pid: 3, type: 'Tab', memory: { workingSetSize: 51200 } },
+    { pid: 4, type: 'GPU', memory: { workingSetSize: 25600 } },
+    { pid: 5, type: 'Utility', memory: { workingSetSize: 10240 } },
+    { pid: 6, type: 'Unknown', memory: { workingSetSize: 1024 } },
+  ]
+  const report = await getDiagnostics()
+  expect(report.memoryMB).toBe(386)
+  expect(report.memoryByType).toEqual({ main: 100, renderer: 250, gpu: 25, utility: 10, other: 1 })
+  expect(report.processes).toHaveLength(6)
+  expect(report.processes[0]).toEqual({ pid: 1, type: 'main', memoryMB: 100, privateMB: 50 })
+  expect(report.processes[1]).not.toHaveProperty('privateMB')
+  fixture.metrics = []
 })
