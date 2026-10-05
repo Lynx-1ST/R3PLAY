@@ -91,7 +91,9 @@ class LastFmService {
     try {
       const response = await this.client.call('auth.getToken')
       if (generation !== this.generation) return this.status()
-      if (!/^[a-f0-9]{32}$/i.test(response.token)) throw new LastFmError(14)
+      // Last.fm tokens are opaque and can contain punctuation, not just hex.
+      if (typeof response.token !== 'string' || !/^[\x21-\x7e]{32}$/.test(response.token))
+        throw new LastFmError(14)
       this.token = response.token
       this.error = undefined
       await shell.openExternal(
@@ -112,7 +114,13 @@ class LastFmService {
       const response = await this.client.call('auth.getSession', { token: this.token })
       if (generation !== this.generation) return this.status()
       const session = response.session as Session
-      if (!session?.name || !/^[a-f0-9]{32}$/i.test(session.key)) throw new LastFmError(14)
+      if (
+        typeof session?.name !== 'string' ||
+        !session.name ||
+        typeof session.key !== 'string' ||
+        !/^[\x21-\x7e]{32}$/.test(session.key)
+      )
+        throw new LastFmError(14)
       if (store.get('owner') !== session.name) store.set('pending', [])
       store.set('session', safeStorage.encryptString(JSON.stringify(session)).toString('base64'))
       store.set('owner', session.name)

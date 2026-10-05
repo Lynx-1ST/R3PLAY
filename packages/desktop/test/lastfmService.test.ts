@@ -26,7 +26,7 @@ vi.mock('electron', () => ({
 }))
 const key = 'a'.repeat(32),
   secret = 'b'.repeat(32),
-  sessionKey = 'c'.repeat(32)
+  sessionKey = 's+/='.repeat(8)
 beforeEach(() => {
   vi.resetModules()
   vi.useFakeTimers()
@@ -40,7 +40,7 @@ beforeEach(() => {
         : options.body.get('method')
     const data =
       method === 'auth.getToken'
-        ? { token: 'd'.repeat(32) }
+        ? { token: 'z+/='.repeat(8) }
         : method === 'auth.getSession'
           ? { session: { name: 'test-user', key: sessionKey } }
           : method === 'track.scrobble'
