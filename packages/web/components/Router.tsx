@@ -22,6 +22,7 @@ const Artist = lazy(() => import('@/web/pages/Artist'))
 const Lyrics = lazy(() => import('@/web/pages/Lyrics/Lyrics'))
 const Search = lazy(() => import('@/web/pages/Search'))
 const Settings = lazy(() => import('@/web/pages/Settings'))
+const LastFm = lazy(() => import('@/web/pages/LastFm'))
 
 // Legacy typed-search URLs (/search/:keywords/:type) redirect to the
 // unified search page. `Navigate to` does not interpolate :params in
@@ -50,6 +51,7 @@ const Router = () => {
           <Route path='/' element={<My />} />
           <Route path='/discover' element={<Discover />} />
           <Route path='/browse' element={<Browse />} />
+          <Route path='/lastfm' element={<LastFm />} />
           <Route path='/album/:id' element={<Album />} />
           <Route path='/playlist/:id' element={<Playlist />} />
           <Route path='/artist/:id' element={<Artist />} />

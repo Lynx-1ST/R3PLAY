@@ -3,17 +3,24 @@ import { useTranslation } from 'react-i18next'
 import type { LastFmStatus } from '@/shared/lastfm'
 import { IpcChannels } from '@/shared/IpcChannels'
 import { BlockTitle, Option, OptionText, Switch } from './Controls'
+import { useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 
 export default function LastFm() {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const [status, setStatus] = useState<LastFmStatus>()
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
+  const updateStatus = (value: LastFmStatus | undefined) => {
+    setStatus(value)
+    queryClient.setQueryData(['lastfm-status'], value)
+  }
   const run = async (action: () => Promise<LastFmStatus | undefined>) => {
     setBusy(true)
     setFailed(false)
     try {
-      setStatus(await action())
+      updateStatus(await action())
     } catch {
       setFailed(true)
     } finally {
@@ -25,7 +32,7 @@ export default function LastFm() {
     const refresh = async () => {
       try {
         const result = await window.ipcRenderer?.invoke(IpcChannels.LastFmStatus)
-        if (!cancelled) setStatus(result)
+        if (!cancelled) updateStatus(result)
       } catch {
         if (!cancelled) setFailed(true)
       }
@@ -46,7 +53,7 @@ export default function LastFm() {
       checking = true
       try {
         const result = await window.ipcRenderer?.invoke(IpcChannels.LastFmComplete)
-        if (!cancelled) setStatus(result)
+        if (!cancelled) updateStatus(result)
       } catch {
         if (!cancelled) setFailed(true)
       } finally {
@@ -74,6 +81,12 @@ export default function LastFm() {
           <p className='mb-4 text-sm'>
             {t('settings.lastfm.connected', { username: status.username })}
           </p>
+          <Link
+            to='/lastfm'
+            className='text-accent-color-700 mb-4 inline-flex min-h-10 items-center text-sm font-semibold hover:underline'
+          >
+            {t('lastfm.open')}
+          </Link>
           <Option>
             <OptionText>{t('settings.lastfm.scrobble')}</OptionText>
             <fieldset disabled={busy}>
