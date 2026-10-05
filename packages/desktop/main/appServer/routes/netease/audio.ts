@@ -199,8 +199,8 @@ async function audio(fastify: FastifyInstance) {
       }>,
       reply
     ) => {
-      const id = Number(req.query.id) || 0
-      if (!id || isNaN(id)) {
+      const id = Number(req.query.id)
+      if (!Number.isSafeInteger(id) || id <= 0) {
         return reply.status(400).send({
           code: 400,
           msg: 'id is required or id is invalid',

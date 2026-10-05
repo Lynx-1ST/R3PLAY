@@ -446,11 +446,7 @@ export class Player {
       )
         return
       const howl = new Howl({
-        src: [
-          source.audio.includes('?')
-            ? `${source.audio}&dash-id=${id}`
-            : `${source.audio}?dash-id=${id}`,
-        ],
+        src: [source.audio],
         format: ['mp3', 'flac', 'webm'],
         html5: true,
         autoplay: false,
@@ -618,7 +614,7 @@ export class Player {
     Howler.unload()
 
     const cachedInfo = { ...this.audioInfo }
-    const url = audio.includes('?') ? `${audio}&dash-id=${id}` : `${audio}?dash-id=${id}`
+    const url = audio
     const howler = new Howl({
       src: [url],
       format: ['mp3', 'flac', 'webm'],

@@ -57,3 +57,26 @@ it('retries a failed initialization and shares the retry across concurrent calle
     await fs.rm(directory, { recursive: true, force: true })
   }
 })
+
+it('cleans WebM temporary and unreferenced final files while preserving referenced WebM', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'r3play-webm-recovery-'))
+  const cache = path.join(directory, 'audio_cache')
+  await fs.mkdir(cache)
+  const retained = '42-128000-unknown-11111111111111111111111111111111.webm'
+  const names = [
+    retained,
+    '43-128000-unknown-00000000000000000000000000000000.webm',
+    'stream-00000000-0000-0000-0000-000000000000.tmp.webm',
+  ]
+  for (const name of names) await fs.writeFile(path.join(cache, name), '')
+  const jobs = new AudioCacheJobs({
+    userData: directory,
+    repository: { find: () => undefined, save: () => {}, referenced: name => name === retained },
+  })
+  try {
+    await jobs.initialize()
+    expect(await fs.readdir(cache)).toEqual([retained])
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true })
+  }
+})

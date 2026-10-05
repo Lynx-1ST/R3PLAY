@@ -50,7 +50,7 @@ export interface TablesStructures {
   [Tables.Audio]: {
     id: number
     bitRate: number
-    format: 'mp3' | 'flac' | 'ogg' | 'wav' | 'm4a' | 'aac' | 'unknown' | 'opus'
+    format: 'mp3' | 'flac' | 'ogg' | 'wav' | 'm4a' | 'aac' | 'unknown' | 'opus' | 'webm'
     source:
       'unknown' | 'netease' | 'migu' | 'kuwo' | 'kugou' | 'youtube' | 'qq' | 'bilibili' | 'joox'
     queriedAt: number

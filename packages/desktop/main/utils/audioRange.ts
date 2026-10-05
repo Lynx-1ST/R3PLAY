@@ -42,6 +42,7 @@ export async function streamCachedAudio(
     wav: 'audio/wav',
     m4a: 'audio/mp4',
     aac: 'audio/aac',
+    webm: 'audio/webm',
   }
   reply.type(types[type] ?? 'application/octet-stream')
   reply

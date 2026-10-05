@@ -277,7 +277,11 @@ class Cache {
   }
 
   async getAudio(fileName: string, request: FastifyRequest, reply: FastifyReply) {
-    const filePath = resolveCacheAudioPath(app.getPath('userData'), fileName, audioCacheStorage.directory)
+    const filePath = resolveCacheAudioPath(
+      app.getPath('userData'),
+      fileName,
+      audioCacheStorage.directory
+    )
     if (!filePath) return reply.code(400).send({ error: 'Invalid filename' })
     db.sqlite
       .prepare('UPDATE AudioVariant SET queriedAt = ? WHERE fileName = ?')
@@ -310,15 +314,18 @@ class Cache {
       meta?.format?.codec === 'OPUS' ? 165000 : (meta?.format?.bitrate ?? bitrate ?? 0)
     )
     const type =
-      {
-        'MPEG 1 Layer 3': 'mp3',
-        'Ogg Vorbis': 'ogg',
-        AAC: 'm4a',
-        FLAC: 'flac',
-        OPUS: 'opus',
-        Opus: 'opus',
-        PCM: 'wav',
-      }[meta?.format?.codec ?? ''] ?? 'unknown'
+      meta.format.container === 'EBML/webm' &&
+      ['OPUS', 'Opus', 'VORBIS', 'Vorbis'].includes(meta.format.codec ?? '')
+        ? 'webm'
+        : ({
+            'MPEG 1 Layer 3': 'mp3',
+            'Ogg Vorbis': 'ogg',
+            AAC: 'm4a',
+            FLAC: 'flac',
+            OPUS: 'opus',
+            Opus: 'opus',
+            PCM: 'wav',
+          }[meta?.format?.codec ?? ''] ?? 'unknown')
 
     let source: TablesStructures[Tables.Audio]['source'] = 'unknown'
     const hostname = new URL(url).hostname
@@ -351,7 +358,11 @@ class Cache {
       queriedAt: Date.now(),
     })
     if (previous && previous.fileName !== fileName) {
-      const previousPath = resolveCacheAudioPath(app.getPath('userData'), previous.fileName, audioCacheStorage.directory)
+      const previousPath = resolveCacheAudioPath(
+        app.getPath('userData'),
+        previous.fileName,
+        audioCacheStorage.directory
+      )
       if (previousPath) await fs.promises.unlink(previousPath).catch(() => {})
     }
     await audioCacheStorage.trim()

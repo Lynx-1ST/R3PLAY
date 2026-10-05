@@ -140,6 +140,22 @@ afterEach(() => {
   vi.useRealTimers()
 })
 describe('player session restoration', () => {
+  it('preserves a signed CDN URL exactly for normal playback and crossfade', async () => {
+    const signed = 'https://example.test/song?signature=a%2Bb&expires=123#audio'
+    mocks.audio.mockResolvedValue({ data: [{ url: signed, br: 128000 }] })
+    mocks.settings.enableCrossfade = true
+    const player = new Player()
+    player.init({ ...session, _repeatMode: 'off' })
+    await settle()
+    const outgoing = player.howler as any
+    expect(outgoing.options.src).toEqual([signed])
+    outgoing.load()
+    player.play()
+    outgoing.position = 182
+    await vi.advanceTimersByTimeAsync(500)
+    expect(mocks.instances.at(-1).options.src).toEqual([signed])
+  })
+
   it.each(['pending', 'failed'])(
     'playback and seeking remain usable while background cache is %s',
     async failure => {
@@ -154,12 +170,7 @@ describe('player session restoration', () => {
       player.play()
       howl.load()
       await settle()
-      expect(cacheAudio).toHaveBeenCalledWith(
-        2,
-        'https://example.test/song.mp3?dash-id=2',
-        128000,
-        undefined
-      )
+      expect(cacheAudio).toHaveBeenCalledWith(2, 'https://example.test/song.mp3', 128000, undefined)
       expect(howl.active).toBe(true)
       expect(howl.position).toBe(85)
       player.progress = 100
@@ -317,6 +328,7 @@ describe('player session restoration', () => {
     outgoing.position = 182
     await vi.advanceTimersByTimeAsync(500)
     const incoming = mocks.instances.at(-1)
+    expect(incoming.options.src).toEqual(['https://example.test/song.mp3'])
     expect(incoming).not.toBe(outgoing)
     expect(incoming.active).toBe(false)
     incoming.load()

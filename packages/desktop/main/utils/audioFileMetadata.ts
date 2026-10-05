@@ -9,6 +9,7 @@ export async function detectAudioExtension(fileName: string): Promise<string> {
     const { bytesRead } = await file.read(header, 0, header.length, 0)
     if (bytesRead < 12) throw new Error('Audio file is too small')
     const magic = header.toString('ascii', 0, 4)
+    if (header.readUInt32BE(0) === 0x1a45dfa3) return 'webm'
     if (magic === 'fLaC') return 'flac'
     if (magic === 'OggS') return 'ogg'
     if (magic === 'RIFF' && header.toString('ascii', 8, 12) === 'WAVE') return 'wav'

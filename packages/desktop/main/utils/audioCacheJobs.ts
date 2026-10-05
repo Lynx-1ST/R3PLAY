@@ -137,8 +137,8 @@ export class AudioCacheJobs {
     await mkdir(this.directory, { recursive: true })
     for (const name of await readdir(this.directory)) {
       if (
-        /^stream-[a-f0-9-]{36}\.tmp(?:\.(flac|ogg|wav|m4a|mp3|aac))?$/.test(name) ||
-        (/^\d+-\d+-(standard|higher|exhigh|lossless|hires|jyeffect|vivid|sky|unknown)-[a-f0-9]{32}\.(mp3|ogg|m4a|flac|opus|wav|aac)$/.test(
+        /^stream-[a-f0-9-]{36}\.tmp(?:\.(flac|ogg|wav|m4a|mp3|aac|webm))?$/.test(name) ||
+        (/^\d+-\d+-(standard|higher|exhigh|lossless|hires|jyeffect|vivid|sky|unknown)-[a-f0-9]{32}\.(mp3|ogg|m4a|flac|opus|wav|aac|webm)$/.test(
           name
         ) &&
           !this.dependencies.repository.referenced(name))
@@ -183,8 +183,12 @@ export class AudioCacheJobs {
         this.dependencies.metadata ?? (file => parseFile(file, { skipCovers: true }))
       )(temporary)
       signal.throwIfAborted()
-      const format =
-        metadata.format.codec === 'AAC' && metadata.format.container?.includes('ADTS')
+      const webm =
+        metadata.format.container === 'EBML/webm' &&
+        ['OPUS', 'Opus', 'VORBIS', 'Vorbis'].includes(metadata.format.codec ?? '')
+      const format = webm
+        ? 'webm'
+        : metadata.format.codec === 'AAC' && metadata.format.container?.includes('ADTS')
           ? 'aac'
           : (
               {
@@ -202,6 +206,7 @@ export class AudioCacheJobs {
       const bitRate = Math.round(metadata.format.bitrate ?? job.request.bitrate ?? 0)
       if (
         !format ||
+        (typedTemporary.endsWith('.webm') && !webm) ||
         !Number.isSafeInteger(bitRate) ||
         bitRate <= 0 ||
         !metadata.format.duration ||
@@ -252,7 +257,11 @@ export class AudioCacheJobs {
       })
       committed = true
       if (previous && previous.fileName !== fileName && !repository.referenced(previous.fileName)) {
-        const oldPath = resolveCacheAudioPath(this.dependencies.userData, previous.fileName, this.directory)
+        const oldPath = resolveCacheAudioPath(
+          this.dependencies.userData,
+          previous.fileName,
+          this.directory
+        )
         if (oldPath) await unlink(oldPath).catch(() => {})
       }
       report?.('cached', job.request.id, `${level}/${format}`)

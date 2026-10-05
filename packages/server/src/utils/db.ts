@@ -145,17 +145,25 @@ class DB {
       return
     }
 
-    const sqlFiles = fs.readdirSync(migrationsDir)
-    sqlFiles.forEach((sqlFile: string) => {
-      const version = sqlFile.split('.').shift() || ''
-      if (!validate(version)) return
-      if (compare(version, pkg.version, '>')) {
-        const file = readSqlFile(sqlFile)
-        this.sqlite.exec(file)
-      }
-    })
-
-    updateAppVersionInDB()
+    // Never lower the watermark when opening a database from a newer release.
+    if (compare(appVersion.value, pkg.version, '>')) return
+    const migrations = fs
+      .readdirSync(migrationsDir)
+      .filter(file => /\.sql$/i.test(file))
+      .map(sqlFile => ({ sqlFile, version: sqlFile.replace(/\.sql$/i, '') }))
+      .filter(({ version }) => validate(version))
+      .filter(
+        ({ version }) =>
+          compare(version, appVersion.value, '>') && compare(version, pkg.version, '<=')
+      )
+      .sort((a, b) =>
+        compare(a.version, b.version, '=') ? 0 : compare(a.version, b.version, '>') ? 1 : -1
+      )
+    // SQL and the version watermark must commit together so failed upgrades can retry.
+    this.sqlite.transaction(() => {
+      for (const { sqlFile } of migrations) this.sqlite.exec(readSqlFile(sqlFile))
+      updateAppVersionInDB()
+    })()
 
     log.info('[db] Database migrated.')
   }

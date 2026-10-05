@@ -16,6 +16,7 @@ import { resolveCacheAudioPath } from '../main/utils/cacheAudioPath'
 import { streamCachedAudio } from '../main/utils/audioRange'
 import Fastify from 'fastify'
 
+const webmFixture = await readFile(path.join(__dirname, 'fixtures/tone.webm'))
 const fixture = Buffer.alloc(128)
 fixture.write('fLaC')
 fixture[4] = 128
@@ -64,6 +65,9 @@ beforeEach(async () => {
   }
   server = createServer((req, res) => {
     switch (req.url) {
+      case '/webm':
+        res.end(webmFixture)
+        return
       case '/redirect':
         res.writeHead(302, { Location: `${remote}/ok` }).end()
         return
@@ -126,6 +130,36 @@ afterEach(async () => {
 })
 
 describe('background streaming cache integration', () => {
+  it('caches WebM Opus with the correct container extension and replays identical bytes with ranges', async () => {
+    expect(
+      jobs.submit({ id: 42, url: 'https://r1.googlevideo.com/webm', bitrate: 128000 })
+    ).toEqual({ status: 'queued' })
+    await jobs.whenIdle()
+    expect(rows()).toHaveLength(1)
+    const row = rows()[0]
+    expect(row).toMatchObject({
+      source: 'youtube',
+      level: 'unknown',
+      format: 'webm',
+      sampleRate: 48000,
+    })
+    const file = resolveCacheAudioPath(directory, row.fileName)!
+    expect(file).toMatch(/\.webm$/)
+    expect(await readFile(file)).toEqual(webmFixture)
+    const app = Fastify()
+    app.get('/audio', (req, reply) => streamCachedAudio(file, req, reply))
+    try {
+      const result = await app.inject('/audio')
+      expect(result.headers['content-type']).toBe('audio/webm')
+      expect(result.rawPayload).toEqual(webmFixture)
+      const range = await app.inject({ url: '/audio', headers: { range: 'bytes=10-19' } })
+      expect(range.statusCode).toBe(206)
+      expect(range.rawPayload).toEqual(webmFixture.subarray(10, 20))
+    } finally {
+      await app.close()
+    }
+  })
+
   it('does not touch active temp files until explicitly initialized after the instance lock', async () => {
     const cacheDirectory = path.join(directory, 'audio_cache')
     const { mkdir } = await import('node:fs/promises')

@@ -96,3 +96,16 @@ it('skips missing fallback files and unknown NetEase quality before Unblock', as
   await app.inject('/netease/song/url/v1?id=42&level=hires')
   expect(mocks.match).toHaveBeenCalledOnce()
 })
+
+it.each(['-1', '1.5', '9007199254740992', '0', '', 'NaN', 'Infinity'])(
+  'rejects invalid playback ID %s before touching cache or providers',
+  async id => {
+    const result = await app.inject(
+      `/netease/song/url/v1?id=${encodeURIComponent(id)}&level=exhigh`
+    )
+    expect(result.statusCode).toBe(400)
+    expect(mocks.song).not.toHaveBeenCalled()
+    expect(mocks.match).not.toHaveBeenCalled()
+    expect(mocks.cache.get).not.toHaveBeenCalled()
+  }
+)

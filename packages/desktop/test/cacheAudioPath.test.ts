@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import path from 'path'
-import {
-  AUDIO_CACHE_DIRNAME,
-  resolveCacheAudioPath,
-} from '../main/utils/cacheAudioPath'
+import { AUDIO_CACHE_DIRNAME, resolveCacheAudioPath } from '../main/utils/cacheAudioPath'
 
 const userData = '/tmp/fake-user-data'
 const cacheDir = path.resolve(userData, AUDIO_CACHE_DIRNAME)
@@ -14,6 +11,7 @@ describe('resolveCacheAudioPath', () => {
       '123-320000.mp3',
       '1-0.unknown',
       '999-165000.opus',
+      '42-128000-unknown-0123456789abcdef0123456789abcdef.webm',
       '42-980001.flac',
     ]) {
       const resolved = resolveCacheAudioPath(userData, fileName)

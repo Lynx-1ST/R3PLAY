@@ -16,13 +16,14 @@ async function main() {
   fixture.writeUInt16BE(4096, 10)
   fixture.writeBigUInt64BE((96000n << 44n) | (1n << 41n) | (23n << 36n) | 96000n, 18)
   const directory = await mkdtemp(path.join(os.tmpdir(), 'audio-runtime-'))
+  const webm = await readFile(path.resolve('packages/desktop/test/fixtures/tone.webm'))
   const rows = new Map<string, AudioVariant>()
-  const server = createServer((_req, res) => res.end(fixture))
+  const server = createServer((req, res) => res.end(req.url === '/webm' ? webm : fixture))
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   const port = (server.address() as { port: number }).port
-  const request: AudioRequest = async (_url, signal) =>
+  const request: AudioRequest = async (url, signal) =>
     new Promise((resolve, reject) => {
-      get(`http://127.0.0.1:${port}/audio`, { signal }, resolve).on('error', reject)
+      get(`http://127.0.0.1:${port}${url.pathname}`, { signal }, resolve).on('error', reject)
     })
   const failures: string[] = []
   const jobs = new AudioCacheJobs({
@@ -53,6 +54,17 @@ async function main() {
     assert.equal(row.level, 'hires')
     assert.equal(row.hash?.length, 64)
     assert.deepEqual(await readFile(path.join(directory, 'audio_cache', row.fileName)), fixture)
+    assert.equal(
+      jobs.submit({ id: 43, url: 'https://r1.googlevideo.com/webm', bitrate: 128000 }).status,
+      'queued'
+    )
+    await jobs.whenIdle()
+    assert.deepEqual(failures, [])
+    const webmRow = [...rows.values()].find(row => row.trackId === 43)!
+    assert.equal(webmRow.format, 'webm')
+    assert.equal(webmRow.source, 'youtube')
+    assert.equal(webmRow.level, 'unknown')
+    assert.deepEqual(await readFile(path.join(directory, 'audio_cache', webmRow.fileName)), webm)
     console.log('Packaged Electron streaming cache runtime passed')
   } finally {
     await jobs.cancelAll()
