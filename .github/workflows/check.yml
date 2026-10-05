@@ -62,3 +62,6 @@ jobs:
 
       - name: Test release metadata
         run: node --test packages/desktop/scripts/testReleaseMetadata.cjs
+
+      - name: Test verified Windows publisher
+        run: node --test packages/desktop/scripts/testWindowsPublisher.cjs

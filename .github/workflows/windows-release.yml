@@ -102,6 +102,10 @@ jobs:
       - name: Test release metadata
         run: node --test packages/desktop/scripts/testReleaseMetadata.cjs
 
+      - name: Test verified Windows publisher
+        run: |
+          if (Test-Path packages/desktop/scripts/testWindowsPublisher.cjs) { node --test packages/desktop/scripts/testWindowsPublisher.cjs; if ($LASTEXITCODE -ne 0) { throw 'Publisher regression test failed.' } }
+
       - name: Test Discord Rich Presence
         run: pnpm --filter desktop test:discord
 
@@ -224,6 +228,7 @@ jobs:
           retention-days: 14
 
       - name: Publish Windows release
+        if: ${{ !inputs.rebuild }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
@@ -241,3 +246,23 @@ jobs:
             release-assets/release-provenance.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load rebuild publisher from workflow revision
+        if: ${{ inputs.rebuild }}
+        shell: pwsh
+        run: |
+          git show "${{ github.sha }}:packages/desktop/scripts/publishWindowsAssets.cjs" | Set-Content -Encoding utf8 packages/desktop/scripts/publishWindowsAssets.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to load verified rebuild publisher.' }
+
+      - name: Publish rebuilt Windows release
+        if: ${{ inputs.rebuild }}
+        uses: actions/github-script@v7
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_COMMIT: ${{ steps.version.outputs.commit }}
+          RELEASE_NOTES: ${{ steps.version.outputs.notes }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        with:
+          script: |
+            const publish = require('./packages/desktop/scripts/publishWindowsAssets.cjs');
+            await publish({ github, context, directory: 'release-assets', tag: process.env.RELEASE_TAG, commit: process.env.RELEASE_COMMIT, notes: process.env.RELEASE_NOTES, prerelease: process.env.PRERELEASE === 'true' });

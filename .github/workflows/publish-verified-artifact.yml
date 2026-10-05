@@ -1,0 +1,57 @@
+name: Publish verified Windows artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Windows release build run whose publish step failed'
+        required: true
+        type: string
+      tag:
+        description: 'Existing release tag matching the verified artifact'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source build
+        uses: actions/github-script@v7
+        env:
+          SOURCE_RUN: ${{ inputs.run_id }}
+        with:
+          script: |
+            const run = (await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: process.env.SOURCE_RUN })).data;
+            if (!['.github/workflows/build.yaml', '.github/workflows/build-tag-release.yml'].includes(run.path)) throw new Error('Source must be a standard stable Windows workflow.');
+            if (run.status !== 'completed') throw new Error('Source build is not complete.');
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, { ...context.repo, run_id: run.id, per_page: 100 });
+            const steps = jobs.flatMap(job => job.steps);
+            for (const name of ['Typecheck web','Typecheck desktop','Test web','Test desktop','Build workspaces','Verify compiled Last.fm configuration','Package Windows app','Smoke test with packaged Electron','Record release provenance','Upload Windows Actions artifact']) {
+              if (!steps.some(step => step.name === name && step.conclusion === 'success')) throw new Error('Source build did not pass: ' + name);
+            }
+      - name: Download verified Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: R3PLAYX-Windows-${{ inputs.tag }}
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: release-assets
+      - name: Verify and publish artifact
+        uses: actions/github-script@v7
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          SOURCE_RUN: ${{ inputs.run_id }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const provenance = JSON.parse(fs.readFileSync('release-assets/release-provenance.json','utf8').replace(/^\uFEFF/,''));
+            if (provenance.runUrl !== `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.SOURCE_RUN}`) throw new Error('Provenance run mismatch.');
+            const commit = (await github.rest.repos.getCommit({ ...context.repo, ref: process.env.RELEASE_TAG })).data.sha;
+            const publish = require('./packages/desktop/scripts/publishWindowsAssets.cjs');
+            await publish({ github, context, directory: 'release-assets', tag: process.env.RELEASE_TAG, commit, notes: `release-notes/${process.env.RELEASE_TAG}.md`, prerelease: false });
