@@ -11,7 +11,8 @@
 
 @theme {
   /* fontFamily */
-  --font-barlow: Barlow;
+  --font-sans: Manrope, 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-barlow: Manrope, 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Roboto Mono', ui-monospace;
 
   /* fontSize: numeric scale, fixed line-height 1.2 / letter-spacing 0.02em */
@@ -326,6 +327,14 @@
 }
 
 @font-face {
+  font-family: Manrope;
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('@/web/assets/fonts/Manrope-Variable.ttf') format('truetype');
+}
+
+@font-face {
   font-family: Barlow;
   font-weight: normal;
   src: url('@/web/assets/fonts/Barlow-Regular.woff2') format('woff2'),
@@ -370,7 +379,7 @@
 @layer base {
   body,
   input {
-    font-family: Roboto, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Helvetica Neue,
+    font-family: Manrope, 'Be Vietnam Pro', Roboto, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Helvetica Neue,
       PingFang SC, Microsoft YaHei, Source Han Sans SC, Noto Sans CJK SC, WenQuanYi Micro Hei,
       microsoft uighur, sans-serif;
   }
@@ -385,7 +394,7 @@
   html:lang(vi) button,
   html:lang(vi) select,
   html:lang(vi) textarea {
-    font-family: 'Be Vietnam Pro', Roboto, ui-sans-serif, system-ui, sans-serif;
+    font-family: Manrope, 'Be Vietnam Pro', Roboto, ui-sans-serif, system-ui, sans-serif;
   }
 
   html {

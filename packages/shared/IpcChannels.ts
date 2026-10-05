@@ -23,6 +23,7 @@ export const enum IpcChannels {
   Hide = 'Hide',
   LyricsWindowClose = 'LyricsWindowClose',
   IsMaximized = 'IsMaximized',
+  IsWindowVisible = 'IsWindowVisible',
   FullscreenStateChange = 'FullscreenStateChange',
   GetApiCache = 'GetApiCache',
   DevDbExportJson = 'DevDbExportJson',
@@ -57,6 +58,7 @@ export const enum IpcChannels {
 
 // ipcMain.on params
 export interface IpcChannelsParams {
+  [IpcChannels.IsWindowVisible]: void
   [IpcChannels.UpdateState]: void
   [IpcChannels.SetUpdateChannel]: { channel: UpdateChannel }
   [IpcChannels.DownloadUpdate]: void
@@ -139,6 +141,7 @@ export interface IpcChannelsParams {
 
 // ipcRenderer.on params
 export interface IpcChannelsReturns {
+  [IpcChannels.IsWindowVisible]: boolean
   [IpcChannels.UpdateState]: UpdateState
   [IpcChannels.SetUpdateChannel]: UpdateState
   [IpcChannels.DownloadUpdate]: UpdateState

@@ -174,7 +174,9 @@
     "general": "通用",
     "lab": {
       "title": "实验室",
-      "description": "这里可能有一些测试功能"
+      "description": "这里可能有一些测试功能",
+      "startup-animation": "启动动画",
+      "startup-animation-description": "显示标志和开场效果，下次打开应用时生效。"
     },
     "unlock": "解锁更多歌源",
     "engine": "引擎",

@@ -2,7 +2,7 @@
   "name": "desktop",
   "productName": "R3PLAYX",
   "private": true,
-  "version": "2.9.4",
+  "version": "2.9.5",
   "main": "./main/index.js",
   "author": "Lynx-1ST",
   "homepage": "https://github.com/Lynx-1ST/R3PLAY",

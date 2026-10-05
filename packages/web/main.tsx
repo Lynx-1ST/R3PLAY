@@ -16,6 +16,7 @@ import './styles/global.css'
 import './styles/vietnameseFont.css'
 import './styles/accentColor.css'
 import App from './App'
+import StartupSplash from './components/StartupSplash'
 import pkg from '../../package.json'
 import ReactGA from 'react-ga4'
 import { ipcRenderer } from './ipcRenderer'
@@ -60,6 +61,7 @@ root.render(
     <HashRouter>
       <QueryClientProvider client={reactQueryClient}>
         <App />
+        <StartupSplash />
       </QueryClientProvider>
     </HashRouter>
   </StrictMode>

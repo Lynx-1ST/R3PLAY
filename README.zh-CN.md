@@ -8,14 +8,14 @@
 
 [![Checks](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml)
 [![Windows release](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml/badge.svg)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml)
-![Source version](https://img.shields.io/badge/source_version-2.9.2-2ea44f)
+![Source version](https://img.shields.io/badge/source_version-2.9.5-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
 
-## 2.9.2 源码版本与设置
+## 2.9.5 源码版本与设置
 
-当前源码 package 版本为 **2.9.2**。Windows 稳定版使用 `v2.9.1` 等标签；开发预览版使用 `v2.9.2-dev.N`，并标记为 prerelease。版本徽章表示源码版本；已发布的安装包与更新说明请查看 [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases)。
+当前源码 package 版本为 **2.9.5**。Windows 稳定版使用 `v2.9.1` 等标签；开发预览版使用 `v2.9.5-dev.N`，并标记为 prerelease。版本徽章表示源码版本；已发布的安装包与更新说明请查看 [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases)。
 
 - 恢复播放队列、播放位置、音量、随机播放和循环设置；启动后保持暂停。可在 **设置 → 播放器** 中关闭。
 - 快速搜索可在输入时显示歌曲；可在 **设置 → 常规** 中开关。方向键选择结果，Enter 播放所选歌曲或打开全部结果。

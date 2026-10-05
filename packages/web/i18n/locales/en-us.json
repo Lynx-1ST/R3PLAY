@@ -174,7 +174,9 @@
     "show-lyric-background-img": "Show Backround Image",
     "lab": {
       "title": "Lab",
-      "description": "There are some experimental functions"
+      "description": "There are some experimental functions",
+      "startup-animation": "Startup animation",
+      "startup-animation-description": "Show the logo and opening effects. Applies the next time you open the app."
     },
     "unlock": "Unlock More Music Source",
     "engine": "Engine",

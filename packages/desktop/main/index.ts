@@ -1,7 +1,7 @@
 import './preload' // must be first
 import { mediaUrlPatterns, allowMediaCors, mediaRequestHeaders } from './utils/mediaCors'
 import './sentry'
-import { app, BrowserWindow, BrowserWindowConstructorOptions, shell } from 'electron'
+import { app, BrowserWindow, BrowserWindowConstructorOptions, session, shell } from 'electron'
 import { release, type } from 'os'
 import { join } from 'path'
 import log from './log'
@@ -49,6 +49,17 @@ class Main {
       log.info('[index] App ready')
 
       await initAppServer()
+      // Old web/PWA builds registered a worker on this origin. It can keep
+      // serving an outdated UI after the desktop executable is upgraded.
+      // Preserve cookies, local storage and IndexedDB; discard only PWA caches.
+      try {
+        await session.defaultSession.clearStorageData({
+          origin: this.appOrigin,
+          storages: ['serviceworkers', 'cachestorage'],
+        })
+      } catch (error) {
+        log.warn('[startup] Could not clear legacy PWA caches', error)
+      }
       this.createWindow()
       this.handleAppEvents()
       this.handleWindowEvents()
@@ -178,13 +189,11 @@ class Main {
       return { action: 'deny' }
     })
 
-    // Register navigation guards before the first load.
-    this.win.loadURL(this.appOrigin)
-
-    // 减少显示空白窗口的时间
     this.win.once('ready-to-show', () => {
-      this.win && this.win.show()
+      this.win?.show()
     })
+    // Register navigation guards and the show handler before the first load.
+    this.win.loadURL(this.appOrigin)
 
     this.disableCORS()
   }

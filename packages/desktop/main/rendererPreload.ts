@@ -14,6 +14,7 @@ const allowedChannels = new Set<IpcChannels>([
   IpcChannels.Close,
   IpcChannels.Hide,
   IpcChannels.IsMaximized,
+  IpcChannels.IsWindowVisible,
   IpcChannels.FullscreenStateChange,
   IpcChannels.GetApiCache,
   IpcChannels.DevDbExportJson,

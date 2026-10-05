@@ -74,6 +74,7 @@ export function initIpcMain(
  */
 function initWindowIpcMain(win: BrowserWindow | null) {
   const { on, handle } = trustedIpc(win)
+  handle(IpcChannels.IsWindowVisible, () => win?.isVisible() ?? false)
   on(IpcChannels.Minimize, () => {
     win?.minimize()
   })

@@ -174,7 +174,9 @@
     "show-lyric-background-img": "Hiển thị ảnh nền",
     "lab": {
       "title": "Thử nghiệm",
-      "description": "Các tính năng thử nghiệm"
+      "description": "Các tính năng thử nghiệm",
+      "startup-animation": "Animation khi mở ứng dụng",
+      "startup-animation-description": "Hiện logo và hiệu ứng mở đầu. Áp dụng từ lần mở ứng dụng tiếp theo."
     },
     "unlock": "Mở khóa thêm nguồn nhạc",
     "engine": "Nguồn phát",

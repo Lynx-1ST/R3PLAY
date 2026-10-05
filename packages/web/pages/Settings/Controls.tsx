@@ -5,15 +5,18 @@ import { motion } from 'framer-motion'
 export function Switch({
   enabled,
   onChange,
+  label,
 }: {
   enabled: boolean
   onChange: (enabled: boolean) => void
+  label?: string
 }) {
   return (
     <motion.button
       type='button'
       role='switch'
       aria-checked={enabled}
+      aria-label={label}
       className={cx(
         'flex w-11 shrink-0 items-center justify-start rounded-full p-1 transition-colors duration-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current',
         enabled ? 'bg-brand-700' : 'bg-black/30 dark:bg-white/30'

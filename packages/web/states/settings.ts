@@ -6,6 +6,7 @@ import { getKeyboardShortcutDefaultSettings } from '@/shared/defaultSettings'
 import type { PlaybackQuality } from '@/shared/api/Track'
 
 interface Settings {
+  enableStartupAnimation: boolean
   showSearchSuggestions: boolean
   restoreListeningSession: boolean
   enableDiscordRpc: boolean
@@ -57,6 +58,7 @@ export const isLowPowerDevice = () => {
 }
 
 const initSettings: Settings = {
+  enableStartupAnimation: true,
   showSearchSuggestions: true,
   restoreListeningSession: true,
   enableDiscordRpc: false,

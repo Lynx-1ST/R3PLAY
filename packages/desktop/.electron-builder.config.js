@@ -72,6 +72,7 @@ module.exports = {
     ],
     artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
     darkModeSupport: true,
+    icon: 'build/icons/icon.icns',
     category: 'public.app-category.music',
     identity: null,
   },
@@ -107,7 +108,7 @@ module.exports = {
     ],
     artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
     category: 'Music',
-    icon: './build/icon.png',
+    icon: './build/icons/icon.png',
   },
   files: [
     '!runtime/**',
