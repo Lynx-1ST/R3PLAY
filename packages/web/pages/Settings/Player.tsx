@@ -38,7 +38,6 @@ function ListeningSessionSettings() {
   return (
     <div className='mb-12'>
       <BlockTitle>{t`settings.session-title`}</BlockTitle>
-      <BlockDescription>{t`settings.session-description`}</BlockDescription>
       <Option>
         <OptionText>{t`settings.session-enable`}</OptionText>
         <Switch
@@ -56,7 +55,6 @@ function DiscordRpcSettings() {
   return (
     <div className='mb-12'>
       <BlockTitle>Discord Rich Presence</BlockTitle>
-      <BlockDescription>{t`settings.discord-rpc-description`}</BlockDescription>
       <Option>
         <OptionText>{t`settings.discord-rpc-enable`}</OptionText>
         <Switch
@@ -83,7 +81,6 @@ function PlaybackQualitySelector() {
   return (
     <div className='mb-12'>
       <BlockTitle>{t`settings.audio-quality-title`}</BlockTitle>
-      <BlockDescription>{t`settings.audio-quality-description`}</BlockDescription>
       <Option>
         <OptionText>{t`settings.audio-quality-streaming`}</OptionText>
         <Select
@@ -113,18 +110,18 @@ function FindTrackOnYouTube() {
     <div className='flex w-full flex-col justify-between'>
       <div>
         <BlockTitle>{t`settings.player-youtube-unlock`}</BlockTitle>
-        <BlockDescription>{t`settings.player-youtube-desktop-only`}</BlockDescription>
+        {!window.env?.isElectron && (
+          <BlockDescription>{t`settings.player-youtube-desktop-only`}</BlockDescription>
+        )}
       </div>
       <div>
         {
           <>
             {window.env?.isElectron && (
               <div className='mb-5'>
-                <BlockDescription>
-                  {t`settings.player-find-alternative-track-on-youtube-if-not-available-on-netease`}
-                  <br />
-                  {t`settings.player-youtube-proxy-note`}
-                </BlockDescription>
+                {enableFindTrackOnYouTube && (
+                  <BlockDescription>{t`settings.player-youtube-proxy-note`}</BlockDescription>
+                )}
                 {/* Switch */}
                 <Option>
                   <OptionText>{t`settings.player-youtube-enable`}</OptionText>

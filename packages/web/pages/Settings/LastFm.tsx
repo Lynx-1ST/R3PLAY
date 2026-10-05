@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { LastFmStatus } from '@/shared/lastfm'
 import { IpcChannels } from '@/shared/IpcChannels'
-import { BlockTitle, BlockDescription, Option, OptionText, Switch } from './Controls'
+import { BlockTitle, Option, OptionText, Switch } from './Controls'
 
 export default function LastFm() {
   const { t } = useTranslation()
@@ -66,7 +66,6 @@ export default function LastFm() {
   return (
     <div className='mb-12'>
       <BlockTitle>Last.fm</BlockTitle>
-      <BlockDescription>{t('settings.lastfm.description')}</BlockDescription>
       {!status?.configured && (
         <p className='mb-3 text-sm opacity-60'>{t('settings.lastfm.unconfigured')}</p>
       )}

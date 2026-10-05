@@ -33,7 +33,6 @@ export default function Storage() {
   return (
     <div>
       <BlockTitle>{t('settings.storage.title')}</BlockTitle>
-      <BlockDescription>{t('settings.storage.description')}</BlockDescription>
       <p role='status' className='mb-4 text-sm'>
         {status
           ? `${(status.bytes / 1024 ** 3).toFixed(2)} GB / ${status.limitGB} GB · ${status.files} ${t('settings.storage.files')}`

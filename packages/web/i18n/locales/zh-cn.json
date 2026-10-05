@@ -178,7 +178,7 @@
       "startup-animation": "启动动画",
       "startup-animation-description": "显示标志和开场效果，下次打开应用时生效。",
       "crossfade": "交叉淡化",
-      "crossfade-description": "自动切歌时将当前歌曲结尾与下一首开头混合。单曲循环和私人 FM 保持正常播放。",
+      "crossfade-description": "平滑衔接队列歌曲；不适用于单曲循环和私人 FM。",
       "crossfade-duration": "过渡时长",
       "seconds": "{{count}} 秒",
       "reduce-hidden": "最小化时减少特效和界面更新"
@@ -268,7 +268,7 @@
       "files": "文件",
       "loading": "正在读取缓存…",
       "limit": "缓存上限",
-      "move-description": "选择父目录，将音频复制到 R3PLAYX-audio-cache。旧文件保留作备用；关闭应用后可自行删除旧缓存目录。",
+      "move-description": "旧目录保留作备用，可在关闭应用后删除。",
       "choose-folder": "选择目录",
       "clear": "清理未使用缓存",
       "refresh": "刷新",

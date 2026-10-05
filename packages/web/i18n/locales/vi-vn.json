@@ -178,7 +178,7 @@
       "startup-animation": "Animation khi mở ứng dụng",
       "startup-animation-description": "Hiện logo và hiệu ứng mở đầu. Áp dụng từ lần mở ứng dụng tiếp theo.",
       "crossfade": "Crossfade",
-      "crossfade-description": "Trộn phần cuối bài đang nghe với đầu bài tiếp theo trong hàng đợi. Áp dụng khi tự chuyển bài; lặp một bài và Personal FM phát bình thường.",
+      "crossfade-description": "Chuyển bài mượt trong hàng đợi; không áp dụng cho lặp một bài và Personal FM.",
       "crossfade-duration": "Thời gian chuyển bài",
       "seconds": "{{count}} giây",
       "reduce-hidden": "Giảm hiệu ứng và cập nhật giao diện khi thu nhỏ"
@@ -268,7 +268,7 @@
       "files": "file",
       "loading": "Đang đọc cache…",
       "limit": "Giới hạn cache",
-      "move-description": "Chọn thư mục cha. Nhạc hiện có được sao chép vào R3PLAYX-audio-cache. File cũ được giữ để dự phòng; bạn có thể xóa thư mục cache cũ sau khi đóng app.",
+      "move-description": "Thư mục cũ được giữ dự phòng. Có thể xóa sau khi đóng app.",
       "choose-folder": "Chọn thư mục",
       "clear": "Dọn cache không sử dụng",
       "refresh": "Làm mới",

@@ -28,7 +28,6 @@ export default function Diagnostics() {
   return (
     <div>
       <BlockTitle>{t('settings.diagnostics.title')}</BlockTitle>
-      <BlockDescription>{t('settings.diagnostics.description')}</BlockDescription>
       {report && (
         <>
           <dl className='mb-5 grid grid-cols-2 gap-3 text-sm'>
