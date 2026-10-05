@@ -153,7 +153,7 @@ export default function GlassSelect<T extends string>({
             aria-label={label}
             aria-activedescendant={`${listId}-${active}`}
             onKeyDown={onKeyDown}
-            className='fixed z-[100] overflow-y-auto rounded-xl border border-black/10 bg-white/65 p-1 shadow-xl backdrop-blur-2xl outline-none dark:border-white/10 dark:bg-neutral-800/55'
+            className='no-scrollbar fixed z-[100] overflow-y-auto rounded-xl border border-black/10 bg-white/65 p-1 shadow-xl backdrop-blur-2xl outline-none dark:border-white/10 dark:bg-neutral-800/55'
             style={position}
           >
             {options.map((option, index) => (
