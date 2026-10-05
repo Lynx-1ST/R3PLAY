@@ -179,6 +179,27 @@ jobs:
           Write-Host "--- Windows release assets ---"
           Get-ChildItem release-assets
 
+      - name: Record release provenance
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_COMMIT: ${{ steps.version.outputs.commit }}
+        run: |
+          $assets = @(Get-ChildItem release-assets -File | ForEach-Object {
+            @{ name = $_.Name; bytes = $_.Length; sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+          })
+          $provenance = @{
+            version = $env:RELEASE_VERSION
+            commit = $env:RELEASE_COMMIT
+            workflow = 'windows-release.yml'
+            runUrl = "https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            runAttempt = $env:GITHUB_RUN_ATTEMPT
+            runnerOS = $env:RUNNER_OS
+            nodeVersion = (node --version)
+            assets = $assets
+          }
+          $provenance | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 release-assets/release-provenance.json
+
       - name: Upload Windows Actions artifact
         uses: actions/upload-artifact@v4
         with:
@@ -202,5 +223,6 @@ jobs:
             release-assets/*-Setup.exe
             release-assets/*.yml
             release-assets/*.blockmap
+            release-assets/release-provenance.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
