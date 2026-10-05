@@ -102,18 +102,6 @@
   --tracking-hilightLyric: 1.1px;
   --leading-lyric: 120%;
 
-  /* colors — brand (static lime-ish palette) */
-  --color-brand-50: #fcfff5;
-  --color-brand-100: #ecfec1;
-  --color-brand-200: #dcfb8f;
-  --color-brand-300: #cdf764;
-  --color-brand-400: #bff142;
-  --color-brand-500: #b2e928;
-  --color-brand-600: #a5de16;
-  --color-brand-700: #98d00b;
-  --color-brand-800: #8bc003;
-  --color-brand-900: #7eb000;
-
   /* colors — day (light surfaces) */
   --color-day-50: #b6b6b6;
   --color-day-100: #535353;
@@ -189,6 +177,20 @@
   --color-stone-500: #78716c;
   --color-stone-600: #57534e;
   --color-stone-700: #44403c;
+}
+
+/* Legacy brand utilities follow the selected accent at the element, not :root. */
+@theme inline {
+  --color-brand-50: hsl(var(--brand-color-50));
+  --color-brand-100: hsl(var(--brand-color-100));
+  --color-brand-200: hsl(var(--brand-color-200));
+  --color-brand-300: hsl(var(--brand-color-300));
+  --color-brand-400: hsl(var(--brand-color-400));
+  --color-brand-500: hsl(var(--brand-color-500));
+  --color-brand-600: hsl(var(--brand-color-600));
+  --color-brand-700: hsl(var(--brand-color-700));
+  --color-brand-800: hsl(var(--brand-color-800));
+  --color-brand-900: hsl(var(--brand-color-900));
 }
 
 /* v3 scale "DEFAULT" classes (bare `rounded` / `blur` / `backdrop-blur`) are

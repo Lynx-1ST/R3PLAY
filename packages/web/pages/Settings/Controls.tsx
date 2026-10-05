@@ -19,7 +19,7 @@ export function Switch({
       aria-label={label}
       className={cx(
         'flex w-11 shrink-0 items-center justify-start rounded-full p-1 transition-colors duration-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current',
-        enabled ? 'bg-brand-700' : 'bg-black/30 dark:bg-white/30'
+        enabled ? 'bg-accent-color-700' : 'bg-black/30 dark:bg-white/30'
       )}
       onClick={() => onChange(!enabled)}
     >
