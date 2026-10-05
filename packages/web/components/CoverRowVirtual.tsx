@@ -251,7 +251,7 @@ const CoverItem: FC<{
       ref={rootRef}
       to={to}
       aria-label={item.name}
-      className='group relative block min-w-0 rounded-24 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-brand-700'
+      className='group relative block min-w-0 rounded-24 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 focus-visible:outline-solid'
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
     >
@@ -265,8 +265,8 @@ const CoverItem: FC<{
       </div>
       {showTrackListName && (
         <>
-          <h4 className='relative mt-1 mb-4 box-border h-7 overflow-hidden text-center text-ellipsis whitespace-nowrap sm:text-sm lg:-mb-4 lg:text-base 2xl:mb-0 2xl:text-lg'>
-            <span className='right-0 bottom-0 left-0 flex-col justify-end p-1'>{item.name}</span>
+          <h4 className='mt-1 min-w-0 truncate px-1 py-1 text-center text-sm leading-6 lg:text-base 2xl:text-lg'>
+            {item.name}
           </h4>
           {hoverRect && (
             <CoverItemHoverCardContent item={item} imageUrl={imageUrl} rect={hoverRect} />
@@ -434,7 +434,7 @@ const CoverRow = ({
       <div
         key={index}
         className={cx(
-          'virtuoso-grid-item grid w-full grid-cols-4 gap-4 lg:mb-6 lg:gap-6',
+          'virtuoso-grid-item grid w-full grid-cols-4 gap-4 pb-4 lg:gap-6 lg:pb-6',
           !initialAnimDone.current && index < 5 && 'cover-row-enter'
         )}
         style={

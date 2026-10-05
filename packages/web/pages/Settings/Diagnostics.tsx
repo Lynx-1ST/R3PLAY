@@ -78,6 +78,24 @@ export default function Diagnostics() {
         >
           {t('settings.diagnostics.export')}
         </button>
+        <button
+          disabled={busy}
+          className='min-h-10 rounded-lg bg-black/10 px-4 text-sm disabled:opacity-50 dark:bg-white/10'
+          onClick={async () => {
+            setBusy(true)
+            setMessage('')
+            try {
+              setReport(await window.ipcRenderer?.invoke(IpcChannels.ClearLogs))
+              setMessage(t('settings.diagnostics.cleared'))
+            } catch {
+              setMessage(t('settings.diagnostics.error'))
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          {t('settings.diagnostics.clear-logs')}
+        </button>
       </div>
       {message && (
         <p role='status' className='mt-3 text-sm'>

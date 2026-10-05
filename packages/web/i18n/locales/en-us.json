@@ -294,7 +294,9 @@
       "no-errors": "No recent warnings or errors.",
       "export": "Export report",
       "saved": "Report saved.",
-      "error": "Could not read or export the report."
+      "clear-logs": "Clear logs",
+      "cleared": "Logs cleared.",
+      "error": "Unable to process diagnostics or logs."
     },
     "lastfm": {
       "description": "Connect Last.fm to update Now Playing and scrobble tracks you actually listen to. Pauses and seeks do not count toward listening time.",

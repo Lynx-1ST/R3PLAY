@@ -1,5 +1,6 @@
 import { app, dialog, BrowserWindow } from 'electron'
-import { open, writeFile } from 'node:fs/promises'
+import { open, writeFile, unlink } from 'node:fs/promises'
+import { parse, join } from 'node:path'
 import log from './log'
 import { audioCacheStorage } from './audioCache'
 import { redactDiagnosticLine } from './utils/diagnosticRedaction'
@@ -37,6 +38,17 @@ export async function getDiagnostics(): Promise<Diagnostics> {
     cache: await audioCacheStorage.status(),
     recentErrors: await recentErrors(),
   }
+}
+export async function clearLogs(): Promise<Diagnostics> {
+  const file = log.transports.file.getFile()
+  if (!file.clear()) throw new Error('Unable to clear application log')
+  const path = parse(file.path)
+  try {
+    await unlink(join(path.dir, `${path.name}.old${path.ext}`))
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+  }
+  return getDiagnostics()
 }
 export async function exportDiagnostics(win: BrowserWindow) {
   const selected = await dialog.showSaveDialog(win, {

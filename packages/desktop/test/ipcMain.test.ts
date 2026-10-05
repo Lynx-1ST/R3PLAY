@@ -40,7 +40,11 @@ vi.mock('../main/audioCache', () => ({
   },
 }))
 vi.mock('../main/lastfm', () => ({ lastfm: { reset: vi.fn(), update: vi.fn(), flush: vi.fn() } }))
-vi.mock('../main/diagnostics', () => ({ getDiagnostics: vi.fn(), exportDiagnostics: vi.fn() }))
+vi.mock('../main/diagnostics', () => ({
+  getDiagnostics: vi.fn(),
+  exportDiagnostics: vi.fn(),
+  clearLogs: vi.fn(),
+}))
 vi.mock('../main/log', () => ({ default: { info: vi.fn(), warn: vi.fn() } }))
 vi.mock('../main/db', () => ({
   db: { truncate: mocks.truncate, vacuum: mocks.vacuum },

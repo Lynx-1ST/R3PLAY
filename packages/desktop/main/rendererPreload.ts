@@ -15,6 +15,7 @@ const allowedChannels = new Set<IpcChannels>([
   IpcChannels.SetCacheLimit,
   IpcChannels.ClearAudioCache,
   IpcChannels.GetDiagnostics,
+  IpcChannels.ClearLogs,
   IpcChannels.ExportDiagnostics,
   IpcChannels.CacheAudio,
   IpcChannels.DiscordPlayback,

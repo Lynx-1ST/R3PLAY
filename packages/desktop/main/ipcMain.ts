@@ -19,7 +19,7 @@ import { createDockMenu } from './dockMenu'
 import { DiscordPresence } from './discordRpc'
 import { trustedListener } from './utils/trustedIpc'
 import { audioCacheJobs, audioCacheStorage } from './audioCache'
-import { getDiagnostics, exportDiagnostics } from './diagnostics'
+import { getDiagnostics, exportDiagnostics, clearLogs } from './diagnostics'
 import { lastfm } from './lastfm'
 
 const discordPresence = new DiscordPresence()
@@ -103,6 +103,7 @@ export function initIpcMain(
     }
   })
   handle(IpcChannels.GetDiagnostics, () => getDiagnostics())
+  handle(IpcChannels.ClearLogs, () => clearLogs())
   handle(IpcChannels.ExportDiagnostics, () => (win ? exportDiagnostics(win) : false))
   on(IpcChannels.GetSavedSettings, event => {
     event.returnValue = store.get('settings') ?? null

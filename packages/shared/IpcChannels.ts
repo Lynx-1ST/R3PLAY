@@ -20,6 +20,7 @@ export const enum IpcChannels {
   ClearAudioCache = 'ClearAudioCache',
   GetDiagnostics = 'GetDiagnostics',
   ExportDiagnostics = 'ExportDiagnostics',
+  ClearLogs = 'ClearLogs',
   UpdateState = 'UpdateState',
   SetUpdateChannel = 'SetUpdateChannel',
   DownloadUpdate = 'DownloadUpdate',
@@ -85,6 +86,7 @@ export interface IpcChannelsParams {
   [IpcChannels.ClearAudioCache]: void
   [IpcChannels.GetDiagnostics]: void
   [IpcChannels.ExportDiagnostics]: void
+  [IpcChannels.ClearLogs]: void
   [IpcChannels.IsWindowVisible]: void
   [IpcChannels.UpdateState]: void
   [IpcChannels.SetUpdateChannel]: { channel: UpdateChannel }
@@ -181,6 +183,7 @@ export interface IpcChannelsReturns {
   [IpcChannels.ClearAudioCache]: CacheStatus
   [IpcChannels.GetDiagnostics]: Diagnostics
   [IpcChannels.ExportDiagnostics]: boolean
+  [IpcChannels.ClearLogs]: Diagnostics
   [IpcChannels.IsWindowVisible]: boolean
   [IpcChannels.UpdateState]: UpdateState
   [IpcChannels.SetUpdateChannel]: UpdateState

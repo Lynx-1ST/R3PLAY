@@ -293,7 +293,9 @@
       "no-errors": "Không có cảnh báo hoặc lỗi gần đây.",
       "export": "Xuất báo cáo",
       "saved": "Đã lưu báo cáo.",
-      "error": "Không thể đọc hoặc xuất báo cáo."
+      "clear-logs": "Xóa log",
+      "cleared": "Đã xóa log.",
+      "error": "Không thể xử lý báo cáo hoặc log."
     },
     "lastfm": {
       "description": "Kết nối Last.fm để hiện bài đang nghe và scrobble những bài đã nghe đủ thời lượng. Tạm dừng và tua không được tính vào thời gian nghe.",
