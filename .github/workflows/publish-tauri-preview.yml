@@ -1,0 +1,153 @@
+name: Publish Tauri dev installer
+
+on:
+  workflow_run:
+    workflows: ['Tauri Windows Preview']
+    types: [completed]
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Successful Tauri preview run ID (blank uses latest successful dev build)'
+        required: false
+        type: string
+  # Bootstrap publication of the existing verified preview when this workflow lands.
+  push:
+    branches: [dev]
+    paths: ['.github/workflows/publish-tauri-preview.yml']
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: publish-tauri-dev
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select and verify source build
+        id: source
+        uses: actions/github-script@v7
+        env:
+          REQUESTED_RUN: ${{ inputs.run_id }}
+        with:
+          script: |
+            let id = context.payload.workflow_run?.id || process.env.REQUESTED_RUN;
+            if (!id) {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                ...context.repo, workflow_id: 'tauri-preview.yml',
+                branch: 'dev', status: 'success', per_page: 1,
+              });
+              id = runs.data.workflow_runs[0]?.id;
+            }
+            if (!id) throw new Error('No successful Tauri dev build found.');
+            const run = (await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: id })).data;
+            if (run.path !== '.github/workflows/tauri-preview.yml' ||
+                run.head_branch !== 'dev' || run.status !== 'completed' || run.conclusion !== 'success' ||
+                run.head_repository?.full_name !== `${context.repo.owner}/${context.repo.repo}` ||
+                !['push', 'workflow_dispatch'].includes(run.event)) {
+              throw new Error('Source must be a successful trusted Tauri dev build.');
+            }
+            const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+              ...context.repo, run_id: run.id, per_page: 100,
+            });
+            const matches = artifacts.filter(a => a.name === 'R3PLAYX-Tauri-Windows-Preview' && !a.expired);
+            if (matches.length !== 1) throw new Error('Expected exactly one unexpired Tauri installer artifact.');
+            const config = (await github.rest.repos.getContent({
+              ...context.repo, path: 'packages/tauri/src-tauri/tauri.conf.json', ref: run.head_sha,
+            })).data;
+            const version = JSON.parse(Buffer.from(config.content, 'base64').toString('utf8')).version;
+            if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Unexpected preview version.');
+            core.setOutput('run_id', run.id);
+            core.setOutput('sha', run.head_sha);
+            core.setOutput('tag', `tauri-v${version}-dev.${run.run_number}`);
+            core.setOutput('version', `${version}-dev.${run.run_number}`);
+            core.setOutput('url', run.html_url);
+
+      - name: Download verified installer
+        uses: actions/download-artifact@v4
+        with:
+          name: R3PLAYX-Tauri-Windows-Preview
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: release-assets
+
+      - name: Publish separate Tauri prerelease
+        uses: actions/github-script@v7
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          SOURCE_URL: ${{ steps.source.outputs.url }}
+          RELEASE_TAG: ${{ steps.source.outputs.tag }}
+          PREVIEW_VERSION: ${{ steps.source.outputs.version }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const crypto = require('node:crypto');
+            function files(dir) {
+              return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+                const filename = path.join(dir, entry.name);
+                return entry.isDirectory() ? files(filename) : entry.isFile() ? [filename] : [];
+              });
+            }
+            const installers = files('release-assets').filter(file => file.endsWith('.exe'));
+            if (installers.length !== 1) throw new Error('Expected exactly one Windows installer.');
+            const data = fs.readFileSync(installers[0]);
+            if (data.length < 2 || data[0] !== 0x4d || data[1] !== 0x5a) throw new Error('Invalid EXE header.');
+            const name = `R3PLAYX-Tauri-${process.env.PREVIEW_VERSION}-win-x64-Setup.exe`;
+            const digest = crypto.createHash('sha256').update(data).digest('hex');
+            const checksum = Buffer.from(`${digest}  ${name}\n`);
+            const tag = process.env.RELEASE_TAG;
+            let release;
+            try {
+              release = (await github.rest.repos.getReleaseByTag({ ...context.repo, tag })).data;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            if (release && !release.draft) {
+              const commit = (await github.rest.repos.getCommit({ ...context.repo, ref: tag })).data.sha;
+              if (commit !== process.env.SOURCE_SHA || !release.prerelease) {
+                throw new Error('Existing release does not match this preview build.');
+              }
+            }
+            if (!release) {
+              release = (await github.rest.repos.createRelease({
+                ...context.repo, tag_name: tag, target_commitish: process.env.SOURCE_SHA,
+                name: `R3PLAYX Tauri ${process.env.PREVIEW_VERSION} — Windows Preview`,
+                draft: true, prerelease: true, make_latest: 'false',
+                body: [
+                  'Bản thử nghiệm Tauri/Rust dành cho Windows x64. Tải file Setup.exe bên dưới.',
+                  '',
+                  '**Cần chạy API helper riêng:** `pnpm tauri:api` từ mã nguồn. Installer chưa đóng gói backend Node.js.',
+                  'Chưa thay thế Electron; cache/download, Discord, Last.fm và updater chưa được chuyển. Installer chưa ký số.',
+                  '',
+                  `[Hướng dẫn và giới hạn](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${process.env.SOURCE_SHA}/docs/tauri-preview.md)`,
+                  `Source: ${process.env.SOURCE_SHA}`,
+                  `Verified build and tests: ${process.env.SOURCE_URL}`,
+                ].join('\n'),
+              })).data;
+            }
+            const existing = await github.paginate(github.rest.repos.listReleaseAssets, {
+              ...context.repo, release_id: release.id, per_page: 100,
+            });
+            for (const asset of [{ name, data }, { name: 'SHA256SUMS.txt', data: checksum }]) {
+              const old = existing.find(item => item.name === asset.name);
+              if (old) {
+                const expected = `sha256:${crypto.createHash('sha256').update(asset.data).digest('hex')}`;
+                if (old.digest !== expected) throw new Error(`Existing asset digest mismatch: ${asset.name}`);
+                continue;
+              }
+              await github.rest.repos.uploadReleaseAsset({
+                ...context.repo, release_id: release.id, name: asset.name, data: asset.data,
+                headers: { 'content-type': 'application/octet-stream', 'content-length': asset.data.length },
+              });
+            }
+            await github.rest.repos.updateRelease({
+              ...context.repo, release_id: release.id, draft: false,
+              prerelease: true, make_latest: 'false',
+            });
+            await core.summary.addLink('Download Tauri Windows preview', release.html_url).write();
