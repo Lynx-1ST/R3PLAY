@@ -13,6 +13,7 @@ import { appName } from './utils/const'
 
 dotenv.config({ path: join(__dirname, '../../.env') })
 const IS_ELECTRON = process.env.IS_ELECTRON
+const IS_TAURI = process.env.IS_TAURI === 'yes'
 const ELECTRON_DEV_NETEASE_API_PORT = Number(process.env.ELECTRON_DEV_NETEASE_API_PORT || 30001)
 const ELECTRON_WEB_SERVER_PORT = Number(process.env.ELECTRON_WEB_SERVER_PORT || 42710)
 
@@ -48,7 +49,7 @@ export default defineConfig({
     /**
      * @see https://vite-plugin-pwa.netlify.app/guide/generate.html
      */
-    !IS_ELECTRON
+    !IS_ELECTRON && !IS_TAURI
       ? VitePWA({
           registerType: 'autoUpdate',
           manifest: {
@@ -91,16 +92,16 @@ export default defineConfig({
     // (chrome87 / firefox78 / safari14 — browsers with native ESM support).
     target: IS_ELECTRON ? 'esnext' : 'es2020',
     sourcemap: true,
-    outDir: './dist',
+    outDir: IS_TAURI ? './dist-tauri' : './dist',
     emptyOutDir: true,
     rollupOptions: {
-      plugins: [
-      ],
+      plugins: [],
     },
   },
   server: {
-    port: ELECTRON_WEB_SERVER_PORT,
-    strictPort: IS_ELECTRON ? true : false,
+    host: IS_TAURI ? '127.0.0.1' : undefined,
+    port: IS_TAURI ? 1420 : ELECTRON_WEB_SERVER_PORT,
+    strictPort: !!IS_ELECTRON || IS_TAURI,
     proxy: {
       '/netease/': {
         target: `http://127.0.0.1:${ELECTRON_DEV_NETEASE_API_PORT}`,

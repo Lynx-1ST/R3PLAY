@@ -263,3 +263,7 @@ README của upstream còn có thêm các tuyên bố về phạm vi sử dụng
 - [Developer wiki của upstream](https://github.com/Sherlockouo/music/wiki/For-Developers)
 - [Repository upstream](https://github.com/Sherlockouo/music)
 - [Web demo của upstream](https://music.xtify.top/)
+
+## Bản thử nghiệm Tauri / Rust
+
+Đã có bản proof-of-concept Windows chạy song song với Electron. Xem [hướng dẫn và giới hạn hiện tại](docs/tauri-preview.md). Chạy `pnpm tauri:api` và `pnpm tauri:dev` trong hai terminal.

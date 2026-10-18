@@ -6,6 +6,8 @@ import axios, {
   InternalAxiosRequestConfig,
 } from 'axios'
 import { logout } from '../api/hooks/useUser'
+import { isTauriDesktop } from './tauri'
+import { tauriApiAdapter } from './tauriApiAdapter'
 
 // In dev, Vite proxies '/netease' to the local API server (see vite.config).
 // In production builds the env var may be missing; fall back to the same path
@@ -16,6 +18,7 @@ const baseURL = import.meta.env.DEV
 
 const service: AxiosInstance = axios.create({
   baseURL,
+  ...(isTauriDesktop() ? { adapter: tauriApiAdapter } : {}),
   withCredentials: true,
   timeout: 50000,
 })

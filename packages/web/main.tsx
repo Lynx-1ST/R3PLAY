@@ -25,9 +25,10 @@ import reactQueryClient from '@/web/utils/reactQueryClient'
 import React from 'react'
 import './i18n/i18n'
 import { appName } from './utils/const'
+import { isTauriDesktop } from './utils/tauri'
 
 // google analytic — web build only; the Electron app must not phone home.
-if (!window.ipcRenderer) {
+if (!window.ipcRenderer && !isTauriDesktop()) {
   ReactGA.initialize('G-QFPDJGN751')
 }
 

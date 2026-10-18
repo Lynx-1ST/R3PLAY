@@ -20,7 +20,10 @@
     "pack:test": "turbo run build && turbo run pack:test",
     "dev": "cross-env-shell IS_ELECTRON=yes turbo run dev --parallel",
     "lint": "eslint .",
-    "format": "prettier --write \"**/*.{ts,tsx,mjs,js,jsx,md,css}\""
+    "format": "prettier --write \"**/*.{ts,tsx,mjs,js,jsx,md,css}\"",
+    "tauri:dev": "pnpm --filter tauri-desktop tauri:dev",
+    "tauri:build": "pnpm --filter tauri-desktop tauri:build",
+    "tauri:api": "pnpm --filter tauri-desktop api"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.21.0",

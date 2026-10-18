@@ -1,0 +1,14 @@
+{
+  "name": "tauri-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build -- --locked",
+    "tauri:build:debug": "tauri build --debug -- --locked",
+    "api": "node scripts/api.cjs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.3"
+  }
+}
