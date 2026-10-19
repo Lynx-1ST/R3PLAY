@@ -66,8 +66,11 @@ pub struct BackendService {
 impl BackendService {
     pub fn new(resources: PathBuf, data_dir: PathBuf) -> Self {
         Self {
-            resources,
-            data_dir,
+            // Tauri may return Windows namespaced paths (\\?\C:\...). Node's
+            // CommonJS entry-point loader rejects these even though Rust can
+            // spawn the executable, so normalize every path passed to Node.
+            resources: dunce::simplified(&resources).to_path_buf(),
+            data_dir: dunce::simplified(&data_dir).to_path_buf(),
             process: Mutex::new(None),
             stopped: AtomicBool::new(false),
         }
@@ -229,7 +232,12 @@ process.stdin.resume();
 "#,
         )
         .unwrap();
-        let service = BackendService::new(resources.clone(), data.clone());
+        // canonicalize() produces the same Windows \\?\ prefix that Tauri's
+        // installed resource resolver may return. Plain paths miss this bug.
+        let service = BackendService::new(
+            resources.canonicalize().unwrap(),
+            data.canonicalize().unwrap(),
+        );
         let first = service.endpoint().unwrap();
         assert!(TcpStream::connect(("127.0.0.1", first.port)).is_ok());
         assert_eq!(service.endpoint().unwrap().token, first.token);

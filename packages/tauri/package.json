@@ -1,7 +1,7 @@
 {
   "name": "tauri-desktop",
   "private": true,
-  "version": "3.0.0-dev.1",
+  "version": "3.0.0-dev.2",
   "scripts": {
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build -- --locked",
