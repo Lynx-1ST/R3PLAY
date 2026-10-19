@@ -1,19 +1,19 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "R3PLAYX Tauri Preview",
-  "version": "0.1.0",
+  "productName": "R3PLAYX 3.0 Dev",
+  "version": "3.0.0-dev.1",
   "identifier": "com.lynx1st.r3playx.tauri.preview",
   "build": {
-    "beforeDevCommand": "pnpm --filter web dev:tauri",
+    "beforeDevCommand": "pnpm --filter tauri-desktop prepare:backend && pnpm --filter web dev:tauri",
     "devUrl": "http://127.0.0.1:1420",
-    "beforeBuildCommand": "pnpm --filter web build:tauri",
+    "beforeBuildCommand": "pnpm --filter tauri-desktop prepare:backend && pnpm --filter web build:tauri",
     "frontendDist": "../../web/dist-tauri"
   },
   "app": {
     "windows": [
       {
         "label": "main",
-        "title": "R3PLAYX — Tauri Preview",
+        "title": "R3PLAYX 3.0.0-dev.1",
         "width": 1280,
         "height": 800,
         "minWidth": 960,
@@ -27,6 +27,9 @@
   },
   "bundle": {
     "active": true,
+    "resources": {
+      "resources/backend/": "backend/"
+    },
     "targets": [
       "nsis"
     ],

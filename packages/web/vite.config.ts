@@ -10,6 +10,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 import filenamesToType from './vitePluginFilenamesToType'
 import { appName } from './utils/const'
+import rootPackage from '../../package.json'
+import tauriPackage from '../tauri/package.json'
 
 dotenv.config({ path: join(__dirname, '../../.env') })
 const IS_ELECTRON = process.env.IS_ELECTRON
@@ -26,6 +28,11 @@ export default defineConfig({
   mode: process.env.NODE_ENV,
   root: './',
   base: '/',
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(
+      IS_TAURI ? tauriPackage.version : rootPackage.version
+    ),
+  },
   resolve: {
     alias: {
       '@': join(__dirname, '..'),
@@ -34,10 +41,12 @@ export default defineConfig({
   },
   plugins: [
     tailwindcss(),
-    visualizer({
-      emitFile: true,
-      filename: 'stats.html',
-    }) as PluginOption,
+    !IS_TAURI
+      ? (visualizer({
+          emitFile: true,
+          filename: 'stats.html',
+        }) as PluginOption)
+      : undefined,
     react(),
     filenamesToType([
       {
@@ -91,7 +100,7 @@ export default defineConfig({
     // 'modules' alias was removed in vite 7; 'es2020' is its equivalent
     // (chrome87 / firefox78 / safari14 — browsers with native ESM support).
     target: IS_ELECTRON ? 'esnext' : 'es2020',
-    sourcemap: true,
+    sourcemap: !IS_TAURI || process.env.TAURI_ENV_DEBUG === 'true',
     outDir: IS_TAURI ? './dist-tauri' : './dist',
     emptyOutDir: true,
     rollupOptions: {

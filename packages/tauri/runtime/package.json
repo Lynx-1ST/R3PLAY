@@ -1,0 +1,8 @@
+{
+  "name": "r3playx-tauri-backend-runtime",
+  "private": true,
+  "version": "3.0.0-dev",
+  "dependencies": {
+    "@neteasecloudmusicapienhanced/api": "4.40.0"
+  }
+}

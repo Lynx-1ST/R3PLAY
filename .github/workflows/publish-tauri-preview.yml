@@ -11,10 +11,6 @@ on:
         description: 'Successful Tauri preview run ID (blank uses latest successful dev build)'
         required: false
         type: string
-  # Bootstrap publication of the existing verified preview when this workflow lands.
-  push:
-    branches: [dev]
-    paths: ['.github/workflows/publish-tauri-preview.yml']
 
 permissions:
   contents: write
@@ -61,11 +57,13 @@ jobs:
               ...context.repo, path: 'packages/tauri/src-tauri/tauri.conf.json', ref: run.head_sha,
             })).data;
             const version = JSON.parse(Buffer.from(config.content, 'base64').toString('utf8')).version;
-            if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Unexpected preview version.');
+            if (!/^\d+\.\d+\.\d+(?:-dev\.\d+)?$/.test(version)) throw new Error('Unexpected preview version.');
             core.setOutput('run_id', run.id);
             core.setOutput('sha', run.head_sha);
-            core.setOutput('tag', `tauri-v${version}-dev.${run.run_number}`);
-            core.setOutput('version', `${version}-dev.${run.run_number}`);
+            const previewVersion = version.includes('-dev.')
+              ? `${version}.build.${run.run_number}` : `${version}-dev.${run.run_number}`;
+            core.setOutput('tag', `tauri-v${previewVersion}`);
+            core.setOutput('version', previewVersion);
             core.setOutput('url', run.html_url);
 
       - name: Download verified installer
@@ -122,7 +120,7 @@ jobs:
                 body: [
                   'Bản thử nghiệm Tauri/Rust dành cho Windows x64. Tải file Setup.exe bên dưới.',
                   '',
-                  '**Cần chạy API helper riêng:** `pnpm tauri:api` từ mã nguồn. Installer chưa đóng gói backend Node.js.',
+                  'API NetEase tương thích được đóng gói cùng Node.js; Rust tự quản lý tiến trình. Không cần chạy API helper riêng.',
                   'Chưa thay thế Electron; cache/download, Discord, Last.fm và updater chưa được chuyển. Installer chưa ký số.',
                   '',
                   `[Hướng dẫn và giới hạn](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${process.env.SOURCE_SHA}/docs/tauri-preview.md)`,

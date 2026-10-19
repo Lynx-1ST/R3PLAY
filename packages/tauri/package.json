@@ -1,12 +1,14 @@
 {
   "name": "tauri-desktop",
   "private": true,
-  "version": "0.1.0",
+  "version": "3.0.0-dev.1",
   "scripts": {
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build -- --locked",
     "tauri:build:debug": "tauri build --debug -- --locked",
-    "api": "node scripts/api.cjs"
+    "api": "node scripts/api.cjs",
+    "prepare:backend": "node scripts/prepare-backend.cjs",
+    "test:backend": "node --test --test-timeout=10000 test/backend.test.cjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.12.3"

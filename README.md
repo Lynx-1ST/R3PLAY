@@ -8,7 +8,7 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 
 [![Checks](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml)
 [![Windows release](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml/badge.svg)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml)
-![Source version](https://img.shields.io/badge/source_version-2.9.5-2ea44f)
+![Source version](https://img.shields.io/badge/source_version-2.9.7-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
@@ -18,7 +18,14 @@ A polished third-party NetEase Cloud Music player for desktop and web.
 
 ## Version and release channels
 
-The source package version is **2.9.5**. Stable Windows releases use tags such as `v2.9.2`; development previews use `v2.9.5-dev.N` and are prereleases. The version badge describes the source tree; use [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) to check published installers and their release notes.
+The Electron/web source package version is **2.9.7**. Stable Windows releases use tags such as `v2.9.2`; development previews use `v2.9.7-dev.N` and are prereleases. Use [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) to check published installers and their release notes.
+
+The separate **3.0.0-dev.1** desktop source uses Tauri/Rust with the existing
+React UI and a bundled Node compatibility service for NetEase. It is an
+incremental migration with incomplete feature parity. See the
+[preview build instructions](docs/tauri-preview.md) and
+[Rust migration plan](docs/rust-3.0-dev.md); local source changes are not a
+published release or a measured performance improvement.
 
 ## Features
 

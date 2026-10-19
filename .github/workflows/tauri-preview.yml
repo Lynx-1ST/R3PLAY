@@ -46,6 +46,10 @@ jobs:
         run: pnpm --filter web test:types
       - name: Test API bridge
         run: pnpm --filter web exec vitest run test/utils/tauriApiAdapter.test.ts
+      - name: Prepare bundled music service
+        run: pnpm --filter tauri-desktop prepare:backend
+      - name: Test music service lifecycle and authentication
+        run: pnpm --filter tauri-desktop test:backend
       - name: Check Rust formatting
         run: cargo fmt --manifest-path packages/tauri/src-tauri/Cargo.toml -- --check
       - name: Build Windows installer

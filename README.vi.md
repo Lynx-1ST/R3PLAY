@@ -8,7 +8,7 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 
 [![Checks](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml/badge.svg?branch=dev)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/check.yml)
 [![Windows release](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml/badge.svg)](https://github.com/Lynx-1ST/R3PLAY/actions/workflows/build.yaml)
-![Source version](https://img.shields.io/badge/source_version-2.9.5-2ea44f)
+![Source version](https://img.shields.io/badge/source_version-2.9.7-2ea44f)
 ![License](https://img.shields.io/github/license/Lynx-1ST/R3PLAY)
 
 </div>
@@ -18,7 +18,13 @@ Trình phát nhạc NetEase Cloud Music bên thứ ba dành cho desktop và web.
 
 ## Phiên bản và kênh phát hành
 
-Phiên bản package trong mã nguồn là **2.9.5**. Bản Windows ổn định dùng tag như `v2.9.1`; bản thử nghiệm dùng `v2.9.5-dev.N` và được đánh dấu prerelease. Badge phiên bản mô tả mã nguồn; xem [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) để kiểm tra bộ cài đã phát hành và ghi chú thay đổi.
+Phiên bản mã nguồn Electron/web là **2.9.7**. Bản Windows ổn định dùng tag như `v2.9.1`; bản thử nghiệm dùng `v2.9.7-dev.N` và được đánh dấu prerelease. Xem [GitHub Releases](https://github.com/Lynx-1ST/R3PLAY/releases) để kiểm tra bộ cài đã phát hành và ghi chú thay đổi.
+
+Mã nguồn desktop **3.0.0-dev.1** dùng Tauri/Rust, giữ giao diện React và đóng gói
+dịch vụ Node tương thích NetEase. Đây là bước chuyển đổi đầu tiên, còn thiếu
+tính năng so với Electron. Xem [hướng dẫn build](docs/tauri-preview.md) và
+[lộ trình chuyển sang Rust](docs/rust-3.0-dev.md). Thay đổi mã nguồn local chưa
+đồng nghĩa đã phát hành bộ cài hay chứng minh cải thiện hiệu năng.
 
 ## Tính năng
 

@@ -2498,10 +2498,11 @@ checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 
 [[package]]
 name = "r3playx-tauri"
-version = "0.1.0"
+version = "3.0.0-dev.1"
 dependencies = [
  "reqwest 0.12.28",
  "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
 ]

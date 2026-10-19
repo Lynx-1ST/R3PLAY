@@ -1,4 +1,4 @@
-import pkg from '../../../../package.json'
+import { appVersion } from '../../utils/version'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
@@ -20,7 +20,7 @@ const About = () => {
     try {
       const latest = await getLatestRelease()
       setRelease(latest)
-      if (!isNewerStableRelease(latest.version, pkg.version))
+      if (!isNewerStableRelease(latest.version, appVersion))
         toast.success(t('settings.about-up-to-date'))
     } catch {
       toast.error(t('settings.about-update-error'))
@@ -28,14 +28,14 @@ const About = () => {
       setChecking(false)
     }
   }
-  const newer = release && isNewerStableRelease(release.version, pkg.version)
+  const newer = release && isNewerStableRelease(release.version, appVersion)
   const linkClass = 'text-accent-color-600 hover:underline dark:text-accent-color-400'
   return (
     <div className='space-y-6'>
       <div>
         <h2 className='text-2xl font-bold'>R3PLAYX</h2>
         <p className='mt-1 text-black/60 dark:text-white/60'>
-          {t('settings.about-version', { version: pkg.version })}
+          {t('settings.about-version', { version: appVersion })}
         </p>
       </div>
       <div className='space-y-2'>

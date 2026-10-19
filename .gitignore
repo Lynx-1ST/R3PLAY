@@ -66,8 +66,10 @@ packages/desktop/esbuild-kit
 # npm temporary file
 package-lock.json
 !packages/desktop/runtime/package-lock.json
+!packages/tauri/runtime/package-lock.json
 
 # Tauri preview
 packages/tauri/src-tauri/target/
 packages/tauri/src-tauri/gen/
 packages/web/dist-tauri/
+packages/tauri/src-tauri/resources/backend/

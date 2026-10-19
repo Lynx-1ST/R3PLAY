@@ -17,7 +17,7 @@ import './styles/vietnameseFont.css'
 import './styles/accentColor.css'
 import App from './App'
 import StartupSplash from './components/StartupSplash'
-import pkg from '../../package.json'
+import { appVersion } from './utils/version'
 import ReactGA from 'react-ga4'
 import { ipcRenderer } from './ipcRenderer'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -46,7 +46,7 @@ if (import.meta.env.PROD) {
         matchRoutes,
       }),
     ],
-    release: `${appName}@${pkg.version}`,
+    release: `${appName}@${appVersion}`,
     environment: import.meta.env.MODE,
     tracesSampleRate: 0.05,
   })
